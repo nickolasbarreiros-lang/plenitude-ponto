@@ -1,0 +1,14 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#2c2324"><title>Relatórios | Plenitude Ponto</title><link rel="stylesheet" href="assets/css/estilos.css"></head><body>
+<div class="app-shell"><aside class="sidebar">
+  <div class="sidebar-brand"><img class="logo" src="assets/img/logo-plenitude.png" alt="Plenitude"></div>
+  <p class="sidebar-label">CONTROLE DE PONTO</p>
+  <nav>
+    <a data-page="admin" href="admin.html"><span>▦</span><b>Painel</b></a>
+    <a data-page="ponto" href="ponto.html"><span>◷</span><b>Registrar ponto</b></a>
+    <a data-page="funcionarios" href="funcionarios.html"><span>♙</span><b>Funcionário</b></a>
+    <a data-page="jornada" href="jornada.html"><span>▤</span><b>Jornada</b></a>
+    <a data-page="relatorios" class="active" href="relatorios.html"><span>▥</span><b>Relatórios</b></a>
+    <a data-page="configuracoes" href="configuracoes.html"><span>⚙</span><b>Configurações</b></a>
+  </nav>
+  <button id="sair" class="link-button">↪ Sair do sistema</button>
+</aside><main class="content"><header class="topbar"><div><p class="eyebrow">CONTROLE MENSAL</p><h1>Relatórios</h1><p class="muted">Consulte e imprima o espelho de ponto.</p></div><span class="badge">Espelho mensal</span></header><section class="report-filters panel"><label>Mês<input id="rel-mes" type="month"></label><button id="atualizar-relatorio" class="btn primary">Atualizar relatório</button><button id="imprimir-relatorio" class="btn outline">Imprimir</button></section><section class="cards compact-cards"><article class="metric-card"><i>▤</i><span>Dias com registro</span><strong id="rel-dias">0</strong><small>No mês selecionado</small></article><article class="metric-card"><i>◷</i><span>Horas trabalhadas</span><strong id="rel-horas">00:00</strong><small>Total calculado</small></article><article class="metric-card"><i>±</i><span>Saldo acumulado</span><strong id="rel-saldo">00:00</strong><small>Em relação à jornada</small></article></section><article class="panel"><div class="panel-head"><div><p class="panel-kicker">ESPELHO MENSAL</p><h2>Marcações registradas</h2></div></div><div class="table-wrap"><table><thead><tr><th>Data</th><th>Entrada</th><th>Almoço</th><th>Retorno</th><th>Saída</th><th>Total</th><th>Saldo</th></tr></thead><tbody id="relatorio-body"></tbody></table></div><p id="relatorio-vazio" class="empty-state">Nenhuma marcação encontrada para o período.</p></article><script>initRelatorios()</script></body></html></main></div><script src="assets/js/app.js"></script>
