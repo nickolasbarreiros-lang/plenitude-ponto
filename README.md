@@ -1,28 +1,18 @@
-# Plenitude Ponto — versão inicial
+# Plenitude Ponto — versão 2
 
-Projeto separado do Orquidário, pronto para ser colocado em um repositório próprio no GitHub.
+Sistema demonstrativo de controle de ponto da Livraria Plenitude.
 
-## Estrutura
-- `index.html`: login
-- `admin.html`: painel administrativo
-- `ponto.html`: tela de registro
-- `funcionarios.html`: cadastro do funcionário
-- `jornada.html`: jornada semanal
-- `assets/css/estilos.css`: visual
-- `assets/js/app.js`: funcionamento
-- `assets/img/logo-plenitude.png`: logomarca
+## Publicação no GitHub Pages
+
+1. Extraia este ZIP no computador.
+2. No repositório `plenitude-ponto`, apague os arquivos antigos.
+3. Envie **todos os arquivos e a pasta `assets`** diretamente para a raiz do repositório.
+4. Confirme que a raiz mostra `index.html`, `admin.html` e a pasta `assets`.
+5. Em Settings → Pages, use a branch `main` e a pasta `/ (root)`.
 
 ## Acesso demonstrativo
-- E-mail: `admin@plenitude.local`
-- Senha: `123456`
 
-## Como publicar
-1. Crie um repositório novo chamado `plenitude-ponto`.
-2. Envie todo o conteúdo desta pasta para a raiz do repositório.
-3. Abra **Settings > Pages**.
-4. Em **Build and deployment**, escolha **Deploy from a branch**.
-5. Selecione a branch `main` e a pasta `/root`.
-6. Salve e aguarde o endereço do GitHub Pages.
+- E-mail: admin@plenitude.local
+- Senha: 123456
 
-## Importante
-Nesta versão os dados ficam no `localStorage` do navegador. A próxima fase deve conectar login e registros a um banco de dados como Supabase.
+Nesta fase, os dados são armazenados no navegador com LocalStorage. Não é ainda um sistema de ponto oficial REP-P.
