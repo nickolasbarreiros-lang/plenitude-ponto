@@ -17,7 +17,8 @@
       <a data-page="ponto" href="ponto.html"><span>◷</span><b>Registrar ponto</b></a>
       <a data-page="funcionarios" href="funcionarios.html"><span>♙</span><b>Funcionário</b></a>
       <a data-page="jornada" href="jornada.html"><span>▤</span><b>Jornada</b></a>
-      <a data-page="relatorios" href="relatorios.html"><span>▥</span><b>Relatórios</b></a>
+          <a data-page="calendario" href="calendario.html"><span>▣</span><b>Calendário</b></a>
+<a data-page="relatorios" href="relatorios.html"><span>▥</span><b>Relatórios</b></a>
       <a data-page="configuracoes" href="configuracoes.html"><span>⚙</span><b>Configurações</b></a>
     </nav>
     <button id="sair" class="link-button">↪ Sair do sistema</button>
@@ -46,13 +47,15 @@
       <article class="metric-card"><i>▤</i><span>Carga semanal</span><strong>44:00</strong><small>Horas previstas</small></article>
     </section>
 
+    <section id="daily-indicators" class="daily-indicators"></section>
+
     <section class="panel-grid dashboard-main-grid">
       <article class="panel today-panel">
         <div class="panel-head">
           <div><p class="panel-kicker">HOJE</p><h2>Marcações</h2></div>
           <a class="btn small primary" href="ponto.html">Abrir ponto</a>
         </div>
-        <div id="marcacoes-hoje" class="timeline empty">Nenhuma marcação registrada hoje.</div>
+        <div id="marcacoes-hoje" class="timeline empty"><div class="empty-state"><div class="icon">🕘</div><strong>Nenhuma marcação registrada hoje</strong><span>Aguardando a primeira marcação do dia.</span></div></div>
       </article>
 
       <article class="panel schedule-card">
