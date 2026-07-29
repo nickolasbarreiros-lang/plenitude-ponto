@@ -1,15 +1,16 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#2c2324"><title>Funcionário | Plenitude Ponto</title><link rel="stylesheet" href="assets/css/estilos.css"></head><body>
-<div class="app-shell"><aside class="sidebar">
+<div class="app-shell"><aside class="sidebar" id="app-sidebar">
+    <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Recolher menu" title="Recolher menu">☰</button>
   <div class="sidebar-brand"><img class="logo" src="assets/img/logo-plenitude.png" alt="Plenitude"></div>
   <p class="sidebar-label">CONTROLE DE PONTO</p>
   <nav>
-    <a data-page="admin" href="admin.html"><span>▦</span><b>Painel</b></a>
-    <a data-page="ponto" href="ponto.html"><span>◷</span><b>Registrar ponto</b></a>
-    <a data-page="funcionarios" class="active" href="funcionarios.html"><span>♙</span><b>Funcionário</b></a>
-    <a data-page="jornada" href="jornada.html"><span>▤</span><b>Jornada</b></a>
-        <a data-page="calendario" href="calendario.html"><span>▣</span><b>Calendário</b></a>
-<a data-page="relatorios" href="relatorios.html"><span>▥</span><b>Relatórios</b></a>
-    <a data-page="configuracoes" href="configuracoes.html"><span>⚙</span><b>Configurações</b></a>
+    <a data-page="admin" href="admin.html" title="Painel"><span>▦</span><b>Painel</b></a>
+    <a data-page="ponto" href="ponto.html" title="Registrar ponto"><span>◷</span><b>Registrar ponto</b></a>
+    <a data-page="funcionarios" class="active" href="funcionarios.html" title="Funcionário"><span>♙</span><b>Funcionário</b></a>
+    <a data-page="jornada" href="jornada.html" title="Jornada"><span>▤</span><b>Jornada</b></a>
+        <a data-page="calendario" href="calendario.html" title="Calendário"><span>▣</span><b>Calendário</b></a>
+<a data-page="relatorios" href="relatorios.html" title="Relatórios"><span>▥</span><b>Relatórios</b></a>
+    <a data-page="configuracoes" href="configuracoes.html" title="Configurações"><span>⚙</span><b>Configurações</b></a>
   </nav>
   <button id="sair" class="link-button">↪ Sair do sistema</button>
 </aside><main class="content"><header class="topbar"><div><p class="eyebrow">CADASTRO</p><h1>Funcionário</h1><p class="muted">Mantenha os dados do colaborador atualizados.</p></div><span class="badge">1 vaga ativa</span></header><section class="panel-grid"><article class="panel"><div class="panel-head"><div><p class="panel-kicker">DADOS</p><h2>Cadastro do funcionário</h2></div></div><form id="func-form" class="form-grid"><label>Nome completo<input id="nome" required></label><label>CPF<input id="cpf" placeholder="000.000.000-00" inputmode="numeric"></label><label>Cargo<input id="cargo" value="Atendente"></label><label>Data de admissão<input id="admissao" type="date"></label><label class="full">E-mail<input id="func-email" type="email"></label><div class="actions full"><button class="btn primary" type="submit">Salvar funcionário</button></div></form></article><article class="panel employee-preview"><div class="avatar">P</div><p class="panel-kicker">FUNCIONÁRIO ATIVO</p><h2 id="func-nome">Funcionário da loja</h2><div id="func-detalhes" class="details"></div></article></section></main></div><script src="assets/js/app.js"></script><script>initFuncionarios()</script></body></html>

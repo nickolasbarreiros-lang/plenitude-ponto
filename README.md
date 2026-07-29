@@ -12,3 +12,9 @@ Sistema demonstrativo de controle de ponto da Livraria Plenitude.
 - configurações e backup JSON.
 
 Os dados permanecem armazenados no navegador até a integração com banco de dados.
+
+
+## V7 UI/UX
+- Menu lateral recolhível com preferência salva no navegador.
+- Relógio em tempo real no painel.
+- Refinamento de cards, hover, cabeçalho e tela de registro.
