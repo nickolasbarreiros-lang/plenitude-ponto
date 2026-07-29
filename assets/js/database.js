@@ -28,7 +28,10 @@
       data_admissao:values.admissao||null,
       matricula:values.matricula||null,
       carga_semanal_minutos:2640,
-      ativo:true
+      ativo:values.status!=='inativo',
+      status:values.status||'ativo',
+      foto_url:values.foto_url||null,
+      codigo_qr:values.codigo_qr||null
     };
     let query=id?client.from('funcionarios').update(payload).eq('id',id):client.from('funcionarios').insert(payload);
     const {data,error}=await query.select().single();

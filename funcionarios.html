@@ -12,5 +12,30 @@
     <a data-page="configuracoes" href="configuracoes.html"><span>⚙</span><b>Configurações</b></a>
   </nav>
   <button id="sair" class="link-button">↪ Sair do sistema</button>
-</aside><main class="content"><header class="topbar"><div><p class="eyebrow">CADASTRO</p><h1>Funcionário</h1><p class="muted">Mantenha os dados do colaborador atualizados.</p></div><span class="badge">1 vaga ativa</span></header><section class="panel-grid"><article class="panel"><div class="panel-head"><div><p class="panel-kicker">DADOS</p><h2>Cadastro do funcionário</h2></div></div><form id="func-form" class="form-grid"><label>Nome completo<input id="nome" required></label><label>CPF<input id="cpf" placeholder="000.000.000-00" inputmode="numeric"></label><label>Cargo<input id="cargo" value="Atendente"></label><label>Matrícula<input id="matricula" placeholder="Ex.: 001"></label><label>Data de admissão<input id="admissao" type="date"></label><label class="full">Conta de acesso<input id="func-email" type="email" placeholder="Será vinculada na próxima etapa" disabled></label><div class="actions full"><button class="btn primary" type="submit">Salvar funcionário</button></div></form></article><article class="panel employee-preview"><div class="avatar">P</div><p class="panel-kicker">FUNCIONÁRIO ATIVO</p><h2 id="func-nome">Funcionário da loja</h2><div id="func-detalhes" class="details"></div></article></section></main></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js"></script><script src="assets/js/auth.js"></script>
+</aside><main class="content"><header class="topbar"><div><p class="eyebrow">CADASTRO</p><h1>Funcionário</h1><p class="muted">Mantenha os dados do colaborador atualizados.</p></div><span id="func-status-top" class="badge">1 funcionário</span></header><section class="panel-grid employee-module-grid">
+<article class="panel">
+  <div class="panel-head"><div><p class="panel-kicker">DADOS</p><h2>Cadastro do funcionário</h2></div></div>
+  <form id="func-form" class="form-grid">
+    <label>Nome completo<input id="nome" required></label>
+    <label>CPF<input id="cpf" placeholder="000.000.000-00" inputmode="numeric"></label>
+    <label>Cargo<input id="cargo" value="Atendente"></label>
+    <label>Matrícula<input id="matricula" placeholder="Ex.: 001"></label>
+    <label>Data de admissão<input id="admissao" type="date"></label>
+    <label>Status<select id="func-status"><option value="ativo">Ativo</option><option value="ferias">Férias</option><option value="afastado">Afastado</option><option value="inativo">Inativo</option></select></label>
+    <label class="full">Foto do funcionário<input id="func-foto" type="file" accept="image/png,image/jpeg,image/webp"><small class="field-help">A imagem será reduzida antes de ser salva no banco.</small></label>
+    <label class="full">Conta de acesso<input id="func-email" type="email" placeholder="Será vinculada em uma etapa posterior" disabled></label>
+    <div class="actions full"><button class="btn primary" type="submit">Salvar funcionário</button></div>
+  </form>
+</article>
+<article class="panel employee-preview employee-profile-card">
+  <div id="func-avatar" class="avatar profile-avatar"><span>P</span></div>
+  <div id="func-status-badge" class="employee-status ativo"><i></i> Ativo</div>
+  <h2 id="func-nome">Funcionário da loja</h2>
+  <div id="func-detalhes" class="details employee-details"></div>
+  <div class="employee-qr-section">
+    <div id="func-qrcode" class="employee-qrcode" aria-label="QR Code do funcionário"></div>
+    <div><p class="panel-kicker">IDENTIFICAÇÃO</p><strong id="func-qr-code">Aguardando cadastro</strong><small>QR individual preparado para futuras funções de identificação.</small></div>
+  </div>
+</article>
+</section></main></div><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js"></script><script src="assets/js/auth.js"></script>
   <script src="assets/js/database.js"></script><script src="assets/js/app.js"></script><script>initFuncionarios()</script></body></html>

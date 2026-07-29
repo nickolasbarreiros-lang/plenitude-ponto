@@ -28,3 +28,7 @@ A próxima etapa vinculará uma conta Auth ao funcionário e ativará a função
 2. Publique os arquivos no GitHub Pages.
 3. Entre como administrador e abra `Registrar ponto`.
 4. Selecione a funcionária e clique no botão. O horário vem do servidor.
+
+
+## V11
+Antes de publicar, execute `supabase-v11-perfil-funcionario.sql` no SQL Editor. A versão adiciona status, foto otimizada, QR individual e indicadores operacionais no painel.

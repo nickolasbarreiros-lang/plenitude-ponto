@@ -45,14 +45,21 @@ async function initAdmin(){
     DB_STATE.schedule=DB_STATE.employee?dbScheduleToUi(await window.PlenitudeDB.schedules(DB_STATE.employee.id)):defaultSchedule;
     const today=localDateKey(),marks=await window.PlenitudeDB.marksForRange(today,today);
     const employeeMarks=DB_STATE.employee?marks.filter(m=>m.funcionario_id===DB_STATE.employee.id):marks;
+    const activeEmployees=employees.filter(f=>f.ativo!==false&&f.status!=='inativo');
+    const marksByEmployee=new Map();marks.forEach(m=>{const list=marksByEmployee.get(m.funcionario_id)||[];list.push(m);marksByEmployee.set(m.funcionario_id,list)});
+    const presentCount=activeEmployees.filter(f=>(marksByEmployee.get(f.id)||[]).length>0).length;
+    const lunchCount=activeEmployees.filter(f=>{const list=(marksByEmployee.get(f.id)||[]).sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em));return list.at(-1)?.tipo==='inicio_intervalo'}).length;
+    document.getElementById('presentes-hoje').textContent=String(presentCount);
+    document.getElementById('em-almoco').textContent=String(lunchCount);
+    document.getElementById('ausentes-hoje').textContent=String(Math.max(0,activeEmployees.length-presentCount));
     const p=employeeMarks.map(m=>new Date(m.registrado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
     const sched=scheduleForDateFrom(DB_STATE.schedule,new Date());
     document.getElementById('saudacao-admin').textContent=profile.nome||session.user.email||'Administrador';
     document.getElementById('data-atual').textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(new Date());
     document.getElementById('total-func').textContent=String(employees.length);
     const box=document.getElementById('marcacoes-hoje');
-    if(p.length){box.classList.remove('empty');box.innerHTML=p.map((x,i)=>`<div class="timeline-item"><span><i>${i+1}</i>${punchLabels[i]||'Marcação'}</span><strong>${x}</strong></div>`).join('');document.getElementById('status-hoje').textContent=p.length>=4?'Jornada concluída':'Em andamento';document.getElementById('ultima-marcacao').textContent=`Última: ${p.at(-1)}`}
-    else{box.classList.add('empty');document.getElementById('status-hoje').textContent='Sem marcação';document.getElementById('ultima-marcacao').textContent='Nenhuma marcação';}
+    if(p.length){box.classList.remove('empty');box.innerHTML=p.map((x,i)=>`<div class="timeline-item"><span><i>${i+1}</i>${punchLabels[i]||'Marcação'}</span><strong>${x}</strong></div>`).join('');}
+    else{box.classList.add('empty');}
     const schedule=DB_STATE.schedule,max=Math.max(...schedule.map(totalDay),1);
     document.getElementById('resumo-jornada').innerHTML=DB_STATE.employee?schedule.map(s=>`<div class="schedule-row-v4"><span class="schedule-day">${s.dia.slice(0,3)}</span><div class="schedule-line"><span style="width:${Math.max(34,Math.round(totalDay(s)/max*100))}%"></span></div><strong class="schedule-time">${s.entrada}–${s.saida}</strong><small class="schedule-break">Intervalo ${s.almoco}–${s.retorno}</small></div>`).join(''):'<div class="mini-empty">Cadastre um funcionário para configurar a jornada.</div>';
     if(p.length===4&&sched){const c=calcPunchDay(p,sched);document.getElementById('saldo-dia').textContent=signedMinutes(c.diff)}
@@ -77,14 +84,19 @@ function renderWeekChart(){const all=getAllPunches(),now=new Date(),monday=new D
 async function initFuncionarios(){
   const session=await initCommon();if(!session)return;
   const form=document.getElementById('func-form');
+  const photoInput=document.getElementById('func-foto');if(photoInput)photoInput.onchange=async()=>{const file=photoInput.files?.[0];if(!file)return;try{window.__employeePhotoData=await resizeEmployeePhoto(file);renderAvatar(window.__employeePhotoData,document.getElementById('nome').value)}catch(error){toast(errorText(error),'warn')}};
   try{
     const employees=await window.PlenitudeDB.employees();DB_STATE.employees=employees;DB_STATE.employee=employees[0]||null;
     fillEmployeeForm(DB_STATE.employee);renderEmployee(DB_STATE.employee);
-    form.onsubmit=async e=>{e.preventDefault();const button=form.querySelector('button[type="submit"]');button.disabled=true;button.textContent='Salvando...';try{const values={nome:document.getElementById('nome').value.trim(),cpf:document.getElementById('cpf').value.replace(/\D/g,''),cargo:document.getElementById('cargo').value.trim(),admissao:document.getElementById('admissao').value,email:document.getElementById('func-email').value.trim(),matricula:document.getElementById('matricula')?.value.trim()||null};const saved=await window.PlenitudeDB.saveEmployee(values,DB_STATE.employee?.id||null);DB_STATE.employee=saved;renderEmployee(saved);toast('Funcionário salvo no Supabase.')}catch(error){toast(errorText(error),'warn');console.error(error)}finally{button.disabled=false;button.textContent='Salvar funcionário'}};
+    form.onsubmit=async e=>{e.preventDefault();const button=form.querySelector('button[type="submit"]');button.disabled=true;button.textContent='Salvando...';try{const values={nome:document.getElementById('nome').value.trim(),cpf:document.getElementById('cpf').value.replace(/\D/g,''),cargo:document.getElementById('cargo').value.trim(),admissao:document.getElementById('admissao').value,email:document.getElementById('func-email').value.trim(),matricula:document.getElementById('matricula')?.value.trim()||null,status:document.getElementById('func-status').value,foto_url:window.__employeePhotoData||DB_STATE.employee?.foto_url||null,codigo_qr:DB_STATE.employee?.codigo_qr||null};const saved=await window.PlenitudeDB.saveEmployee(values,DB_STATE.employee?.id||null);DB_STATE.employee=saved;renderEmployee(saved);toast('Funcionário salvo no Supabase.')}catch(error){toast(errorText(error),'warn');console.error(error)}finally{button.disabled=false;button.textContent='Salvar funcionário'}};
   }catch(error){toast(errorText(error),'warn');console.error(error)}
 }
-function fillEmployeeForm(f){['nome','cpf','cargo','admissao'].forEach(k=>{const el=document.getElementById(k);if(el)el.value=f?(k==='admissao'?f.data_admissao||'':f[k]||''):''});const email=document.getElementById('func-email');if(email)email.value='';const matricula=document.getElementById('matricula');if(matricula)matricula.value=f?.matricula||''}
-function renderEmployee(f){document.getElementById('func-nome').textContent=f?.nome||'Nenhum funcionário cadastrado';document.getElementById('func-detalhes').innerHTML=f?`<span><strong>Cargo:</strong> ${f.cargo||'—'}</span><span><strong>CPF:</strong> ${f.cpf||'—'}</span><span><strong>Matrícula:</strong> ${f.matricula||'—'}</span><span><strong>Admissão:</strong> ${f.data_admissao||'—'}</span>`:'<span>Preencha o formulário para cadastrar o primeiro funcionário.</span>'}
+function fillEmployeeForm(f){['nome','cpf','cargo','admissao'].forEach(k=>{const el=document.getElementById(k);if(el)el.value=f?(k==='admissao'?f.data_admissao||'':f[k]||''):''});const email=document.getElementById('func-email');if(email)email.value='';const matricula=document.getElementById('matricula');if(matricula)matricula.value=f?.matricula||'';const status=document.getElementById('func-status');if(status)status.value=f?.status||'ativo';window.__employeePhotoData=f?.foto_url||null}
+function employeeStatusLabel(status){return({ativo:'Ativo',ferias:'Férias',afastado:'Afastado',inativo:'Inativo'})[status]||'Ativo'}
+function employeeInitials(name=''){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'P'}
+function renderAvatar(photo,name){const el=document.getElementById('func-avatar');if(!el)return;el.innerHTML=photo?`<img src="${photo}" alt="Foto de ${name||'funcionário'}">`:`<span>${employeeInitials(name)}</span>`}
+function renderEmployee(f){document.getElementById('func-nome').textContent=f?.nome||'Nenhum funcionário cadastrado';const status=f?.status||'ativo',badge=document.getElementById('func-status-badge');if(badge){badge.className=`employee-status ${status}`;badge.innerHTML=`<i></i> ${employeeStatusLabel(status)}`};document.getElementById('func-status-top').textContent=f?`1 funcionário ${status==='ativo'?'ativo':'cadastrado'}`:'Nenhum funcionário';renderAvatar(f?.foto_url,f?.nome);document.getElementById('func-detalhes').innerHTML=f?`<span><strong>Cargo:</strong> ${f.cargo||'—'}</span><span><strong>CPF:</strong> ${f.cpf||'—'}</span><span><strong>Matrícula:</strong> ${f.matricula||'—'}</span><span><strong>Admissão:</strong> ${f.data_admissao?new Intl.DateTimeFormat('pt-BR').format(new Date(f.data_admissao+'T12:00:00')):'—'}</span><span><strong>Carga semanal:</strong> ${fmtMinutes(f.carga_semanal_minutos||2640)}</span>`:'<span>Preencha o formulário para cadastrar o primeiro funcionário.</span>';const code=f?.codigo_qr||'';document.getElementById('func-qr-code').textContent=code||'Será gerado ao salvar';const qr=document.getElementById('func-qrcode');if(qr){qr.innerHTML='';if(code&&window.QRCode)new QRCode(qr,{text:`${location.origin}${location.pathname.replace(/funcionarios\.html$/,'ponto.html')}?codigo=${encodeURIComponent(code)}`,width:112,height:112,colorDark:'#2a2526',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M})}}
+async function resizeEmployeePhoto(file){if(!file.type.startsWith('image/'))throw new Error('Selecione um arquivo de imagem.');if(file.size>8*1024*1024)throw new Error('A imagem deve ter no máximo 8 MB.');const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(new Error('Não foi possível ler a imagem.'));r.readAsDataURL(file)});const img=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('Imagem inválida.'));i.src=data});const size=360,canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d'),scale=Math.max(size/img.width,size/img.height),w=img.width*scale,h=img.height*scale;ctx.drawImage(img,(size-w)/2,(size-h)/2,w,h);return canvas.toDataURL('image/jpeg',.78)}
 
 async function initJornada(){
   const session=await initCommon();if(!session)return;
@@ -111,13 +123,13 @@ async function initPonto(){
       selector.hidden=false;
       selector.innerHTML=employees.length?employees.map(f=>`<option value="${f.id}">${f.nome}</option>`).join(''):'<option value="">Nenhum funcionário cadastrado</option>';
       DB_STATE.employee=employees[0]||null;
-      selector.onchange=async()=>{DB_STATE.employee=employees.find(f=>f.id===selector.value)||null;await loadRealPunches()};
+      selector.onchange=async()=>{DB_STATE.employee=employees.find(f=>f.id===selector.value)||null;renderClockEmployee(DB_STATE.employee);await loadRealPunches()};
     }else{
       DB_STATE.employee=employees.find(f=>f.auth_user_id===session.user.id)||employees[0]||null;
       selector.hidden=true;
     }
     if(!DB_STATE.employee){document.getElementById('clock-employee').textContent='Nenhum funcionário cadastrado';document.getElementById('registrar').disabled=true;renderRealPunches([]);return}
-    document.getElementById('clock-employee').textContent=DB_STATE.employee.nome;
+    renderClockEmployee(DB_STATE.employee);
     await loadRealPunches();
     document.getElementById('registrar').onclick=async()=>{
       const button=document.getElementById('registrar');button.disabled=true;button.classList.add('loading');
@@ -126,11 +138,12 @@ async function initPonto(){
     window.PlenitudeDB.subscribeMarks(async()=>{if(document.visibilityState==='visible')await loadRealPunches()});
   }catch(error){toast(errorText(error),'warn');console.error(error)}
 }
+function renderClockEmployee(f){if(!f)return;document.getElementById('clock-employee').textContent=f.nome;const status=document.getElementById('clock-status');if(status){status.textContent=employeeStatusLabel(f.status||'ativo');status.className=`${f.status||'ativo'}`};const avatar=document.getElementById('clock-avatar');if(avatar)avatar.innerHTML=f.foto_url?`<img src="${f.foto_url}" alt="Foto de ${f.nome}">`:`<span>${employeeInitials(f.nome)}</span>`}
 function labelForMarkType(type){return({entrada:'Entrada',inicio_intervalo:'Início do almoço',fim_intervalo:'Retorno do almoço',saida:'Saída'})[type]||'Marcação'}
 function formatDbTime(value){return value?new Date(value).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—'}
 async function loadRealPunches(){
   if(!DB_STATE.employee)return renderRealPunches([]);
-  document.getElementById('clock-employee').textContent=DB_STATE.employee.nome;
+  renderClockEmployee(DB_STATE.employee);
   const today=localDateKey(),marks=(await window.PlenitudeDB.marksForRange(today,today)).filter(m=>m.funcionario_id===DB_STATE.employee.id);
   renderRealPunches(marks);
 }
