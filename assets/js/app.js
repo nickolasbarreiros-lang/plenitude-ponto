@@ -32,3 +32,64 @@ function renderPunches(){const p=getPunches();document.getElementById('lista-pon
 function initRelatorios(){initCommon();const month=document.getElementById('rel-mes');const now=new Date();month.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;document.getElementById('atualizar-relatorio').onclick=renderRelatorio;document.getElementById('imprimir-relatorio').onclick=()=>window.print();renderRelatorio()}
 function renderRelatorio(){const selected=document.getElementById('rel-mes').value,all=getAllPunches(),rows=[];let worked=0,diff=0;Object.keys(all).sort().forEach(k=>{if(!k.startsWith(selected))return;const d=dateFromKey(k),p=all[k],s=scheduleForDate(d),c=calcPunchDay(p,s);if(c){worked+=c.worked;diff+=c.diff}rows.push({k,p,c})});document.getElementById('rel-dias').textContent=rows.length;document.getElementById('rel-horas').textContent=fmtMinutes(worked);document.getElementById('rel-saldo').textContent=`${diff>=0?'+':'−'}${fmtMinutes(Math.abs(diff))}`;const body=document.getElementById('relatorio-body'),empty=document.getElementById('relatorio-vazio');body.innerHTML=rows.map(r=>`<tr><td>${new Intl.DateTimeFormat('pt-BR').format(dateFromKey(r.k))}</td>${[0,1,2,3].map(i=>`<td>${r.p[i]||'—'}</td>`).join('')}<td>${r.c?fmtMinutes(r.c.worked):'—'}</td><td>${r.c?`${r.c.diff>=0?'+':'−'}${fmtMinutes(Math.abs(r.c.diff))}`:'—'}</td></tr>`).join('');empty.style.display=rows.length?'none':'block'}
 function initConfiguracoes(){initCommon();const cfg=JSON.parse(localStorage.getItem('plenitudeConfig')||'{}');document.getElementById('empresa-nome').value=cfg.empresaNome||'Livraria Plenitude';document.getElementById('empresa-endereco').value=cfg.endereco||'Av. Primeira Avenida, 231, Shopping Laranjeiras, Serra/ES';document.getElementById('admin-nome').value=cfg.adminNome||'Administrador';document.getElementById('admin-email').value=cfg.adminEmail||'admin@plenitude.local';document.getElementById('config-form').onsubmit=e=>{e.preventDefault();localStorage.setItem('plenitudeConfig',JSON.stringify({empresaNome:document.getElementById('empresa-nome').value,endereco:document.getElementById('empresa-endereco').value,adminNome:document.getElementById('admin-nome').value,adminEmail:document.getElementById('admin-email').value}));alert('Configurações salvas com sucesso.')};document.getElementById('exportar-backup').onclick=()=>{const data={employee:getEmployee(),schedule:getSchedule(),punches:getAllPunches(),config:JSON.parse(localStorage.getItem('plenitudeConfig')||'{}'),exportedAt:new Date().toISOString()};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`plenitude-ponto-backup-${localDateKey()}.json`;a.click();URL.revokeObjectURL(a.href)};document.getElementById('limpar-marcacoes').onclick=()=>{if(confirm('Apagar todas as marcações de teste deste navegador?')){localStorage.removeItem('plenitudePunches');alert('Marcações apagadas.')}}}
+
+/* refinamentos v4 */
+function initAdmin(){
+  initCommon();
+  const cfg=JSON.parse(localStorage.getItem('plenitudeConfig')||'{}');
+  const saudacao=document.getElementById('saudacao-admin');
+  if(saudacao)saudacao.textContent=cfg.adminNome||'Administrador';
+  const data=document.getElementById('data-atual');
+  if(data)data.textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(new Date());
+  document.getElementById('total-func').textContent='1';
+
+  const p=getPunches(),box=document.getElementById('marcacoes-hoje');
+  if(p.length){
+    box.classList.remove('empty');
+    box.innerHTML=p.map((x,i)=>`<div class="timeline-item"><span>${labels()[i]||'Marcação'}</span><strong>${x}</strong></div>`).join('');
+    document.getElementById('status-hoje').textContent=p.length>=4?'Jornada concluída':'Em andamento';
+    document.getElementById('ultima-marcacao').textContent=`Última: ${p[p.length-1]}`;
+  }
+
+  const sched=getSchedule();
+  const maxMinutes=Math.max(...sched.map(totalDay),1);
+  document.getElementById('resumo-jornada').innerHTML=sched.map(s=>{
+    const pct=Math.max(34,Math.round(totalDay(s)/maxMinutes*100));
+    return `<div class="schedule-row-v4"><span class="schedule-day">${s.dia.slice(0,3)}</span><div class="schedule-line"><span style="width:${pct}%"></span></div><strong class="schedule-time">${s.entrada}–${s.saida}</strong><small class="schedule-break">Intervalo ${s.almoco}–${s.retorno}</small></div>`;
+  }).join('');
+
+  if(p.length===4&&todaySchedule()){
+    const c=calcPunchDay(p,todaySchedule());
+    document.getElementById('saldo-dia').textContent=`${c.diff>=0?'+':'−'}${fmtMinutes(Math.abs(c.diff))}`;
+  }
+  renderWeekChart();
+}
+
+function renderWeekChart(){
+  const all=getAllPunches(),now=new Date(),monday=new Date(now);
+  const delta=(now.getDay()+6)%7;monday.setDate(now.getDate()-delta);
+  const names=['Seg','Ter','Qua','Qui','Sex'],vals=[],expected=[];
+  for(let i=0;i<5;i++){
+    const d=new Date(monday);d.setDate(monday.getDate()+i);
+    const s=scheduleForDate(d),p=all[localDateKey(d)]||[],c=calcPunchDay(p,s);
+    vals.push(c?c.worked:0);expected.push(s?totalDay(s):0);
+  }
+  const max=Math.max(600,...vals,...expected);
+  document.getElementById('grafico-semana').innerHTML=vals.map((v,i)=>{
+    const visual=v||Math.round(expected[i]*.18);
+    const h=Math.max(12,Math.round(visual/max*100));
+    return `<div class="chart-column ${v?'':'is-empty'}"><div class="chart-track"><div class="chart-bar" style="height:${h}%"></div></div><strong>${names[i]}</strong><small>${v?fmtMinutes(v):'Sem registro'}</small></div>`;
+  }).join('');
+}
+
+function renderPunches(){
+  const p=getPunches(),names=labels();
+  const list=document.getElementById('lista-pontos');
+  list.innerHTML=p.map((x,i)=>`<div class="punch-item"><span>${names[i]}</span><strong>${x}</strong></div>`).join('');
+  document.getElementById('proxima').textContent=p.length<4?`Próxima marcação: ${names[p.length]}`:'Jornada de hoje concluída';
+  document.getElementById('registrar').disabled=p.length>=4;
+  const progress=document.getElementById('punch-progress');
+  if(progress)progress.innerHTML=names.map((_,i)=>`<span class="progress-step ${i<p.length?'done':''}"></span>`).join('');
+  const steps=document.getElementById('punch-steps');
+  if(steps)steps.innerHTML=names.map((name,i)=>`<div class="punch-step ${i<p.length?'done':''}"><span class="step-icon">${i<p.length?'✓':i+1}</span><strong>${name}</strong><small>${p[i]||'Aguardando'}</small></div>`).join('');
+}
