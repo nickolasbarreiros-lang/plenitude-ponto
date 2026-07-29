@@ -1,15 +1,30 @@
 (function(){'use strict';
- const form=document.getElementById('employee-login-form'),adminForm=document.getElementById('login-form');
- const tabEmp=document.getElementById('tab-funcionario'),tabAdmin=document.getElementById('tab-admin');
+ const form=document.getElementById('employee-login-form');
  if(!form)return;
- function tab(employee){form.hidden=!employee;adminForm.hidden=employee;tabEmp.classList.toggle('active',employee);tabAdmin.classList.toggle('active',!employee)}
- tabEmp.onclick=()=>tab(true);tabAdmin.onclick=()=>tab(false);
- const pin=document.getElementById('login-pin');document.getElementById('mostrar-pin').onclick=()=>{const show=pin.type==='password';pin.type=show?'text':'password';document.getElementById('mostrar-pin').textContent=show?'Ocultar':'Mostrar'};
- form.onsubmit=async e=>{e.preventDefault();const feedback=document.getElementById('employee-login-feedback'),button=form.querySelector('button[type=submit]');button.disabled=true;feedback.textContent='Verificando...';feedback.className='login-feedback loading';try{
-   const matricula=document.getElementById('login-matricula').value.trim();
+ const choice=document.getElementById('access-choice');
+ const empPanel=document.getElementById('employee-access-panel');
+ const adminPanel=document.getElementById('admin-access-panel');
+ const security=document.querySelector('.access-security');
+ const pin=document.getElementById('login-pin');
+ const matricula=document.getElementById('login-matricula');
+ function openPanel(type){
+   choice.hidden=true;security.hidden=true;
+   empPanel.hidden=type!=='employee';adminPanel.hidden=type!=='admin';
+   setTimeout(()=>type==='employee'?matricula.focus():document.getElementById('email')?.focus(),50);
+ }
+ function home(){choice.hidden=false;security.hidden=false;empPanel.hidden=true;adminPanel.hidden=true}
+ document.getElementById('choose-employee').onclick=()=>openPanel('employee');
+ document.getElementById('choose-admin').onclick=()=>openPanel('admin');
+ document.querySelectorAll('.access-back').forEach(b=>b.onclick=home);
+ document.getElementById('mostrar-pin').onclick=()=>{const show=pin.type==='password';pin.type=show?'text':'password';document.getElementById('mostrar-pin').textContent=show?'Ocultar':'Mostrar'};
+ document.getElementById('pin-keypad').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.key&&pin.value.length<4)pin.value+=b.dataset.key;if(b.dataset.action==='clear')pin.value='';if(b.dataset.action==='backspace')pin.value=pin.value.slice(0,-1);pin.dispatchEvent(new Event('input'));});
+ pin.addEventListener('input',()=>{pin.value=pin.value.replace(/\D/g,'').slice(0,4)});
+ matricula.addEventListener('input',()=>{matricula.value=matricula.value.replace(/\D/g,'').slice(0,10)});
+ form.onsubmit=async e=>{e.preventDefault();const feedback=document.getElementById('employee-login-feedback'),button=form.querySelector('button[type=submit]');button.disabled=true;feedback.textContent='Verificando acesso...';feedback.className='login-feedback loading';try{
+   if(!matricula.value.trim())throw new Error('Digite a matrícula.');
    if(!/^\d{4}$/.test(pin.value))throw new Error('Digite um PIN com exatamente 4 números.');
-   const {data,error}=await window.PlenitudeAuth.client.rpc('login_funcionario_pin',{p_matricula:matricula,p_pin:pin.value});if(error)throw error;
+   const {data,error}=await window.PlenitudeAuth.client.rpc('login_funcionario_pin',{p_matricula:matricula.value.trim(),p_pin:pin.value});if(error)throw error;
    const row=Array.isArray(data)?data[0]:data;if(!row?.token)throw new Error('Não foi possível iniciar a sessão.');
    sessionStorage.setItem('plenitude-employee-session',JSON.stringify(row));location.replace('ponto.html');
- }catch(err){feedback.textContent=err.message||'Matrícula ou PIN incorretos.';feedback.className='login-feedback error';pin.select()}finally{button.disabled=false}}
+ }catch(err){feedback.textContent=err.message||'Matrícula ou PIN incorretos.';feedback.className='login-feedback error';pin.value=''}finally{button.disabled=false}}
 })();

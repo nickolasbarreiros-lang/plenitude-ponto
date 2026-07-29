@@ -7,33 +7,68 @@
   <title>Plenitude Ponto</title>
   <link rel="stylesheet" href="assets/css/estilos.css">
 </head>
-<body class="login-body">
-  <main class="login-shell">
-    <section class="login-card" aria-labelledby="titulo-login">
-      <div class="brand-box">
+<body class="login-body access-home-body">
+  <main class="access-home-shell">
+    <section class="access-home-card" aria-labelledby="titulo-login">
+      <div class="brand-box access-brand">
         <img class="logo" src="assets/img/logo-plenitude.png" alt="Presentes Plenitude e Artigos Religiosos">
       </div>
       <p class="eyebrow">SISTEMA INTERNO</p>
-      <h1 id="titulo-login">Controle de Ponto</h1>
-      <p class="muted">Escolha como deseja acessar o sistema.</p>
-      <div class="login-tabs"><button id="tab-funcionario" class="login-tab active" type="button">Funcionário</button><button id="tab-admin" class="login-tab" type="button">Administrador</button></div>
+      <h1 id="titulo-login">Plenitude Ponto</h1>
+      <p class="muted access-subtitle">Escolha o tipo de acesso.</p>
 
-      <form id="employee-login-form" class="login-form">
-        <label for="login-matricula">Matrícula</label><div class="input-wrap"><span>№</span><input id="login-matricula" inputmode="numeric" autocomplete="username" maxlength="10" placeholder="0001" required></div>
-        <label for="login-pin">PIN de 4 dígitos</label><div class="input-wrap"><span>●</span><input id="login-pin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="current-password" placeholder="••••" required><button id="mostrar-pin" class="eye-btn" type="button">Mostrar</button></div>
-        <button type="submit" class="btn primary login-btn">Entrar para registrar ponto</button><p id="employee-login-feedback" class="login-feedback" role="status"></p>
-      </form>
+      <div id="access-choice" class="access-choice-grid">
+        <button id="choose-employee" class="access-choice-card employee-choice" type="button">
+          <span class="access-choice-icon">◷</span>
+          <strong>Registrar ponto</strong>
+          <small>Acesso por matrícula e PIN</small>
+        </button>
+        <button id="choose-admin" class="access-choice-card admin-choice" type="button">
+          <span class="access-choice-icon">⌘</span>
+          <strong>Administração</strong>
+          <small>Acesso restrito ao gestor</small>
+        </button>
+      </div>
 
-      <form id="login-form" class="login-form" hidden>
-        <label for="email">E-mail</label>
-        <div class="input-wrap"><span>✉</span><input id="email" type="email" placeholder="seuemail@exemplo.com" autocomplete="username" required></div>
-        <label for="senha">Senha</label>
-        <div class="input-wrap"><span>●</span><input id="senha" type="password" placeholder="Digite sua senha" autocomplete="current-password" required><button id="mostrar-senha" class="eye-btn" type="button" aria-label="Mostrar senha">Mostrar</button></div>
-        <button type="submit" class="btn primary login-btn">Entrar no sistema</button>
-        <p id="login-feedback" class="login-feedback" role="status" aria-live="polite"></p>
-      </form>
+      <section id="employee-access-panel" class="access-panel" hidden>
+        <button class="access-back" type="button">← Voltar</button>
+        <div class="access-panel-heading">
+          <span class="access-panel-icon">◷</span>
+          <div><small>FUNCIONÁRIO</small><h2>Registrar ponto</h2></div>
+        </div>
+        <form id="employee-login-form" class="login-form kiosk-login-form">
+          <label for="login-matricula">Matrícula</label>
+          <div class="input-wrap large-input"><span>№</span><input id="login-matricula" inputmode="numeric" autocomplete="username" maxlength="10" placeholder="0001" required></div>
+          <label for="login-pin">PIN de 4 dígitos</label>
+          <div class="input-wrap large-input"><span>●</span><input id="login-pin" type="password" inputmode="none" pattern="[0-9]{4}" maxlength="4" autocomplete="current-password" placeholder="••••" required><button id="mostrar-pin" class="eye-btn" type="button">Mostrar</button></div>
+          <div id="pin-keypad" class="pin-keypad" aria-label="Teclado numérico">
+            <button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button>
+            <button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button>
+            <button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button>
+            <button type="button" data-action="clear" class="key-action">Limpar</button><button type="button" data-key="0">0</button><button type="button" data-action="backspace" class="key-action">⌫</button>
+          </div>
+          <button type="submit" class="btn primary login-btn kiosk-login-btn">Entrar</button>
+          <p id="employee-login-feedback" class="login-feedback" role="status" aria-live="polite"></p>
+        </form>
+      </section>
 
-      <div class="demo-box cloud-box"><strong>Login protegido</strong><span>A autenticação é realizada pelo Supabase.</span></div>
+      <section id="admin-access-panel" class="access-panel" hidden>
+        <button class="access-back" type="button">← Voltar</button>
+        <div class="access-panel-heading">
+          <span class="access-panel-icon">⌘</span>
+          <div><small>ACESSO RESTRITO</small><h2>Administração</h2></div>
+        </div>
+        <form id="login-form" class="login-form">
+          <label for="email">E-mail</label>
+          <div class="input-wrap large-input"><span>✉</span><input id="email" type="email" placeholder="seuemail@exemplo.com" autocomplete="username" required></div>
+          <label for="senha">Senha</label>
+          <div class="input-wrap large-input"><span>●</span><input id="senha" type="password" placeholder="Digite sua senha" autocomplete="current-password" required><button id="mostrar-senha" class="eye-btn" type="button" aria-label="Mostrar senha">Mostrar</button></div>
+          <button type="submit" class="btn primary login-btn">Entrar no painel</button>
+          <p id="login-feedback" class="login-feedback" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <div class="demo-box cloud-box access-security"><strong>Ambiente protegido</strong><span>Horário e registros são gravados no Supabase.</span></div>
     </section>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
