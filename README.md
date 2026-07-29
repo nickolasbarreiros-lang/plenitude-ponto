@@ -1,20 +1,22 @@
-# Plenitude Ponto — versão 3
+# Plenitude Ponto — V9
 
-Sistema demonstrativo de controle de ponto da Livraria Plenitude.
+Sistema de controle de ponto da Livraria Plenitude, hospedado no GitHub Pages e conectado ao Supabase.
 
-## Recursos
-- painel administrativo aprimorado;
-- registro de quatro marcações diárias;
-- cadastro de funcionário;
-- jornada semanal de 44 horas;
-- gráfico semanal;
-- relatório mensal imprimível;
-- configurações e backup JSON.
+## Implementado nesta versão
 
-Os dados permanecem armazenados no navegador até a integração com banco de dados.
+- autenticação real pelo Supabase Auth;
+- sessão persistente e logout;
+- proteção das páginas internas;
+- leitura do perfil e da empresa vinculada;
+- cadastro e edição do funcionário no PostgreSQL;
+- cadastro e edição da jornada semanal no PostgreSQL;
+- painel lendo funcionário, jornada e marcações disponíveis no banco.
 
+## Ainda temporariamente local
 
-## V7 UI/UX
-- Menu lateral recolhível com preferência salva no navegador.
-- Relógio em tempo real no painel.
-- Refinamento de cards, hover, cabeçalho e tela de registro.
+- calendário;
+- configurações visuais;
+- marcações criadas pela tela de ponto;
+- relatórios baseados nas marcações locais.
+
+A próxima etapa vinculará uma conta Auth ao funcionário e ativará a função segura `registrar_ponto()`.

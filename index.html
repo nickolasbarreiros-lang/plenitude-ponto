@@ -19,27 +19,19 @@
 
       <form id="login-form" class="login-form">
         <label for="email">E-mail</label>
-        <div class="input-wrap"><span>✉</span><input id="email" type="email" value="admin@plenitude.local" autocomplete="username" required></div>
+        <div class="input-wrap"><span>✉</span><input id="email" type="email" placeholder="seuemail@exemplo.com" autocomplete="username" required></div>
         <label for="senha">Senha</label>
-        <div class="input-wrap"><span>●</span><input id="senha" type="password" value="123456" autocomplete="current-password" required><button id="mostrar-senha" class="eye-btn" type="button" aria-label="Mostrar senha">Mostrar</button></div>
+        <div class="input-wrap"><span>●</span><input id="senha" type="password" placeholder="Digite sua senha" autocomplete="current-password" required><button id="mostrar-senha" class="eye-btn" type="button" aria-label="Mostrar senha">Mostrar</button></div>
         <button type="submit" class="btn primary login-btn">Entrar no sistema</button>
+        <p id="login-feedback" class="login-feedback" role="status" aria-live="polite"></p>
       </form>
 
-      <div class="demo-box"><strong>Versão demonstrativa</strong><span>Os dados ficam salvos neste navegador.</span></div>
+      <div class="demo-box cloud-box"><strong>Login protegido</strong><span>A autenticação é realizada pelo Supabase.</span></div>
     </section>
   </main>
-  <script>
-    const senha = document.getElementById('senha');
-    document.getElementById('mostrar-senha').addEventListener('click', function () {
-      const mostrar = senha.type === 'password';
-      senha.type = mostrar ? 'text' : 'password';
-      this.textContent = mostrar ? 'Ocultar' : 'Mostrar';
-    });
-    document.getElementById('login-form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      sessionStorage.setItem('plenitudeAuth', '1');
-      location.href = 'admin.html';
-    });
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/supabase-config.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/login.js"></script>
 </body>
 </html>

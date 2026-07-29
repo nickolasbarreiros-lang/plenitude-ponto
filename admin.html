@@ -9,18 +9,17 @@
 </head>
 <body>
 <div class="app-shell">
-  <aside class="sidebar" id="app-sidebar">
-    <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Recolher menu" title="Recolher menu">☰</button>
+  <aside class="sidebar">
     <div class="sidebar-brand"><img class="logo" src="assets/img/logo-plenitude.png" alt="Plenitude"></div>
     <p class="sidebar-label">CONTROLE DE PONTO</p>
     <nav>
-      <a data-page="admin" class="active" href="admin.html" title="Painel"><span>▦</span><b>Painel</b></a>
-      <a data-page="ponto" href="ponto.html" title="Registrar ponto"><span>◷</span><b>Registrar ponto</b></a>
-      <a data-page="funcionarios" href="funcionarios.html" title="Funcionário"><span>♙</span><b>Funcionário</b></a>
-      <a data-page="jornada" href="jornada.html" title="Jornada"><span>▤</span><b>Jornada</b></a>
-          <a data-page="calendario" href="calendario.html" title="Calendário"><span>▣</span><b>Calendário</b></a>
-<a data-page="relatorios" href="relatorios.html" title="Relatórios"><span>▥</span><b>Relatórios</b></a>
-      <a data-page="configuracoes" href="configuracoes.html" title="Configurações"><span>⚙</span><b>Configurações</b></a>
+      <a data-page="admin" class="active" href="admin.html"><span>▦</span><b>Painel</b></a>
+      <a data-page="ponto" href="ponto.html"><span>◷</span><b>Registrar ponto</b></a>
+      <a data-page="funcionarios" href="funcionarios.html"><span>♙</span><b>Funcionário</b></a>
+      <a data-page="jornada" href="jornada.html"><span>▤</span><b>Jornada</b></a>
+          <a data-page="calendario" href="calendario.html"><span>▣</span><b>Calendário</b></a>
+<a data-page="relatorios" href="relatorios.html"><span>▥</span><b>Relatórios</b></a>
+      <a data-page="configuracoes" href="configuracoes.html"><span>⚙</span><b>Configurações</b></a>
     </nav>
     <button id="sair" class="link-button">↪ Sair do sistema</button>
   </aside>
@@ -32,17 +31,14 @@
         <h1>Painel administrativo</h1>
         <p class="muted">Resumo claro da jornada e das marcações do dia.</p>
       </div>
-      <div class="topbar-actions">
-        <div class="live-clock" aria-label="Horário atual"><span id="admin-clock">00:00:00</span><small>Horário atual</small></div>
-        <div class="welcome-box">
+      <div class="welcome-box">
         <small>Bem-vindo</small>
         <strong id="saudacao-admin">Administrador</strong>
         <span id="data-atual"></span>
-        </div>
       </div>
     </header>
 
-    <section class="notice"><strong>Modo demonstração:</strong> os dados ainda são salvos somente neste navegador.</section>
+    <section class="notice"><strong>Supabase conectado:</strong> funcionários e jornadas já são salvos na nuvem. Marcações e calendário serão migrados na próxima etapa.</section>
 
     <section class="cards">
       <article class="metric-card"><i>♙</i><span>Funcionários</span><strong id="total-func">1</strong><small>Cadastro ativo</small></article>
@@ -80,7 +76,8 @@
     </section>
   </main>
 </div>
-<script src="assets/js/app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js"></script><script src="assets/js/auth.js"></script>
+  <script src="assets/js/database.js"></script><script src="assets/js/app.js"></script>
 <script>initAdmin()</script>
 </body>
 </html>
