@@ -15,9 +15,16 @@
       </div>
       <p class="eyebrow">SISTEMA INTERNO</p>
       <h1 id="titulo-login">Controle de Ponto</h1>
-      <p class="muted">Acesse o painel para administrar o funcionário, a jornada e as marcações.</p>
+      <p class="muted">Escolha como deseja acessar o sistema.</p>
+      <div class="login-tabs"><button id="tab-funcionario" class="login-tab active" type="button">Funcionário</button><button id="tab-admin" class="login-tab" type="button">Administrador</button></div>
 
-      <form id="login-form" class="login-form">
+      <form id="employee-login-form" class="login-form">
+        <label for="login-matricula">Matrícula</label><div class="input-wrap"><span>№</span><input id="login-matricula" inputmode="numeric" autocomplete="username" maxlength="10" placeholder="0001" required></div>
+        <label for="login-pin">PIN de 4 dígitos</label><div class="input-wrap"><span>●</span><input id="login-pin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="current-password" placeholder="••••" required><button id="mostrar-pin" class="eye-btn" type="button">Mostrar</button></div>
+        <button type="submit" class="btn primary login-btn">Entrar para registrar ponto</button><p id="employee-login-feedback" class="login-feedback" role="status"></p>
+      </form>
+
+      <form id="login-form" class="login-form" hidden>
         <label for="email">E-mail</label>
         <div class="input-wrap"><span>✉</span><input id="email" type="email" placeholder="seuemail@exemplo.com" autocomplete="username" required></div>
         <label for="senha">Senha</label>
@@ -33,5 +40,6 @@
   <script src="assets/js/supabase-config.js"></script>
   <script src="assets/js/auth.js"></script>
   <script src="assets/js/login.js"></script>
+  <script src="assets/js/employee-login.js"></script>
 </body>
 </html>

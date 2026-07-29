@@ -202,5 +202,17 @@
       .subscribe();
   }
 
-  window.PlenitudeDB=Object.freeze({profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,updateSettings,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,registerPoint,subscribeMarks});
+
+  async function defineEmployeePin(employeeId,pin,requireChange=false,active=true){
+    const {data,error}=await client.rpc('admin_definir_pin',{p_funcionario_id:employeeId,p_pin:pin,p_exigir_troca:requireChange,p_acesso_ativo:active});
+    if(error) throw error;
+    return Array.isArray(data)?data[0]:data;
+  }
+
+  async function setEmployeePinAccess(employeeId,active){
+    const {error}=await client.rpc('admin_alterar_acesso_pin',{p_funcionario_id:employeeId,p_ativo:active});
+    if(error) throw error;
+  }
+
+  window.PlenitudeDB=Object.freeze({profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,registerPoint,subscribeMarks});
 })();

@@ -42,11 +42,11 @@
       </div>
     </section>
 
-    <p class="clock-footnote">O horário oficial é gerado e gravado pelo servidor do Supabase.</p>
+    <section id="change-pin-panel" class="change-pin-panel" hidden><h3>Alterar meu PIN</h3><div class="pin-change-grid"><input id="pin-atual" type="password" inputmode="numeric" maxlength="4" placeholder="PIN atual"><input id="pin-novo" type="password" inputmode="numeric" maxlength="4" placeholder="Novo PIN"><input id="pin-confirmar" type="password" inputmode="numeric" maxlength="4" placeholder="Confirmar novo PIN"><button id="alterar-meu-pin" class="btn secondary" type="button">Salvar novo PIN</button></div></section><button id="abrir-troca-pin" class="link-button change-pin-link" type="button">Alterar meu PIN</button><p class="clock-footnote">O horário oficial é gerado e gravado pelo servidor do Supabase.</p>
   </section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js"></script><script src="assets/js/auth.js"></script>
   <script src="assets/js/database.js"></script><script src="assets/js/app.js"></script>
-<script>initPonto()</script>
+<script src="assets/js/ponto-pin.js"></script>
 </body>
 </html>
