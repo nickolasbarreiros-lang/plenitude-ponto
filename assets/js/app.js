@@ -13,7 +13,7 @@ function dbScheduleToUi(rows){const byDay=new Map((rows||[]).map(r=>[r.dia_seman
 function errorText(error){const m=String(error?.message||error||'');if(m.includes('duplicate key'))return 'Já existe um cadastro com este CPF ou matrícula.';if(m.includes('row-level security'))return 'Seu usuário não tem permissão para esta operação.';if(m.includes('Failed to fetch'))return 'Não foi possível conectar ao banco de dados.';return m||'Ocorreu um erro inesperado.';}
 
 
-async function requireAuth(){return window.PlenitudeAuth.requireSession()}
+async function requireAuth(roles=null){return window.PlenitudeAuth.requireAccess({roles})}
 function localDateKey(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function minutes(a,b){if(!a||!b)return 0;const [h1,m1]=a.split(':').map(Number),[h2,m2]=b.split(':').map(Number);return(h2*60+m2)-(h1*60+m1)}
 function totalDay(s){return s?minutes(s.entrada,s.almoco)+minutes(s.retorno,s.saida):0}
@@ -23,12 +23,13 @@ function dateFromKey(k){const [y,m,d]=k.split('-').map(Number);return new Date(y
 function calcPunchDay(p,s){if(!p||p.length<4||!s)return null;const worked=minutes(p[0],p[1])+minutes(p[2],p[3]);return{worked,expected:totalDay(s),diff:worked-totalDay(s)}}
 function toast(message,type='ok'){let box=document.querySelector('.toast');if(!box){box=document.createElement('div');box.className='toast';document.body.appendChild(box)}box.className=`toast show ${type}`;box.textContent=message;clearTimeout(box._timer);box._timer=setTimeout(()=>box.classList.remove('show'),2600)}
 function applyTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem(STORAGE.theme,theme);const btn=document.getElementById('theme-toggle');if(btn)btn.textContent=theme==='dark'?'☀':'◐'}
-async function initCommon(){const session=await requireAuth();if(!session)return null;const theme=localStorage.getItem(STORAGE.theme)||'light';applyTheme(theme);const logout=document.getElementById('sair');if(logout)logout.onclick=async()=>{logout.disabled=true;try{await window.PlenitudeAuth.signOut()}catch(error){logout.disabled=false;toast('Não foi possível sair do sistema.','warn')}};if(!document.getElementById('theme-toggle')){const b=document.createElement('button');b.id='theme-toggle';b.className='theme-toggle';b.type='button';b.title='Alternar tema';b.onclick=()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');document.body.appendChild(b)} return session; }
+async function initCommon(roles=null){const context=await requireAuth(roles);if(!context)return null;const session=context.session;const theme=localStorage.getItem(STORAGE.theme)||'light';applyTheme(theme);const logout=document.getElementById('sair');if(logout)logout.onclick=async()=>{logout.disabled=true;try{await window.PlenitudeAuth.signOut()}catch(error){logout.disabled=false;toast('Não foi possível sair do sistema.','warn')}};if(!document.getElementById('theme-toggle')){const b=document.createElement('button');b.id='theme-toggle';b.className='theme-toggle';b.type='button';b.title='Alternar tema';b.onclick=()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');document.body.appendChild(b)} return context; }
 
 async function initAdmin(){
-  const session=await initCommon();if(!session)return;
+  const context=await initCommon(['administrador']);if(!context)return;const session=context.session;
   try{
-    const [profile,employees]=await Promise.all([window.PlenitudeDB.profile(),window.PlenitudeDB.employees()]);
+    const profile=await window.PlenitudeDB.profile();
+    const employees=profile.papel==='administrador'?await window.PlenitudeDB.employees():[];
     DB_STATE.profile=profile;DB_STATE.employees=employees;DB_STATE.employee=employees[0]||null;
     DB_STATE.schedule=DB_STATE.employee?dbScheduleToUi(await window.PlenitudeDB.schedules(DB_STATE.employee.id)):defaultSchedule;
     const today=localDateKey(),marks=await window.PlenitudeDB.marksForRange(today,today);
@@ -69,7 +70,7 @@ async function renderWeekChartDB(){
 }
 
 async function initFuncionarios(){
-  const session=await initCommon();if(!session)return;
+  const context=await initCommon(['administrador']);if(!context)return;const session=context.session;
   const form=document.getElementById('func-form'),photoInput=document.getElementById('func-foto');
   if(photoInput)photoInput.onchange=async()=>{const file=photoInput.files?.[0];if(!file)return;try{window.__employeePhotoData=await resizeEmployeePhoto(file);window.__employeePhotoFileSelected=true;renderAvatar(window.__employeePhotoData,document.getElementById('nome').value);document.getElementById('foto-status').textContent='Nova foto pronta para envio.'}catch(error){toast(errorText(error),'warn')}};
   try{
@@ -99,7 +100,7 @@ function printEmployeeQr(){if(!DB_STATE.employee||!qrCanvasOrImage())return toas
 async function resizeEmployeePhoto(file){if(!file.type.startsWith('image/'))throw new Error('Selecione um arquivo de imagem.');if(file.size>8*1024*1024)throw new Error('A imagem deve ter no máximo 8 MB.');const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(new Error('Não foi possível ler a imagem.'));r.readAsDataURL(file)});const img=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('Imagem inválida.'));i.src=data});const size=480,canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d'),scale=Math.max(size/img.width,size/img.height),w=img.width*scale,h=img.height*scale;ctx.drawImage(img,(size-w)/2,(size-h)/2,w,h);return canvas.toDataURL('image/jpeg',.82)}
 
 async function initJornada(){
-  const session=await initCommon();if(!session)return;
+  const context=await initCommon(['administrador']);if(!context)return;const session=context.session;
   const tbody=document.getElementById('jornada-body');
   try{
     const employees=await window.PlenitudeDB.employees();DB_STATE.employee=employees[0]||null;
@@ -113,10 +114,11 @@ async function initJornada(){
 function updateTotals(){let weekly=0;document.querySelectorAll('#jornada-body tr').forEach(tr=>{if(!tr.querySelector('[name=entrada]'))return;const g=n=>tr.querySelector(`[name=${n}]`).value,s={entrada:g('entrada'),almoco:g('almoco'),retorno:g('retorno'),saida:g('saida')},t=totalDay(s);weekly+=t;tr.querySelector('.total-dia').textContent=fmtMinutes(t)});const total=document.getElementById('total-semanal');if(total)total.textContent=fmtMinutes(weekly)}
 
 async function initPonto(){
-  const session=await initCommon();if(!session)return;
+  const context=await initCommon(['administrador','funcionario']);if(!context)return;const session=context.session;
   const clock=()=>{const d=new Date();document.getElementById('clock-date').textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(d);document.getElementById('clock-time').textContent=d.toLocaleTimeString('pt-BR')};clock();setInterval(clock,1000);
   try{
-    const [profile,employees]=await Promise.all([window.PlenitudeDB.profile(),window.PlenitudeDB.employees()]);
+    const profile=await window.PlenitudeDB.profile();
+    const employees=profile.papel==='administrador'?await window.PlenitudeDB.employees():[];
     DB_STATE.profile=profile;DB_STATE.employees=employees;
     const selector=document.getElementById('ponto-funcionario-select');
     if(profile.papel==='administrador'){
@@ -125,10 +127,12 @@ async function initPonto(){
       DB_STATE.employee=employees[0]||null;
       selector.onchange=async()=>{DB_STATE.employee=employees.find(f=>f.id===selector.value)||null;renderClockEmployee(DB_STATE.employee);await loadRealPunches()};
     }else{
-      DB_STATE.employee=employees.find(f=>f.auth_user_id===session.user.id)||employees[0]||null;
+      DB_STATE.employee=await window.PlenitudeDB.ownEmployee();
       selector.hidden=true;
+      document.body.classList.add('employee-mode');
+      const back=document.querySelector('.back-link');if(back)back.remove();
     }
-    if(!DB_STATE.employee){document.getElementById('clock-employee').textContent='Nenhum funcionário cadastrado';document.getElementById('registrar').disabled=true;renderRealPunches([]);return}
+    if(!DB_STATE.employee){document.getElementById('clock-employee').textContent=profile.papel==='funcionario'?'Conta ainda não vinculada a um funcionário':'Nenhum funcionário cadastrado';document.getElementById('clock-status').textContent='Acesso pendente';document.getElementById('registrar').disabled=true;renderRealPunches([]);return}
     renderClockEmployee(DB_STATE.employee);
     await loadRealPunches();
     document.getElementById('registrar').onclick=async()=>{
@@ -146,6 +150,7 @@ async function loadRealPunches(){
   renderClockEmployee(DB_STATE.employee);
   const today=localDateKey(),marks=(await window.PlenitudeDB.marksForRange(today,today)).filter(m=>m.funcionario_id===DB_STATE.employee.id);
   renderRealPunches(marks);
+  if(DB_STATE.profile?.papel==='funcionario') await renderEmployeeSummary(marks);
 }
 function renderRealPunches(marks){
   const list=document.getElementById('lista-pontos'),button=document.getElementById('registrar');
@@ -156,7 +161,39 @@ function renderRealPunches(marks){
   const steps=document.getElementById('punch-steps');if(steps)steps.innerHTML=punchLabels.map((name,i)=>`<div class="punch-step ${i<marks.length?'done':''} ${i===marks.length?'current':''}"><span class="step-icon">${i<marks.length?'✓':i+1}</span><strong>${name}</strong><small>${marks[i]?formatDbTime(marks[i].registrado_em):'Aguardando'}</small></div>`).join('');
 }
 
-async function initRelatorios(){const session=await initCommon();if(!session)return;const month=document.getElementById('rel-mes'),now=new Date();month.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;document.getElementById('atualizar-relatorio').onclick=renderRelatorio;document.getElementById('imprimir-relatorio').onclick=()=>window.print();await renderRelatorio()}
+
+async function renderEmployeeSummary(todayMarks){
+  const panel=document.getElementById('employee-self-service');if(!panel||!DB_STATE.employee)return;
+  try{
+    const now=new Date(),firstMonth=new Date(now.getFullYear(),now.getMonth(),1);
+    const monday=new Date(now);monday.setDate(now.getDate()-((now.getDay()+6)%7));
+    const [scheduleRows,weekMarks,monthMarks]=await Promise.all([
+      window.PlenitudeDB.schedules(DB_STATE.employee.id),
+      window.PlenitudeDB.marksForRange(localDateKey(monday),localDateKey(now)),
+      window.PlenitudeDB.marksForRange(localDateKey(firstMonth),localDateKey(now))
+    ]);
+    const schedule=dbScheduleToUi(scheduleRows);
+    const balanceFor=(marks)=>{
+      const grouped={};marks.filter(m=>m.funcionario_id===DB_STATE.employee.id).forEach(m=>(grouped[m.data_local]??=[]).push(m));
+      let total=0;
+      Object.entries(grouped).forEach(([key,list])=>{
+        const times=list.sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em)).map(m=>formatDbTime(m.registrado_em));
+        const c=calcPunchDay(times,scheduleForDateFrom(schedule,dateFromKey(key)));if(c)total+=c.diff;
+      });return total;
+    };
+    const todayTimes=todayMarks.map(m=>formatDbTime(m.registrado_em));
+    const todayCalc=calcPunchDay(todayTimes,scheduleForDateFrom(schedule,now));
+    document.getElementById('self-today-balance').textContent=todayCalc?signedMinutes(todayCalc.diff):'Em andamento';
+    document.getElementById('self-week-balance').textContent=signedMinutes(balanceFor(weekMarks));
+    document.getElementById('self-month-balance').textContent=signedMinutes(balanceFor(monthMarks));
+    document.getElementById('self-profile-name').textContent=DB_STATE.employee.nome||'—';
+    document.getElementById('self-profile-role').textContent=DB_STATE.employee.cargo||'Funcionário';
+    document.getElementById('self-profile-code').textContent=DB_STATE.employee.matricula||DB_STATE.employee.codigo_qr||'—';
+    panel.hidden=false;
+  }catch(error){console.error(error)}
+}
+
+async function initRelatorios(){const context=await initCommon(['administrador']);if(!context)return;const session=context.session;const month=document.getElementById('rel-mes'),now=new Date();month.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;document.getElementById('atualizar-relatorio').onclick=renderRelatorio;document.getElementById('imprimir-relatorio').onclick=()=>window.print();await renderRelatorio()}
 async function renderRelatorio(){
   try{
     const selected=document.getElementById('rel-mes').value,[year,month]=selected.split('-').map(Number),last=new Date(year,month,0).getDate();
@@ -176,7 +213,7 @@ async function renderRelatorio(){
 }
 
 async function initConfiguracoes(){
-  const session=await initCommon();if(!session)return;
+  const context=await initCommon(['administrador']);if(!context)return;const session=context.session;
   try{
     const profile=await window.PlenitudeDB.profile();
     const company=profile.empresas||{};
@@ -214,7 +251,7 @@ let CALENDAR_STATE={employee:null,events:[],marks:[]};
 const occurrenceTypeToDb={'Folga':'folga','Férias':'ferias','Feriado':'feriado','Atestado':'atestado','Compensação':'compensacao'};
 const occurrenceTypeFromDb={folga:'Folga',ferias:'Férias',feriado:'Feriado',atestado:'Atestado',compensacao:'Compensação',justificativa:'Justificativa'};
 async function initCalendario(){
-  const session=await initCommon();if(!session)return;
+  const context=await initCommon(['administrador']);if(!context)return;const session=context.session;
   try{
     const employees=await window.PlenitudeDB.employees();CALENDAR_STATE.employee=employees[0]||null;
     calendarCursor=new Date();

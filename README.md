@@ -46,3 +46,14 @@ Antes de publicar, execute `supabase-v12-storage-acesso.sql` no SQL Editor. A fo
 - Removido o armazenamento local de dados operacionais.
 - O `localStorage` permanece apenas para a preferência visual de tema claro/escuro.
 - Nenhum novo script SQL é necessário para esta versão.
+
+## V14 — acesso individual da funcionária
+
+- Redirecionamento automático por papel: administrador para `admin.html` e funcionário para `ponto.html`.
+- Bloqueio das páginas administrativas para contas com papel `funcionario`.
+- Tela de ponto identifica automaticamente o funcionário vinculado ao usuário autenticado.
+- Funcionário registra o próprio ponto pela função segura `registrar_ponto()`.
+- Resumo pessoal com saldo de hoje, semana e mês, além de perfil básico.
+- Conta ainda não vinculada recebe uma mensagem clara e não consegue registrar ponto.
+
+Nenhum novo SQL é necessário nesta versão. Antes do primeiro acesso da funcionária, crie a conta dela em Authentication > Users e use o botão "Vincular conta de acesso" no cadastro do funcionário.

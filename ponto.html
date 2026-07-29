@@ -10,7 +10,7 @@
 <body>
 <main class="clock-page">
   <section class="clock-card premium-clock-card">
-    <a class="back-link" href="admin.html">← Voltar ao painel</a>
+    <a class="back-link" href="admin.html">← Voltar ao painel</a><button id="sair" class="clock-logout" type="button">Sair</button>
     <img class="logo clock-logo" src="assets/img/logo-plenitude.png" alt="Plenitude">
     <p class="eyebrow">REGISTRO DE JORNADA</p>
     <p id="clock-date" class="clock-date"></p>
@@ -28,6 +28,19 @@
     <div class="punch-steps" id="punch-steps"></div>
     <div class="punch-progress" id="punch-progress"></div>
     <div id="lista-pontos" class="punch-list punch-list-premium"></div>
+
+
+    <section id="employee-self-service" class="employee-self-service" hidden>
+      <div class="self-balance-grid">
+        <article><span>Saldo de hoje</span><strong id="self-today-balance">—</strong></article>
+        <article><span>Saldo da semana</span><strong id="self-week-balance">00:00</strong></article>
+        <article><span>Saldo do mês</span><strong id="self-month-balance">00:00</strong></article>
+      </div>
+      <div class="self-profile-card">
+        <div><small>MEU PERFIL</small><strong id="self-profile-name">—</strong><span id="self-profile-role">—</span></div>
+        <div><small>MATRÍCULA / CÓDIGO</small><strong id="self-profile-code">—</strong></div>
+      </div>
+    </section>
 
     <p class="clock-footnote">O horário oficial é gerado e gravado pelo servidor do Supabase.</p>
   </section>

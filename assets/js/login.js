@@ -34,9 +34,13 @@
 
     try {
       await window.PlenitudeAuth.signIn(email.value.trim(), senha.value);
+      const context = await window.PlenitudeAuth.getAccessContext(true);
       const params = new URLSearchParams(location.search);
       const retorno = params.get('retorno');
-      location.replace(retorno && /^[a-z0-9_-]+\.html$/i.test(retorno) ? retorno : 'admin.html');
+      const adminPages = ['admin.html','funcionarios.html','jornada.html','calendario.html','relatorios.html','configuracoes.html'];
+      const safeReturn = retorno && /^[a-z0-9_-]+\.html$/i.test(retorno);
+      if (safeReturn && (context.profile.papel === 'administrador' || !adminPages.includes(retorno))) location.replace(retorno);
+      else location.replace(window.PlenitudeAuth.homeForRole(context.profile.papel));
     } catch (error) {
       setFeedback(window.PlenitudeAuth.friendlyAuthError(error), 'error');
       senha.focus();

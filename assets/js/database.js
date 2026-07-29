@@ -25,6 +25,16 @@
     return {...employee,foto_resolvida:await employeePhotoUrl(employee.foto_url)};
   }
 
+
+  async function ownEmployee(){
+    const {data:{user},error:userError}=await client.auth.getUser();
+    if(userError) throw userError;
+    if(!user) throw new Error('Sessão não encontrada.');
+    const {data,error}=await client.from('funcionarios').select('*').eq('auth_user_id',user.id).maybeSingle();
+    if(error) throw error;
+    return attachPhoto(data);
+  }
+
   async function employees(){
     const {data,error}=await client.from('funcionarios').select('*').order('nome');
     if(error) throw error;
@@ -192,5 +202,5 @@
       .subscribe();
   }
 
-  window.PlenitudeDB=Object.freeze({profile,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,updateSettings,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,registerPoint,subscribeMarks});
+  window.PlenitudeDB=Object.freeze({profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,updateSettings,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,registerPoint,subscribeMarks});
 })();
