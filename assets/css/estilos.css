@@ -69,3 +69,8 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
 @media(max-width:1250px){.operational-cards{grid-template-columns:repeat(3,minmax(0,1fr))}.employee-module-grid{grid-template-columns:1fr}}
 @media(max-width:780px){.operational-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.employee-qr-section{grid-template-columns:1fr;text-align:center}.employee-qrcode{margin:auto}}
 @media(max-width:520px){.operational-cards{grid-template-columns:1fr}.clock-employee-box{grid-template-columns:52px 1fr}.clock-avatar{width:50px;height:50px}}
+
+
+/* ===== V12 — STORAGE, ACESSO E QR OPERACIONAL ===== */
+.photo-actions,.access-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:-6px}.photo-actions .field-help,.access-actions .field-help{margin:0}.qr-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}.qr-actions .btn{padding:8px 11px;font-size:11px}.employee-qrcode{position:relative}.employee-qrcode::after{content:"QR";position:absolute;right:7px;bottom:5px;font-size:8px;font-weight:900;color:#b9a7a2;letter-spacing:.12em}.btn.secondary:disabled{opacity:.55;cursor:wait}.storage-secure-note{display:flex;align-items:center;gap:8px;color:#14783d;font-weight:800;font-size:12px}
+@media(max-width:520px){.photo-actions,.access-actions{align-items:stretch;flex-direction:column}.photo-actions .btn,.access-actions .btn{width:100%}.qr-actions .btn{flex:1}}

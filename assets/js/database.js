@@ -12,10 +12,23 @@
     return {...data,email:user.email};
   }
 
+  async function employeePhotoUrl(path){
+    if(!path) return null;
+    if(/^https?:\/\//i.test(path)||path.startsWith('data:')) return path;
+    const {data,error}=await client.storage.from('funcionarios').createSignedUrl(path,3600);
+    if(error) return null;
+    return data?.signedUrl||null;
+  }
+
+  async function attachPhoto(employee){
+    if(!employee) return employee;
+    return {...employee,foto_resolvida:await employeePhotoUrl(employee.foto_url)};
+  }
+
   async function employees(){
     const {data,error}=await client.from('funcionarios').select('*').order('nome');
     if(error) throw error;
-    return data||[];
+    return Promise.all((data||[]).map(attachPhoto));
   }
 
   async function saveEmployee(values,id=null){
@@ -36,7 +49,37 @@
     let query=id?client.from('funcionarios').update(payload).eq('id',id):client.from('funcionarios').insert(payload);
     const {data,error}=await query.select().single();
     if(error) throw error;
-    return data;
+    return attachPhoto(data);
+  }
+
+  async function uploadEmployeePhoto(employeeId,dataUrl){
+    if(!employeeId||!dataUrl) throw new Error('Funcionário ou imagem inválida.');
+    const p=await profile();
+    const blob=await (await fetch(dataUrl)).blob();
+    const path=`${p.empresa_id}/${employeeId}/perfil.jpg`;
+    const {error:uploadError}=await client.storage.from('funcionarios').upload(path,blob,{contentType:'image/jpeg',upsert:true,cacheControl:'3600'});
+    if(uploadError) throw uploadError;
+    const {data,error}=await client.from('funcionarios').update({foto_url:path}).eq('id',employeeId).select().single();
+    if(error) throw error;
+    return attachPhoto(data);
+  }
+
+  async function removeEmployeePhoto(employee){
+    if(!employee?.id) return employee;
+    if(employee.foto_url&&!/^https?:|^data:/i.test(employee.foto_url)){
+      const {error:storageError}=await client.storage.from('funcionarios').remove([employee.foto_url]);
+      if(storageError&&!String(storageError.message||'').includes('not found')) throw storageError;
+    }
+    const {data,error}=await client.from('funcionarios').update({foto_url:null}).eq('id',employee.id).select().single();
+    if(error) throw error;
+    return attachPhoto(data);
+  }
+
+  async function linkEmployeeAccess(employeeId,email){
+    if(!employeeId||!email) throw new Error('Informe o funcionário e o e-mail da conta.');
+    const {data,error}=await client.rpc('vincular_funcionario_usuario',{p_funcionario_id:employeeId,p_email:email.trim().toLowerCase()});
+    if(error) throw error;
+    return attachPhoto(Array.isArray(data)?data[0]:data);
   }
 
   async function schedules(employeeId){
@@ -84,5 +127,5 @@
       .subscribe();
   }
 
-  window.PlenitudeDB=Object.freeze({profile,employees,saveEmployee,schedules,saveSchedules,marksForRange,registerPoint,subscribeMarks});
+  window.PlenitudeDB=Object.freeze({profile,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,schedules,saveSchedules,marksForRange,registerPoint,subscribeMarks});
 })();

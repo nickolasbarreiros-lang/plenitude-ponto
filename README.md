@@ -32,3 +32,7 @@ A próxima etapa vinculará uma conta Auth ao funcionário e ativará a função
 
 ## V11
 Antes de publicar, execute `supabase-v11-perfil-funcionario.sql` no SQL Editor. A versão adiciona status, foto otimizada, QR individual e indicadores operacionais no painel.
+
+
+## V12 — Storage e acesso do funcionário
+Antes de publicar, execute `supabase-v12-storage-acesso.sql` no SQL Editor. A foto passa a ser armazenada em bucket privado. Para vincular o login da funcionária, crie a usuária em Authentication → Users e informe o mesmo e-mail na tela Funcionário.

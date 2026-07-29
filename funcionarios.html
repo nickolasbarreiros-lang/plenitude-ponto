@@ -22,8 +22,10 @@
     <label>Matrícula<input id="matricula" placeholder="Ex.: 001"></label>
     <label>Data de admissão<input id="admissao" type="date"></label>
     <label>Status<select id="func-status"><option value="ativo">Ativo</option><option value="ferias">Férias</option><option value="afastado">Afastado</option><option value="inativo">Inativo</option></select></label>
-    <label class="full">Foto do funcionário<input id="func-foto" type="file" accept="image/png,image/jpeg,image/webp"><small class="field-help">A imagem será reduzida antes de ser salva no banco.</small></label>
-    <label class="full">Conta de acesso<input id="func-email" type="email" placeholder="Será vinculada em uma etapa posterior" disabled></label>
+    <label class="full">Foto do funcionário<input id="func-foto" type="file" accept="image/png,image/jpeg,image/webp"><small class="field-help">A imagem será recortada, comprimida e enviada ao Supabase Storage.</small></label>
+    <div class="photo-actions full"><button id="remover-foto" class="btn secondary" type="button">Remover foto</button><span id="foto-status" class="field-help">Nenhuma nova imagem selecionada.</span></div>
+    <label class="full">Conta de acesso<input id="func-email" type="email" placeholder="E-mail criado em Authentication → Users"><small class="field-help">Crie primeiro o usuário no Supabase Auth e depois vincule o mesmo e-mail aqui.</small></label>
+    <div class="access-actions full"><button id="vincular-acesso" class="btn secondary" type="button">Vincular conta de acesso</button><span id="acesso-status" class="field-help">Ainda sem conta vinculada.</span></div>
     <div class="actions full"><button class="btn primary" type="submit">Salvar funcionário</button></div>
   </form>
 </article>
@@ -34,7 +36,7 @@
   <div id="func-detalhes" class="details employee-details"></div>
   <div class="employee-qr-section">
     <div id="func-qrcode" class="employee-qrcode" aria-label="QR Code do funcionário"></div>
-    <div><p class="panel-kicker">IDENTIFICAÇÃO</p><strong id="func-qr-code">Aguardando cadastro</strong><small>QR individual preparado para futuras funções de identificação.</small></div>
+    <div><p class="panel-kicker">IDENTIFICAÇÃO</p><strong id="func-qr-code">Aguardando cadastro</strong><small>O QR abre a tela de ponto com a identificação deste funcionário.</small><div class="qr-actions"><button id="baixar-qr" class="btn secondary" type="button">Baixar QR</button><button id="imprimir-qr" class="btn secondary" type="button">Imprimir</button></div></div>
   </div>
 </article>
 </section></main></div><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js"></script><script src="assets/js/auth.js"></script>
