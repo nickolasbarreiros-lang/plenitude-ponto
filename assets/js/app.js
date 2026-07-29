@@ -5,33 +5,21 @@ const defaultSchedule=[
   {dia:'Quinta',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'18:30'},
   {dia:'Sexta',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'17:00'}
 ];
-const demoEmployee={nome:'Funcionário da loja',cpf:'',cargo:'Atendente',admissao:'',email:''};
 const punchLabels=['Entrada','Início do almoço','Retorno do almoço','Saída'];
-const STORAGE={schedule:'plenitudeSchedule',employee:'plenitudeEmployee',punches:'plenitudePunches',config:'plenitudeConfig',events:'plenitudeEvents',theme:'plenitudeTheme'};
+const STORAGE={theme:'plenitudeTheme'};
 let DB_STATE={profile:null,employees:[],employee:null,schedule:[]};
 const dayNames=['Segunda','Terça','Quarta','Quinta','Sexta'];
 function dbScheduleToUi(rows){const byDay=new Map((rows||[]).map(r=>[r.dia_semana,r]));return dayNames.map((dia,i)=>{const r=byDay.get(i+1);return r?{dia,entrada:r.entrada?.slice(0,5)||'',almoco:r.inicio_intervalo?.slice(0,5)||'',retorno:r.fim_intervalo?.slice(0,5)||'',saida:r.saida?.slice(0,5)||''}:defaultSchedule[i]});}
 function errorText(error){const m=String(error?.message||error||'');if(m.includes('duplicate key'))return 'Já existe um cadastro com este CPF ou matrícula.';if(m.includes('row-level security'))return 'Seu usuário não tem permissão para esta operação.';if(m.includes('Failed to fetch'))return 'Não foi possível conectar ao banco de dados.';return m||'Ocorreu um erro inesperado.';}
 
 
-const readJSON=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||'null')??fallback}catch{return fallback}};
-const writeJSON=(key,value)=>localStorage.setItem(key,JSON.stringify(value));
 async function requireAuth(){return window.PlenitudeAuth.requireSession()}
-function getSchedule(){return readJSON(STORAGE.schedule,defaultSchedule)}
-function getEmployee(){return readJSON(STORAGE.employee,demoEmployee)}
-function getAllPunches(){return readJSON(STORAGE.punches,{})}
-function getConfig(){return readJSON(STORAGE.config,{})}
-function getEvents(){return readJSON(STORAGE.events,{})}
 function localDateKey(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
-function getPunches(date=new Date()){return getAllPunches()[localDateKey(date)]||[]}
-function savePunches(list,date=new Date()){const all=getAllPunches();all[localDateKey(date)]=list;writeJSON(STORAGE.punches,all)}
 function minutes(a,b){if(!a||!b)return 0;const [h1,m1]=a.split(':').map(Number),[h2,m2]=b.split(':').map(Number);return(h2*60+m2)-(h1*60+m1)}
 function totalDay(s){return s?minutes(s.entrada,s.almoco)+minutes(s.retorno,s.saida):0}
 function fmtMinutes(value){const n=Math.max(0,Math.round(value||0)),h=Math.floor(n/60),m=n%60;return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`}
 function signedMinutes(value){return`${value>=0?'+':'−'}${fmtMinutes(Math.abs(value))}`}
 function dateFromKey(k){const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)}
-function scheduleForDate(d){const map={1:0,2:1,3:2,4:3,5:4};const i=map[d.getDay()];return i===undefined?null:getSchedule()[i]}
-function todaySchedule(){return scheduleForDate(new Date())}
 function calcPunchDay(p,s){if(!p||p.length<4||!s)return null;const worked=minutes(p[0],p[1])+minutes(p[2],p[3]);return{worked,expected:totalDay(s),diff:worked-totalDay(s)}}
 function toast(message,type='ok'){let box=document.querySelector('.toast');if(!box){box=document.createElement('div');box.className='toast';document.body.appendChild(box)}box.className=`toast show ${type}`;box.textContent=message;clearTimeout(box._timer);box._timer=setTimeout(()=>box.classList.remove('show'),2600)}
 function applyTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem(STORAGE.theme,theme);const btn=document.getElementById('theme-toggle');if(btn)btn.textContent=theme==='dark'?'☀':'◐'}
@@ -79,7 +67,6 @@ async function renderWeekChartDB(){
   for(let i=0;i<5;i++){const d=new Date(monday);d.setDate(monday.getDate()+i);const s=scheduleForDateFrom(DB_STATE.schedule,d);const p=marks.filter(m=>(!DB_STATE.employee||m.funcionario_id===DB_STATE.employee.id)&&m.data_local===localDateKey(d)).map(m=>new Date(m.registrado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));const c=calcPunchDay(p,s);vals.push(c?c.worked:0);expected.push(s?totalDay(s):0)}
   const max=Math.max(...vals,...expected,1);el.innerHTML=vals.map((v,i)=>`<div class="chart-column ${v?'':'is-empty'}"><div class="chart-value">${v?fmtMinutes(v):'—'}</div><div class="chart-track"><div class="chart-target" style="height:${Math.round(expected[i]/max*100)}%"></div><div class="chart-bar" style="height:${v?Math.max(8,Math.round(v/max*100)):6}%"></div></div><strong>${names[i]}</strong><small>${v?'Registrado':`Previsto ${fmtMinutes(expected[i])}`}</small></div>`).join('')
 }
-function renderWeekChart(){const all=getAllPunches(),now=new Date(),monday=new Date(now),delta=(now.getDay()+6)%7;monday.setDate(now.getDate()-delta);const names=['Seg','Ter','Qua','Qui','Sex'],vals=[],expected=[];for(let i=0;i<5;i++){const d=new Date(monday);d.setDate(monday.getDate()+i);const s=scheduleForDate(d),c=calcPunchDay(all[localDateKey(d)]||[],s);vals.push(c?c.worked:0);expected.push(s?totalDay(s):0)}const max=Math.max(...vals,...expected,1);document.getElementById('grafico-semana').innerHTML=vals.map((v,i)=>`<div class="chart-column ${v?'':'is-empty'}"><div class="chart-value">${v?fmtMinutes(v):'—'}</div><div class="chart-track"><div class="chart-target" style="height:${Math.round(expected[i]/max*100)}%"></div><div class="chart-bar" style="height:${v?Math.max(8,Math.round(v/max*100)):6}%"></div></div><strong>${names[i]}</strong><small>${v?'Registrado':`Previsto ${fmtMinutes(expected[i])}`}</small></div>`).join('')}
 
 async function initFuncionarios(){
   const session=await initCommon();if(!session)return;
@@ -188,8 +175,86 @@ async function renderRelatorio(){
   }catch(error){toast(errorText(error),'warn');console.error(error)}
 }
 
-async function initConfiguracoes(){const session=await initCommon();if(!session)return;const cfg=getConfig();document.getElementById('empresa-nome').value=cfg.empresaNome||'Livraria Plenitude';document.getElementById('empresa-endereco').value=cfg.endereco||'Av. Primeira Avenida, 231, Shopping Laranjeiras, Serra/ES';document.getElementById('admin-nome').value=cfg.adminNome||'Administrador';document.getElementById('admin-email').value=cfg.adminEmail||'admin@plenitude.local';document.getElementById('config-form').onsubmit=e=>{e.preventDefault();writeJSON(STORAGE.config,{empresaNome:document.getElementById('empresa-nome').value,endereco:document.getElementById('empresa-endereco').value,adminNome:document.getElementById('admin-nome').value,adminEmail:document.getElementById('admin-email').value});toast('Configurações salvas com sucesso.')};document.getElementById('exportar-backup').onclick=()=>{const data={employee:getEmployee(),schedule:getSchedule(),punches:getAllPunches(),events:getEvents(),config:getConfig(),exportedAt:new Date().toISOString()};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`plenitude-ponto-backup-${localDateKey()}.json`;a.click();URL.revokeObjectURL(a.href)};document.getElementById('limpar-marcacoes').onclick=()=>{if(confirm('Apagar todas as marcações de teste deste navegador?')){localStorage.removeItem(STORAGE.punches);toast('Marcações apagadas.')}}}
+async function initConfiguracoes(){
+  const session=await initCommon();if(!session)return;
+  try{
+    const profile=await window.PlenitudeDB.profile();
+    const company=profile.empresas||{};
+    document.getElementById('empresa-nome').value=company.nome_fantasia||company.razao_social||'Livraria Plenitude';
+    document.getElementById('empresa-endereco').value=company.endereco||'';
+    document.getElementById('admin-nome').value=profile.nome||'Administrador';
+    document.getElementById('admin-email').value=profile.email||session.user.email||'';
+    document.getElementById('admin-email').readOnly=true;
+    document.getElementById('config-form').onsubmit=async e=>{
+      e.preventDefault();
+      const button=e.submitter; if(button)button.disabled=true;
+      try{
+        await window.PlenitudeDB.updateSettings({
+          empresaNome:document.getElementById('empresa-nome').value,
+          endereco:document.getElementById('empresa-endereco').value,
+          adminNome:document.getElementById('admin-nome').value
+        });
+        toast('Configurações salvas no Supabase.');
+      }catch(error){toast(errorText(error),'warn');console.error(error)}finally{if(button)button.disabled=false}
+    };
+    document.getElementById('exportar-backup').onclick=async()=>{
+      const button=document.getElementById('exportar-backup');button.disabled=true;
+      try{
+        const data=await window.PlenitudeDB.backupData();
+        const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');
+        a.href=URL.createObjectURL(blob);a.download=`plenitude-ponto-backup-${localDateKey()}.json`;a.click();URL.revokeObjectURL(a.href);
+        toast('Backup do Supabase baixado.');
+      }catch(error){toast(errorText(error),'warn');console.error(error)}finally{button.disabled=false}
+    };
+  }catch(error){toast(errorText(error),'warn');console.error(error)}
+}
 
 let calendarCursor=new Date();
-async function initCalendario(){const session=await initCommon();if(!session)return;calendarCursor=new Date();document.getElementById('cal-prev').onclick=()=>{calendarCursor.setMonth(calendarCursor.getMonth()-1);renderCalendar()};document.getElementById('cal-next').onclick=()=>{calendarCursor.setMonth(calendarCursor.getMonth()+1);renderCalendar()};document.getElementById('event-form').onsubmit=e=>{e.preventDefault();const date=document.getElementById('event-date').value,type=document.getElementById('event-type').value,note=document.getElementById('event-note').value.trim();if(!date)return;const events=getEvents();events[date]={type,note};writeJSON(STORAGE.events,events);toast('Evento salvo no calendário.');renderCalendar()};renderCalendar()}
-function renderCalendar(){const year=calendarCursor.getFullYear(),month=calendarCursor.getMonth(),first=new Date(year,month,1),last=new Date(year,month+1,0),events=getEvents(),punches=getAllPunches();document.getElementById('cal-title').textContent=new Intl.DateTimeFormat('pt-BR',{month:'long',year:'numeric'}).format(first);const grid=document.getElementById('calendar-grid');grid.innerHTML=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(x=>`<div class="cal-weekday">${x}</div>`).join('');for(let i=0;i<first.getDay();i++)grid.insertAdjacentHTML('beforeend','<div class="cal-day muted-day"></div>');for(let day=1;day<=last.getDate();day++){const d=new Date(year,month,day),key=localDateKey(d),ev=events[key],p=punches[key]||[],today=key===localDateKey();grid.insertAdjacentHTML('beforeend',`<button class="cal-day ${today?'today':''} ${ev?'has-event':''} ${p.length?'has-punch':''}" data-date="${key}"><span>${day}</span>${p.length?`<small>${p.length}/4 pontos</small>`:''}${ev?`<em>${ev.type}</em>`:''}</button>`)}grid.querySelectorAll('[data-date]').forEach(btn=>btn.onclick=()=>{const key=btn.dataset.date,ev=events[key];document.getElementById('event-date').value=key;document.getElementById('event-type').value=ev?.type||'Folga';document.getElementById('event-note').value=ev?.note||''})}
+let CALENDAR_STATE={employee:null,events:[],marks:[]};
+const occurrenceTypeToDb={'Folga':'folga','Férias':'ferias','Feriado':'feriado','Atestado':'atestado','Compensação':'compensacao'};
+const occurrenceTypeFromDb={folga:'Folga',ferias:'Férias',feriado:'Feriado',atestado:'Atestado',compensacao:'Compensação',justificativa:'Justificativa'};
+async function initCalendario(){
+  const session=await initCommon();if(!session)return;
+  try{
+    const employees=await window.PlenitudeDB.employees();CALENDAR_STATE.employee=employees[0]||null;
+    calendarCursor=new Date();
+    document.getElementById('cal-prev').onclick=async()=>{calendarCursor.setMonth(calendarCursor.getMonth()-1);await renderCalendar()};
+    document.getElementById('cal-next').onclick=async()=>{calendarCursor.setMonth(calendarCursor.getMonth()+1);await renderCalendar()};
+    document.getElementById('event-form').onsubmit=async e=>{
+      e.preventDefault();
+      if(!CALENDAR_STATE.employee){toast('Cadastre um funcionário antes de adicionar ocorrências.','warn');return}
+      const date=document.getElementById('event-date').value,type=document.getElementById('event-type').value,note=document.getElementById('event-note').value.trim();
+      if(!date)return;
+      const button=e.submitter;if(button)button.disabled=true;
+      try{
+        await window.PlenitudeDB.saveOccurrence(CALENDAR_STATE.employee.id,{tipo:occurrenceTypeToDb[type],dataInicio:date,dataFim:date,descricao:note});
+        toast('Ocorrência salva no Supabase.');await renderCalendar();
+      }catch(error){toast(errorText(error),'warn');console.error(error)}finally{if(button)button.disabled=false}
+    };
+    await renderCalendar();
+  }catch(error){toast(errorText(error),'warn');console.error(error)}
+}
+async function renderCalendar(){
+  const year=calendarCursor.getFullYear(),month=calendarCursor.getMonth(),first=new Date(year,month,1),last=new Date(year,month+1,0);
+  const start=localDateKey(first),end=localDateKey(last);
+  if(CALENDAR_STATE.employee){
+    [CALENDAR_STATE.events,CALENDAR_STATE.marks]=await Promise.all([
+      window.PlenitudeDB.occurrencesForRange(CALENDAR_STATE.employee.id,start,end),
+      window.PlenitudeDB.marksForRange(start,end)
+    ]);
+  }else{CALENDAR_STATE.events=[];CALENDAR_STATE.marks=[]}
+  const eventsByDate={};CALENDAR_STATE.events.forEach(ev=>{eventsByDate[ev.data_inicio]=ev});
+  const marksByDate={};CALENDAR_STATE.marks.filter(m=>!CALENDAR_STATE.employee||m.funcionario_id===CALENDAR_STATE.employee.id).forEach(m=>(marksByDate[m.data_local]??=[]).push(m));
+  document.getElementById('cal-title').textContent=new Intl.DateTimeFormat('pt-BR',{month:'long',year:'numeric'}).format(first);
+  const grid=document.getElementById('calendar-grid');grid.innerHTML=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(x=>`<div class="cal-weekday">${x}</div>`).join('');
+  for(let i=0;i<first.getDay();i++)grid.insertAdjacentHTML('beforeend','<div class="cal-day muted-day"></div>');
+  for(let day=1;day<=last.getDate();day++){
+    const d=new Date(year,month,day),key=localDateKey(d),ev=eventsByDate[key],p=marksByDate[key]||[],today=key===localDateKey();
+    grid.insertAdjacentHTML('beforeend',`<button class="cal-day ${today?'today':''} ${ev?'has-event':''} ${p.length?'has-punch':''}" data-date="${key}"><span>${day}</span>${p.length?`<small>${p.length}/4 pontos</small>`:''}${ev?`<em>${occurrenceTypeFromDb[ev.tipo]||ev.tipo}</em>`:''}</button>`);
+  }
+  grid.querySelectorAll('[data-date]').forEach(btn=>btn.onclick=()=>{
+    const key=btn.dataset.date,ev=eventsByDate[key];document.getElementById('event-date').value=key;
+    document.getElementById('event-type').value=ev?occurrenceTypeFromDb[ev.tipo]||'Folga':'Folga';document.getElementById('event-note').value=ev?.descricao||'';
+  });
+}
+

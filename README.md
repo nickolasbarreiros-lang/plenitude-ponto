@@ -36,3 +36,13 @@ Antes de publicar, execute `supabase-v11-perfil-funcionario.sql` no SQL Editor. 
 
 ## V12 — Storage e acesso do funcionário
 Antes de publicar, execute `supabase-v12-storage-acesso.sql` no SQL Editor. A foto passa a ser armazenada em bucket privado. Para vincular o login da funcionária, crie a usuária em Authentication → Users e informe o mesmo e-mail na tela Funcionário.
+
+
+## V13 — Dados 100% no Supabase
+
+- Configurações da empresa e nome do administrador salvos no Supabase.
+- Calendário e ocorrências salvos na tabela `ocorrencias`.
+- Backup JSON gerado diretamente das tabelas do banco.
+- Removido o armazenamento local de dados operacionais.
+- O `localStorage` permanece apenas para a preferência visual de tema claro/escuro.
+- Nenhum novo script SQL é necessário para esta versão.

@@ -82,6 +82,71 @@
     return attachPhoto(Array.isArray(data)?data[0]:data);
   }
 
+  async function updateSettings(values){
+    const p=await profile();
+    const companyPayload={
+      razao_social:values.empresaNome?.trim()||'Livraria Plenitude',
+      nome_fantasia:values.empresaNome?.trim()||'Livraria Plenitude',
+      endereco:values.endereco?.trim()||null
+    };
+    const {error:companyError}=await client.from('empresas').update(companyPayload).eq('id',p.empresa_id);
+    if(companyError) throw companyError;
+    const {error:profileError}=await client.from('perfis').update({nome:values.adminNome?.trim()||p.nome}).eq('id',p.id);
+    if(profileError) throw profileError;
+    return profile();
+  }
+
+  async function occurrencesForRange(employeeId,start,end){
+    let query=client.from('ocorrencias').select('*').gte('data_inicio',start).lte('data_inicio',end).order('data_inicio');
+    if(employeeId) query=query.eq('funcionario_id',employeeId);
+    const {data,error}=await query;
+    if(error) throw error;
+    return data||[];
+  }
+
+  async function saveOccurrence(employeeId,values){
+    if(!employeeId) throw new Error('Cadastre ou selecione um funcionário.');
+    const p=await profile();
+    const payload={
+      empresa_id:p.empresa_id,
+      funcionario_id:employeeId,
+      tipo:values.tipo,
+      data_inicio:values.dataInicio,
+      data_fim:values.dataFim||values.dataInicio,
+      descricao:values.descricao||null,
+      aprovado:true,
+      criado_por:p.id
+    };
+    const {data:existing,error:findError}=await client.from('ocorrencias').select('id').eq('funcionario_id',employeeId).eq('data_inicio',payload.data_inicio).limit(1);
+    if(findError) throw findError;
+    let query=existing?.length?client.from('ocorrencias').update(payload).eq('id',existing[0].id):client.from('ocorrencias').insert(payload);
+    const {data,error}=await query.select().single();
+    if(error) throw error;
+    return data;
+  }
+
+  async function backupData(){
+    const p=await profile();
+    const [employeesResult,schedulesResult,marksResult,occurrencesResult,logsResult]=await Promise.all([
+      client.from('funcionarios').select('*').order('nome'),
+      client.from('jornadas').select('*').order('funcionario_id,dia_semana'),
+      client.from('marcacoes').select('*').order('registrado_em'),
+      client.from('ocorrencias').select('*').order('data_inicio'),
+      client.from('logs_auditoria').select('*').order('criado_em')
+    ]);
+    for(const result of [employeesResult,schedulesResult,marksResult,occurrencesResult,logsResult]) if(result.error) throw result.error;
+    return {
+      empresa:p.empresas||null,
+      perfil:{id:p.id,nome:p.nome,papel:p.papel,email:p.email},
+      funcionarios:employeesResult.data||[],
+      jornadas:schedulesResult.data||[],
+      marcacoes:marksResult.data||[],
+      ocorrencias:occurrencesResult.data||[],
+      auditoria:logsResult.data||[],
+      exportado_em:new Date().toISOString()
+    };
+  }
+
   async function schedules(employeeId){
     const {data,error}=await client.from('jornadas').select('*').eq('funcionario_id',employeeId).order('dia_semana');
     if(error) throw error;
@@ -127,5 +192,5 @@
       .subscribe();
   }
 
-  window.PlenitudeDB=Object.freeze({profile,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,schedules,saveSchedules,marksForRange,registerPoint,subscribeMarks});
+  window.PlenitudeDB=Object.freeze({profile,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,updateSettings,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,registerPoint,subscribeMarks});
 })();
