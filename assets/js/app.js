@@ -100,11 +100,67 @@ async function initJornada(){
 }
 function updateTotals(){let weekly=0;document.querySelectorAll('#jornada-body tr').forEach(tr=>{if(!tr.querySelector('[name=entrada]'))return;const g=n=>tr.querySelector(`[name=${n}]`).value,s={entrada:g('entrada'),almoco:g('almoco'),retorno:g('retorno'),saida:g('saida')},t=totalDay(s);weekly+=t;tr.querySelector('.total-dia').textContent=fmtMinutes(t)});const total=document.getElementById('total-semanal');if(total)total.textContent=fmtMinutes(weekly)}
 
-async function initPonto(){const session=await requireAuth();if(!session)return;applyTheme(localStorage.getItem(STORAGE.theme)||'light');document.getElementById('clock-employee').textContent=getEmployee().nome;const clock=()=>{const d=new Date();document.getElementById('clock-date').textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(d);document.getElementById('clock-time').textContent=d.toLocaleTimeString('pt-BR')};clock();setInterval(clock,1000);renderPunches();document.getElementById('registrar').onclick=()=>{const p=getPunches();if(p.length>=4){toast('As quatro marcações de hoje já foram registradas.','warn');return}p.push(new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));savePunches(p);renderPunches();toast(`${punchLabels[p.length-1]} registrada às ${p.at(-1)}.`)}}
-function renderPunches(){const p=getPunches(),list=document.getElementById('lista-pontos');list.innerHTML=p.length?p.map((x,i)=>`<div class="punch-item"><span>${punchLabels[i]}</span><strong>${x}</strong></div>`).join(''):'<div class="mini-empty">Nenhuma marcação feita hoje.</div>';document.getElementById('proxima').textContent=p.length<4?`Próxima marcação: ${punchLabels[p.length]}`:'Jornada de hoje concluída';document.getElementById('registrar').disabled=p.length>=4;const progress=document.getElementById('punch-progress');if(progress)progress.innerHTML=punchLabels.map((_,i)=>`<span class="progress-step ${i<p.length?'done':''}"></span>`).join('');const steps=document.getElementById('punch-steps');if(steps)steps.innerHTML=punchLabels.map((name,i)=>`<div class="punch-step ${i<p.length?'done':''} ${i===p.length?'current':''}"><span class="step-icon">${i<p.length?'✓':i+1}</span><strong>${name}</strong><small>${p[i]||'Aguardando'}</small></div>`).join('')}
+async function initPonto(){
+  const session=await initCommon();if(!session)return;
+  const clock=()=>{const d=new Date();document.getElementById('clock-date').textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(d);document.getElementById('clock-time').textContent=d.toLocaleTimeString('pt-BR')};clock();setInterval(clock,1000);
+  try{
+    const [profile,employees]=await Promise.all([window.PlenitudeDB.profile(),window.PlenitudeDB.employees()]);
+    DB_STATE.profile=profile;DB_STATE.employees=employees;
+    const selector=document.getElementById('ponto-funcionario-select');
+    if(profile.papel==='administrador'){
+      selector.hidden=false;
+      selector.innerHTML=employees.length?employees.map(f=>`<option value="${f.id}">${f.nome}</option>`).join(''):'<option value="">Nenhum funcionário cadastrado</option>';
+      DB_STATE.employee=employees[0]||null;
+      selector.onchange=async()=>{DB_STATE.employee=employees.find(f=>f.id===selector.value)||null;await loadRealPunches()};
+    }else{
+      DB_STATE.employee=employees.find(f=>f.auth_user_id===session.user.id)||employees[0]||null;
+      selector.hidden=true;
+    }
+    if(!DB_STATE.employee){document.getElementById('clock-employee').textContent='Nenhum funcionário cadastrado';document.getElementById('registrar').disabled=true;renderRealPunches([]);return}
+    document.getElementById('clock-employee').textContent=DB_STATE.employee.nome;
+    await loadRealPunches();
+    document.getElementById('registrar').onclick=async()=>{
+      const button=document.getElementById('registrar');button.disabled=true;button.classList.add('loading');
+      try{const mark=await window.PlenitudeDB.registerPoint(DB_STATE.employee.id);await loadRealPunches();const label=labelForMarkType(mark?.tipo);const time=formatDbTime(mark?.registrado_em);toast(`${label} registrada às ${time}.`)}catch(error){toast(errorText(error),'warn');console.error(error)}finally{button.classList.remove('loading');}
+    };
+    window.PlenitudeDB.subscribeMarks(async()=>{if(document.visibilityState==='visible')await loadRealPunches()});
+  }catch(error){toast(errorText(error),'warn');console.error(error)}
+}
+function labelForMarkType(type){return({entrada:'Entrada',inicio_intervalo:'Início do almoço',fim_intervalo:'Retorno do almoço',saida:'Saída'})[type]||'Marcação'}
+function formatDbTime(value){return value?new Date(value).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—'}
+async function loadRealPunches(){
+  if(!DB_STATE.employee)return renderRealPunches([]);
+  document.getElementById('clock-employee').textContent=DB_STATE.employee.nome;
+  const today=localDateKey(),marks=(await window.PlenitudeDB.marksForRange(today,today)).filter(m=>m.funcionario_id===DB_STATE.employee.id);
+  renderRealPunches(marks);
+}
+function renderRealPunches(marks){
+  const list=document.getElementById('lista-pontos'),button=document.getElementById('registrar');
+  list.innerHTML=marks.length?marks.map(m=>`<div class="punch-item"><span>${labelForMarkType(m.tipo)}</span><strong>${formatDbTime(m.registrado_em)}</strong></div>`).join(''):'<div class="mini-empty">Nenhuma marcação feita hoje.</div>';
+  document.getElementById('proxima').textContent=marks.length<4?`Próxima marcação: ${punchLabels[marks.length]}`:'Jornada de hoje concluída';
+  if(button)button.disabled=!DB_STATE.employee||marks.length>=4;
+  const progress=document.getElementById('punch-progress');if(progress)progress.innerHTML=punchLabels.map((_,i)=>`<span class="progress-step ${i<marks.length?'done':''}"></span>`).join('');
+  const steps=document.getElementById('punch-steps');if(steps)steps.innerHTML=punchLabels.map((name,i)=>`<div class="punch-step ${i<marks.length?'done':''} ${i===marks.length?'current':''}"><span class="step-icon">${i<marks.length?'✓':i+1}</span><strong>${name}</strong><small>${marks[i]?formatDbTime(marks[i].registrado_em):'Aguardando'}</small></div>`).join('');
+}
 
-async function initRelatorios(){const session=await initCommon();if(!session)return;const month=document.getElementById('rel-mes'),now=new Date();month.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;document.getElementById('atualizar-relatorio').onclick=renderRelatorio;document.getElementById('imprimir-relatorio').onclick=()=>window.print();renderRelatorio()}
-function renderRelatorio(){const selected=document.getElementById('rel-mes').value,all=getAllPunches(),rows=[];let worked=0,diff=0;Object.keys(all).sort().forEach(k=>{if(!k.startsWith(selected))return;const d=dateFromKey(k),p=all[k],c=calcPunchDay(p,scheduleForDate(d));if(c){worked+=c.worked;diff+=c.diff}rows.push({k,p,c})});document.getElementById('rel-dias').textContent=rows.length;document.getElementById('rel-horas').textContent=fmtMinutes(worked);document.getElementById('rel-saldo').textContent=signedMinutes(diff);const body=document.getElementById('relatorio-body'),empty=document.getElementById('relatorio-vazio');body.innerHTML=rows.map(r=>`<tr><td>${new Intl.DateTimeFormat('pt-BR').format(dateFromKey(r.k))}</td>${[0,1,2,3].map(i=>`<td>${r.p[i]||'—'}</td>`).join('')}<td>${r.c?fmtMinutes(r.c.worked):'—'}</td><td class="${r.c&&r.c.diff<0?'negative':'positive'}">${r.c?signedMinutes(r.c.diff):'—'}</td></tr>`).join('');empty.style.display=rows.length?'none':'block'}
+async function initRelatorios(){const session=await initCommon();if(!session)return;const month=document.getElementById('rel-mes'),now=new Date();month.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;document.getElementById('atualizar-relatorio').onclick=renderRelatorio;document.getElementById('imprimir-relatorio').onclick=()=>window.print();await renderRelatorio()}
+async function renderRelatorio(){
+  try{
+    const selected=document.getElementById('rel-mes').value,[year,month]=selected.split('-').map(Number),last=new Date(year,month,0).getDate();
+    const start=`${selected}-01`,end=`${selected}-${String(last).padStart(2,'0')}`;
+    const [employees,marks]=await Promise.all([window.PlenitudeDB.employees(),window.PlenitudeDB.marksForRange(start,end)]);
+    const employee=employees[0]||null,employeeMarks=employee?marks.filter(m=>m.funcionario_id===employee.id):marks;
+    const grouped={};employeeMarks.forEach(m=>(grouped[m.data_local]??=[]).push(m));
+    let worked=0,diff=0;const rows=[];
+    for(const k of Object.keys(grouped).sort()){
+      const d=dateFromKey(k),dayMarks=grouped[k].sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em)),p=dayMarks.map(m=>formatDbTime(m.registrado_em));
+      const scheduleRows=employee?dbScheduleToUi(await window.PlenitudeDB.schedules(employee.id)):defaultSchedule,c=calcPunchDay(p,scheduleForDateFrom(scheduleRows,d));
+      if(c){worked+=c.worked;diff+=c.diff}rows.push({k,p,c});
+    }
+    document.getElementById('rel-dias').textContent=rows.length;document.getElementById('rel-horas').textContent=fmtMinutes(worked);document.getElementById('rel-saldo').textContent=signedMinutes(diff);
+    const body=document.getElementById('relatorio-body'),empty=document.getElementById('relatorio-vazio');body.innerHTML=rows.map(r=>`<tr><td>${new Intl.DateTimeFormat('pt-BR').format(dateFromKey(r.k))}</td>${[0,1,2,3].map(i=>`<td>${r.p[i]||'—'}</td>`).join('')}<td>${r.c?fmtMinutes(r.c.worked):'—'}</td><td class="${r.c&&r.c.diff<0?'negative':'positive'}">${r.c?signedMinutes(r.c.diff):'—'}</td></tr>`).join('');empty.style.display=rows.length?'none':'block';
+  }catch(error){toast(errorText(error),'warn');console.error(error)}
+}
 
 async function initConfiguracoes(){const session=await initCommon();if(!session)return;const cfg=getConfig();document.getElementById('empresa-nome').value=cfg.empresaNome||'Livraria Plenitude';document.getElementById('empresa-endereco').value=cfg.endereco||'Av. Primeira Avenida, 231, Shopping Laranjeiras, Serra/ES';document.getElementById('admin-nome').value=cfg.adminNome||'Administrador';document.getElementById('admin-email').value=cfg.adminEmail||'admin@plenitude.local';document.getElementById('config-form').onsubmit=e=>{e.preventDefault();writeJSON(STORAGE.config,{empresaNome:document.getElementById('empresa-nome').value,endereco:document.getElementById('empresa-endereco').value,adminNome:document.getElementById('admin-nome').value,adminEmail:document.getElementById('admin-email').value});toast('Configurações salvas com sucesso.')};document.getElementById('exportar-backup').onclick=()=>{const data={employee:getEmployee(),schedule:getSchedule(),punches:getAllPunches(),events:getEvents(),config:getConfig(),exportedAt:new Date().toISOString()};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`plenitude-ponto-backup-${localDateKey()}.json`;a.click();URL.revokeObjectURL(a.href)};document.getElementById('limpar-marcacoes').onclick=()=>{if(confirm('Apagar todas as marcações de teste deste navegador?')){localStorage.removeItem(STORAGE.punches);toast('Marcações apagadas.')}}}
 

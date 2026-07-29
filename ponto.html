@@ -19,6 +19,7 @@
     <div class="employee-box">
       <small>Funcionário</small>
       <strong id="clock-employee">Funcionário da loja</strong>
+      <select id="ponto-funcionario-select" class="employee-select" hidden aria-label="Selecionar funcionário"></select>
     </div>
 
     <button id="registrar" class="punch-button"><span>◷</span> Registrar ponto</button>
@@ -28,7 +29,7 @@
     <div class="punch-progress" id="punch-progress"></div>
     <div id="lista-pontos" class="punch-list punch-list-premium"></div>
 
-    <p class="clock-footnote">O horário registrado é o horário atual deste dispositivo.</p>
+    <p class="clock-footnote">O horário oficial é gerado e gravado pelo servidor do Supabase.</p>
   </section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js"></script><script src="assets/js/auth.js"></script>

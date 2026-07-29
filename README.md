@@ -20,3 +20,11 @@ Sistema de controle de ponto da Livraria Plenitude, hospedado no GitHub Pages e 
 - relatórios baseados nas marcações locais.
 
 A próxima etapa vinculará uma conta Auth ao funcionário e ativará a função segura `registrar_ponto()`.
+
+
+## V10 — Registro de ponto real
+
+1. Execute `supabase-v10-registro-ponto.sql` no SQL Editor do Supabase.
+2. Publique os arquivos no GitHub Pages.
+3. Entre como administrador e abra `Registrar ponto`.
+4. Selecione a funcionária e clique no botão. O horário vem do servidor.

@@ -65,5 +65,21 @@
     return data||[];
   }
 
-  window.PlenitudeDB=Object.freeze({profile,employees,saveEmployee,schedules,saveSchedules,marksForRange});
+  async function registerPoint(employeeId=null){
+    const p=await profile();
+    const functionName=p.papel==='administrador'?'registrar_ponto_funcionario':'registrar_ponto';
+    const args=functionName==='registrar_ponto_funcionario'?{p_funcionario_id:employeeId}:{};
+    if(functionName==='registrar_ponto_funcionario'&&!employeeId) throw new Error('Selecione um funcionário para registrar o ponto.');
+    const {data,error}=await client.rpc(functionName,args);
+    if(error) throw error;
+    return Array.isArray(data)?data[0]:data;
+  }
+
+  function subscribeMarks(callback){
+    return client.channel('plenitude-marcacoes')
+      .on('postgres_changes',{event:'*',schema:'public',table:'marcacoes'},payload=>callback(payload))
+      .subscribe();
+  }
+
+  window.PlenitudeDB=Object.freeze({profile,employees,saveEmployee,schedules,saveSchedules,marksForRange,registerPoint,subscribeMarks});
 })();

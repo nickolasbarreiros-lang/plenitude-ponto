@@ -60,3 +60,5 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
 .login-btn:disabled{opacity:.7;cursor:wait;transform:none!important}
 .cloud-box{border-color:rgba(255,101,0,.22)}
 .auth-loading{pointer-events:none;opacity:.75}
+
+.employee-select{margin-top:10px;width:min(420px,100%);padding:11px 14px;border:1px solid var(--border,#eadbd4);border-radius:12px;background:var(--card,#fff);color:inherit;font:inherit;font-weight:700}.punch-button.loading{pointer-events:none;opacity:.7}.punch-button.loading::after{content:"";display:inline-block;width:16px;height:16px;margin-left:10px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
