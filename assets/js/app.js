@@ -122,8 +122,69 @@ async function renderWeekChartDB(){
   const max=Math.max(...vals,...expected,1);el.innerHTML=vals.map((v,i)=>`<div class="chart-column ${v?'':'is-empty'}"><div class="chart-value">${v?fmtMinutes(v):'—'}</div><div class="chart-track"><div class="chart-target" style="height:${Math.round(expected[i]/max*100)}%"></div><div class="chart-bar" style="height:${v?Math.max(8,Math.round(v/max*100)):6}%"></div></div><strong>${names[i]}</strong><small>${v?'Registrado':`Previsto ${fmtMinutes(expected[i])}`}</small></div>`).join('')
 }
 
+function setupEmployeePinEditor(){
+  const edit=document.getElementById('editar-pin');
+  const save=document.getElementById('salvar-pin');
+  const cancel=document.getElementById('cancelar-pin');
+  const area=document.getElementById('pin-edit-area');
+  const generate=document.getElementById('gerar-pin');
+  const pin=document.getElementById('func-pin');
+  const confirmPin=document.getElementById('func-pin-confirm');
+  const force=document.getElementById('exigir-troca-pin');
+  const access=document.getElementById('acesso-pin-ativo');
+  if(!edit||!save||!cancel||!area||!generate||!pin||!confirmPin)return;
+
+  const setMode=(editing)=>{
+    area.hidden=!editing;
+    edit.hidden=editing;
+    save.hidden=!editing;
+    cancel.hidden=!editing;
+    [pin,confirmPin,force,access,generate].forEach(el=>{if(el)el.disabled=!editing});
+    if(editing){
+      pin.value='';confirmPin.value='';
+      requestAnimationFrame(()=>pin.focus());
+    }else{
+      pin.value='';confirmPin.value='';
+      if(access)access.checked=DB_STATE.employee?.acesso_ponto_ativo!==false;
+      if(force)force.checked=!!DB_STATE.employee?.exigir_troca_pin;
+    }
+  };
+
+  edit.addEventListener('click',(event)=>{
+    event.preventDefault();
+    if(!DB_STATE.employee){toast('Salve os dados cadastrais antes de definir o PIN.','warn');return}
+    setMode(true);
+  });
+  cancel.addEventListener('click',(event)=>{event.preventDefault();setMode(false)});
+  generate.addEventListener('click',(event)=>{
+    event.preventDefault();
+    const value=String(Math.floor(1000+Math.random()*9000));
+    pin.value=value;confirmPin.value=value;pin.type='text';confirmPin.type='text';
+    toast(`PIN gerado: ${value}`);
+  });
+  save.addEventListener('click',async(event)=>{
+    event.preventDefault();
+    if(!DB_STATE.employee){toast('Salve os dados cadastrais antes de definir o PIN.','warn');return}
+    const value=pin.value.trim(),confirmation=confirmPin.value.trim();
+    if(!/^\d{4}$/.test(value)){toast('O PIN deve conter exatamente 4 números.','warn');return}
+    if(value!==confirmation){toast('A confirmação do PIN não coincide.','warn');return}
+    if(!confirm(`Confirmar alteração do PIN de ${DB_STATE.employee.nome} (matrícula ${DB_STATE.employee.matricula})?`))return;
+    save.disabled=true;save.textContent='Salvando PIN...';
+    try{
+      const result=await window.PlenitudeDB.defineEmployeePin(DB_STATE.employee.id,value,!!force?.checked,access?.checked!==false);
+      DB_STATE.employee={...DB_STATE.employee,...result,pin_configurado:true};
+      setMode(false);
+      await renderEmployee(DB_STATE.employee);
+      toast(`PIN definido com sucesso para a matrícula ${result.matricula}.`);
+    }catch(error){toast(errorText(error),'warn');console.error(error)}
+    finally{save.disabled=false;save.textContent='Confirmar alteração do PIN'}
+  });
+  setMode(false);
+}
+
 async function initFuncionarios(){
   const context=await initCommon(['administrador']);if(!context)return;const session=context.session;
+  setupEmployeePinEditor();
   const form=document.getElementById('func-form'),photoInput=document.getElementById('func-foto');
   if(photoInput)photoInput.onchange=async()=>{const file=photoInput.files?.[0];if(!file)return;try{window.__employeePhotoData=await resizeEmployeePhoto(file);window.__employeePhotoFileSelected=true;renderAvatar(window.__employeePhotoData,document.getElementById('nome').value);document.getElementById('foto-status').textContent='Nova foto pronta para envio.'}catch(error){toast(errorText(error),'warn')}};
   try{
@@ -134,14 +195,9 @@ async function initFuncionarios(){
       let saved=await window.PlenitudeDB.saveEmployee(values,DB_STATE.employee?.id||null);
       if(window.__employeePhotoFileSelected&&window.__employeePhotoData){document.getElementById('foto-status').textContent='Enviando foto...';saved=await window.PlenitudeDB.uploadEmployeePhoto(saved.id,window.__employeePhotoData)}
       DB_STATE.employee=saved;window.__employeePhotoFileSelected=false;window.__employeePhotoData=null;if(photoInput)photoInput.value='';fillEmployeeForm(saved);await renderEmployee(saved);toast('Funcionário salvo no Supabase.');
-    }catch(error){toast(errorText(error),'warn');console.error(error)}finally{button.disabled=false;button.textContent='Salvar funcionário'}};
+    }catch(error){toast(errorText(error),'warn');console.error(error)}finally{button.disabled=false;button.textContent='Salvar dados cadastrais'}};
     document.getElementById('remover-foto').onclick=async()=>{if(!DB_STATE.employee)return toast('Cadastre primeiro o funcionário.','warn');if(!confirm('Remover a foto deste funcionário?'))return;try{const saved=await window.PlenitudeDB.removeEmployeePhoto(DB_STATE.employee);DB_STATE.employee=saved;window.__employeePhotoData=null;window.__employeePhotoFileSelected=false;await renderEmployee(saved);document.getElementById('foto-status').textContent='Foto removida.';toast('Foto removida.')}catch(error){toast(errorText(error),'warn')}};
-    const setPinEditMode=(editing)=>{const area=document.getElementById('pin-edit-area'),edit=document.getElementById('editar-pin'),save=document.getElementById('salvar-pin'),cancel=document.getElementById('cancelar-pin');area.hidden=!editing;edit.hidden=editing;save.hidden=!editing;cancel.hidden=!editing;['func-pin','func-pin-confirm','exigir-troca-pin','acesso-pin-ativo','gerar-pin'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!editing});if(editing){document.getElementById('func-pin').focus()}else{document.getElementById('func-pin').value='';document.getElementById('func-pin-confirm').value='';fillEmployeeForm(DB_STATE.employee)}};
-    document.getElementById('editar-pin').onclick=()=>{if(!DB_STATE.employee)return toast('Salve os dados cadastrais antes de definir o PIN.','warn');setPinEditMode(true)};
-    document.getElementById('cancelar-pin').onclick=()=>setPinEditMode(false);
-    document.getElementById('gerar-pin').onclick=()=>{const pin=String(Math.floor(1000+Math.random()*9000));document.getElementById('func-pin').value=pin;document.getElementById('func-pin-confirm').value=pin;toast(`PIN gerado: ${pin}`)};
-    document.getElementById('salvar-pin').onclick=async()=>{if(!DB_STATE.employee)return toast('Salve os dados cadastrais antes de definir o PIN.','warn');const pin=document.getElementById('func-pin').value,confirmPin=document.getElementById('func-pin-confirm').value;if(!/^\d{4}$/.test(pin))return toast('O PIN deve conter exatamente 4 números.','warn');if(pin!==confirmPin)return toast('A confirmação do PIN não coincide.','warn');if(!confirm(`Confirmar alteração do PIN de ${DB_STATE.employee.nome} (matrícula ${DB_STATE.employee.matricula})?`))return;const b=document.getElementById('salvar-pin');b.disabled=true;b.textContent='Salvando PIN...';try{const result=await window.PlenitudeDB.defineEmployeePin(DB_STATE.employee.id,pin,document.getElementById('exigir-troca-pin').checked,document.getElementById('acesso-pin-ativo').checked);DB_STATE.employee={...DB_STATE.employee,...result,pin_configurado:true};setPinEditMode(false);await renderEmployee(DB_STATE.employee);toast(`PIN definido com sucesso para a matrícula ${result.matricula}.`)}catch(error){toast(errorText(error),'warn')}finally{b.disabled=false;b.textContent='Confirmar alteração do PIN'}};
-    document.getElementById('baixar-qr').onclick=downloadEmployeeQr;
+        document.getElementById('baixar-qr').onclick=downloadEmployeeQr;
     document.getElementById('imprimir-qr').onclick=printEmployeeQr;
   }catch(error){toast(errorText(error),'warn');console.error(error)}
 }
