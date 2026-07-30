@@ -433,3 +433,22 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
   .homolog-actions{justify-content:flex-start}
   .homolog-progress-head{align-items:flex-start;flex-direction:column}
 }
+
+
+/* RC2.3 — proteção visual contra cliques repetidos */
+#registrar.loading,
+#registrar.cooldown{
+  cursor:wait;
+  opacity:.84;
+  filter:saturate(.78);
+  pointer-events:none;
+}
+#registrar.loading span,
+#registrar.cooldown span{
+  display:inline-block;
+  animation:plenitudePulse .8s ease-in-out infinite alternate;
+}
+@keyframes plenitudePulse{
+  from{transform:scale(.92);opacity:.55}
+  to{transform:scale(1.08);opacity:1}
+}
