@@ -41,7 +41,7 @@
           <label for="login-matricula">Matrícula</label>
           <div class="input-wrap large-input"><span>№</span><input id="login-matricula" inputmode="numeric" autocomplete="username" maxlength="10" placeholder="0001" required></div>
           <label for="login-pin">PIN de 4 dígitos</label>
-          <div class="input-wrap large-input"><span>●</span><input id="login-pin" type="password" inputmode="none" pattern="[0-9]{4}" maxlength="4" autocomplete="current-password" placeholder="••••" required><button id="mostrar-pin" class="eye-btn" type="button">Mostrar</button></div>
+          <div class="input-wrap large-input"><span>●</span><input id="login-pin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="one-time-code" placeholder="••••" required><button id="mostrar-pin" class="eye-btn" type="button" aria-label="Mostrar PIN" aria-pressed="false">Mostrar</button></div>
           <div id="pin-keypad" class="pin-keypad" aria-label="Teclado numérico">
             <button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button>
             <button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button>
