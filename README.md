@@ -124,3 +124,7 @@ Execute `supabase-v24-fechamento-mensal.sql` antes de publicar. A página `fecha
 
 ### Configuração obrigatória no Supabase
 Em Authentication > URL Configuration, inclua a URL publicada de `redefinir-senha.html` em **Redirect URLs**. Exemplo: `https://SEU-USUARIO.github.io/SEU-REPOSITORIO/redefinir-senha.html`.
+
+
+## V26 — Dispositivo autorizado
+Execute `supabase-v26-dispositivo-autorizado.sql`, publique os arquivos e acesse **Dispositivo** no painel administrativo. Autorizar uma nova máquina revoga automaticamente a anterior. A autorização é vinculada ao navegador por token seguro; limpar os dados, trocar de navegador ou formatar o computador exige nova autorização.

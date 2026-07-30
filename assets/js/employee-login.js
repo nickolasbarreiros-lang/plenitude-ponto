@@ -23,7 +23,9 @@
  form.onsubmit=async e=>{e.preventDefault();const feedback=document.getElementById('employee-login-feedback'),button=form.querySelector('button[type=submit]');button.disabled=true;feedback.textContent='Verificando acesso...';feedback.className='login-feedback loading';try{
    if(!matricula.value.trim())throw new Error('Digite a matrícula.');
    if(!/^\d{4}$/.test(pin.value))throw new Error('Digite um PIN com exatamente 4 números.');
-   const {data,error}=await window.PlenitudeAuth.client.rpc('login_funcionario_pin',{p_matricula:matricula.value.trim(),p_pin:pin.value});if(error)throw error;
+   const deviceToken=localStorage.getItem('plenitude-device-token')||'';
+   if(!deviceToken)throw new Error('Este computador não está autorizado. Solicite ao administrador.');
+   const {data,error}=await window.PlenitudeAuth.client.rpc('login_funcionario_pin_dispositivo',{p_matricula:matricula.value.trim(),p_pin:pin.value,p_dispositivo_token:deviceToken,p_user_agent:navigator.userAgent});if(error)throw error;
    const row=Array.isArray(data)?data[0]:data;if(!row?.token)throw new Error('Não foi possível iniciar a sessão.');
    sessionStorage.setItem('plenitude-employee-session',JSON.stringify(row));location.replace('ponto.html');
  }catch(err){feedback.textContent=err.message||'Matrícula ou PIN incorretos.';feedback.className='login-feedback error';pin.value=''}finally{button.disabled=false}}
