@@ -38,9 +38,22 @@ async function initAdmin(){
     const marksByEmployee=new Map();marks.forEach(m=>{const list=marksByEmployee.get(m.funcionario_id)||[];list.push(m);marksByEmployee.set(m.funcionario_id,list)});
     const presentCount=activeEmployees.filter(f=>(marksByEmployee.get(f.id)||[]).length>0).length;
     const lunchCount=activeEmployees.filter(f=>{const list=(marksByEmployee.get(f.id)||[]).sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em));return list.at(-1)?.tipo==='inicio_intervalo'}).length;
+    const tolerance=Number(profile.empresas?.tolerancia_entrada_minutos??15);
+    let lateCount=0;
+    for(const employee of activeEmployees){
+      const first=(marksByEmployee.get(employee.id)||[]).sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em))[0];
+      if(!first)continue;
+      const rows=await window.PlenitudeDB.schedules(employee.id);
+      const ui=dbScheduleToUi(rows),scheduleToday=scheduleForDateFrom(ui,new Date());
+      if(!scheduleToday?.entrada)continue;
+      const actual=new Date(first.registrado_em),actualMinutes=actual.getHours()*60+actual.getMinutes();
+      const [eh,em]=scheduleToday.entrada.split(':').map(Number);
+      if(actualMinutes-(eh*60+em)>tolerance)lateCount++;
+    }
     document.getElementById('presentes-hoje').textContent=String(presentCount);
     document.getElementById('em-almoco').textContent=String(lunchCount);
     document.getElementById('ausentes-hoje').textContent=String(Math.max(0,activeEmployees.length-presentCount));
+    document.getElementById('atrasos-hoje').textContent=String(lateCount);
     const p=employeeMarks.map(m=>new Date(m.registrado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
     const sched=scheduleForDateFrom(DB_STATE.schedule,new Date());
     document.getElementById('saudacao-admin').textContent=profile.nome||session.user.email||'Administrador';
@@ -51,12 +64,52 @@ async function initAdmin(){
     else{box.classList.add('empty');}
     const schedule=DB_STATE.schedule,max=Math.max(...schedule.map(totalDay),1);
     document.getElementById('resumo-jornada').innerHTML=DB_STATE.employee?schedule.map(s=>`<div class="schedule-row-v4"><span class="schedule-day">${s.dia.slice(0,3)}</span><div class="schedule-line"><span style="width:${Math.max(34,Math.round(totalDay(s)/max*100))}%"></span></div><strong class="schedule-time">${s.entrada}–${s.saida}</strong><small class="schedule-break">Intervalo ${s.almoco}–${s.retorno}</small></div>`).join(''):'<div class="mini-empty">Cadastre um funcionário para configurar a jornada.</div>';
-    if(p.length===4&&sched){const c=calcPunchDay(p,sched);document.getElementById('saldo-dia').textContent=signedMinutes(c.diff)}
+    const monthStart=`${today.slice(0,7)}-01`,monthEnd=new Date(new Date().getFullYear(),new Date().getMonth()+1,0);
+    let monthBalance=0;
+    if(DB_STATE.employee){try{const bank=await window.PlenitudeDB.bankHours(DB_STATE.employee.id,monthStart,localDateKey(monthEnd));monthBalance=Number(bank?.resumo?.saldo_minutos||0)}catch(e){console.warn('Saldo mensal indisponível',e)}}
+    document.getElementById('saldo-mes').textContent=signedMinutes(monthBalance);
     const next=p.length<4?punchLabels[p.length]:'Concluído';
     const indicators=document.getElementById('daily-indicators');
     if(indicators)indicators.innerHTML=`<article><span>Entrada prevista</span><strong>${sched?.entrada||'—'}</strong></article><article><span>Última marcação</span><strong>${p.at(-1)||'—'}</strong></article><article><span>Próxima etapa</span><strong>${next}</strong></article><article><span>Funcionário</span><strong>${DB_STATE.employee?.nome||'Nenhum cadastrado'}</strong></article>`;
     await renderWeekChartDB();
+    await renderSmartDashboard(activeEmployees,lateCount,tolerance);
   }catch(error){toast(errorText(error),'warn');console.error(error)}
+}
+
+async function renderSmartDashboard(activeEmployees,lateCount,tolerance){
+  const select=document.getElementById('dashboard-employee');
+  if(select){
+    select.innerHTML=activeEmployees.map(e=>`<option value="${e.id}" ${DB_STATE.employee?.id===e.id?'selected':''}>${e.nome}</option>`).join('');
+    select.onchange=async()=>{DB_STATE.employee=activeEmployees.find(e=>e.id===select.value)||DB_STATE.employee;DB_STATE.schedule=DB_STATE.employee?dbScheduleToUi(await window.PlenitudeDB.schedules(DB_STATE.employee.id)):defaultSchedule;await renderMonthOverview(DB_STATE.employee)};
+  }
+  let pending=[];
+  try{pending=await window.PlenitudeDB.adminAdjustmentRequests('pendente')}catch(e){console.warn('Ajustes pendentes indisponíveis',e)}
+  const pendingCount=pending.length;
+  const pendingEl=document.getElementById('ajustes-pendentes');if(pendingEl)pendingEl.textContent=String(pendingCount);
+  const notes=[];
+  if(pendingCount)notes.push({type:'warn',icon:'✓',title:`${pendingCount} ajuste${pendingCount===1?'':'s'} pendente${pendingCount===1?'':'s'}`,text:'Solicitações aguardando aprovação ou rejeição.',href:'ajustes.html',label:'Analisar'});
+  if(lateCount)notes.push({type:'danger',icon:'⏱',title:`${lateCount} atraso${lateCount===1?'':'s'} hoje`,text:`Entrada após a tolerância configurada de ${tolerance} minutos.`,href:'relatorios.html',label:'Detalhes'});
+  const absent=activeEmployees.filter(e=>{const n=document.getElementById('ausentes-hoje');return Number(n?.textContent||0)>0}).length?Number(document.getElementById('ausentes-hoje')?.textContent||0):0;
+  if(absent)notes.push({type:'warn',icon:'○',title:`${absent} ausência${absent===1?'':'s'} hoje`,text:'Funcionários ativos ainda sem registro de entrada.',href:'ponto.html',label:'Ver ponto'});
+  if(!notes.length)notes.push({type:'ok',icon:'●',title:'Tudo em ordem',text:'Nenhuma pendência operacional identificada neste momento.',href:'relatorios.html',label:'Relatórios'});
+  const box=document.getElementById('dashboard-notifications');
+  if(box)box.innerHTML=notes.map(n=>`<article class="dashboard-note ${n.type}"><span class="note-icon">${n.icon}</span><div><strong>${n.title}</strong><small>${n.text}</small></div><a href="${n.href}">${n.label}</a></article>`).join('');
+  const count=document.getElementById('notification-count');if(count)count.textContent=String(notes.filter(n=>n.type!=='ok').length);
+  await renderMonthOverview(DB_STATE.employee);
+}
+
+async function renderMonthOverview(employee){
+  const el=document.getElementById('grafico-mensal');if(!el)return;
+  if(!employee){el.innerHTML='<div class="dashboard-empty-note">Cadastre um funcionário para visualizar o gráfico.</div>';return}
+  const end=new Date(),start=new Date(end);start.setDate(end.getDate()-29);
+  const [marks,scheduleRows]=await Promise.all([window.PlenitudeDB.marksForRange(localDateKey(start),localDateKey(end)),window.PlenitudeDB.schedules(employee.id)]);
+  const schedule=dbScheduleToUi(scheduleRows),days=[];let max=1;
+  for(let i=0;i<30;i++){
+    const d=new Date(start);d.setDate(start.getDate()+i);const key=localDateKey(d),sched=scheduleForDateFrom(schedule,d);
+    const p=marks.filter(m=>m.funcionario_id===employee.id&&m.data_local===key).map(m=>new Date(m.registrado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
+    const calc=calcPunchDay(p,sched),worked=calc?.worked||0,expected=sched?totalDay(sched):0;max=Math.max(max,worked,expected);days.push({d,worked,expected,absence:!!sched&&!p.length});
+  }
+  el.innerHTML=days.map(x=>`<div class="month-day ${x.d.getDay()===0||x.d.getDay()===6?'is-weekend':''} ${x.absence?'is-absence':''}" title="${x.d.toLocaleDateString('pt-BR')}: ${fmtMinutes(x.worked)} trabalhadas / ${fmtMinutes(x.expected)} previstas"><div class="month-bars"><b style="height:${Math.max(2,Math.round(x.expected/max*100))}%"></b><i style="height:${Math.max(2,Math.round(x.worked/max*100))}%"></i></div><small>${String(x.d.getDate()).padStart(2,'0')}</small></div>`).join('');
 }
 function scheduleForDateFrom(schedule,d){const map={1:0,2:1,3:2,4:3,5:4};const i=map[d.getDay()];return i===undefined?null:schedule[i]}
 async function renderWeekChartDB(){

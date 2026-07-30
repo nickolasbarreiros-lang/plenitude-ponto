@@ -82,3 +82,11 @@ Políticas configuráveis, tolerância de entrada padrão de 15 minutos, preserv
 - Botão **Imprimir / Salvar PDF**, usando a impressão nativa do navegador.
 - Layout de impressão A4 em orientação paisagem.
 - Não exige nova migração SQL: utiliza os dados e funções já instalados na V19.
+
+## V21 — Dashboard inteligente
+
+- Indicadores de atrasos, ajustes pendentes e saldo mensal.
+- Central de notificações operacionais.
+- Gráfico da jornada dos últimos 30 dias por funcionário.
+- Seletor rápido de funcionário no painel.
+- Utiliza apenas estruturas já existentes no Supabase; não exige nova migração SQL.

@@ -46,7 +46,9 @@
       <article class="metric-card"><i>●</i><span>Presentes</span><strong id="presentes-hoje">0</strong><small>Com entrada registrada</small></article>
       <article class="metric-card"><i>◷</i><span>Em almoço</span><strong id="em-almoco">0</strong><small>Intervalo em andamento</small></article>
       <article class="metric-card"><i>○</i><span>Ausentes</span><strong id="ausentes-hoje">0</strong><small>Sem entrada hoje</small></article>
-      <article class="metric-card"><i>±</i><span>Saldo do dia</span><strong id="saldo-dia">00:00</strong><small>Funcionário selecionado</small></article>
+      <article class="metric-card"><i>⏱</i><span>Atrasos hoje</span><strong id="atrasos-hoje">0</strong><small>Fora da tolerância</small></article>
+      <article class="metric-card"><i>✓</i><span>Ajustes pendentes</span><strong id="ajustes-pendentes">0</strong><small>Aguardando análise</small></article>
+      <article class="metric-card"><i>±</i><span>Saldo do mês</span><strong id="saldo-mes">00:00</strong><small>Funcionário selecionado</small></article>
     </section>
 
     <section id="daily-indicators" class="daily-indicators"></section>
@@ -69,12 +71,31 @@
       </article>
     </section>
 
-    <section class="panel dashboard-chart">
+    <section class="panel-grid dashboard-insights-grid">
+      <article class="panel dashboard-chart">
+        <div class="panel-head">
+          <div><p class="panel-kicker">SEMANA ATUAL</p><h2>Horas registradas por dia</h2></div>
+          <a class="btn small outline" href="relatorios.html">Ver relatório</a>
+        </div>
+        <div id="grafico-semana" class="week-chart"></div>
+      </article>
+
+      <article class="panel alert-panel">
+        <div class="panel-head">
+          <div><p class="panel-kicker">ATENÇÃO</p><h2>Notificações</h2></div>
+          <span id="notification-count" class="notification-badge">0</span>
+        </div>
+        <div id="dashboard-notifications" class="dashboard-notifications"></div>
+      </article>
+    </section>
+
+    <section class="panel dashboard-chart monthly-overview">
       <div class="panel-head">
-        <div><p class="panel-kicker">SEMANA ATUAL</p><h2>Horas registradas por dia</h2></div>
-        <a class="btn small outline" href="relatorios.html">Ver relatório</a>
+        <div><p class="panel-kicker">ÚLTIMOS 30 DIAS</p><h2>Presença e jornada</h2></div>
+        <select id="dashboard-employee" class="compact-select" aria-label="Funcionário"></select>
       </div>
-      <div id="grafico-semana" class="week-chart"></div>
+      <div id="grafico-mensal" class="month-chart"></div>
+      <div class="chart-legend"><span><i class="legend-worked"></i> Trabalhado</span><span><i class="legend-expected"></i> Previsto</span></div>
     </section>
   </main>
 </div>

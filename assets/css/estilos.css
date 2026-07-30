@@ -124,3 +124,28 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body{background:#fff!important;font-size:10px}.sidebar,.topbar,.no-print,.theme-toggle,.toast{display:none!important}.app-shell{display:block}.content{padding:0!important;max-width:none;background:#fff!important}.time-sheet-document,.panel,.time-sheet-footer{box-shadow:none!important;border-color:#999;border-radius:0;margin:0 0 6mm;padding:5mm}.time-sheet-header{grid-template-columns:42mm 1fr 42mm;gap:5mm;padding-bottom:4mm}.time-sheet-header img{width:38mm}.time-sheet-header h2{font-size:16px}.time-sheet-identification{padding-top:4mm;gap:4mm}.cards{grid-template-columns:repeat(7,1fr);gap:2mm;margin:0 0 5mm}.metric-card{min-height:0;padding:3mm;border-radius:0;box-shadow:none}.metric-card i,.metric-card small{display:none}.metric-card span{font-size:8px}.metric-card strong{font-size:14px;margin:2mm 0 0}.panel-head{margin-bottom:2mm}.panel-head h2{font-size:14px}table{min-width:0;font-size:8px}th,td{padding:1.7mm 1mm}.report-status{font-size:7px}.time-sheet-footer{page-break-inside:avoid}.time-sheet-declaration{margin-bottom:14mm}.signature-grid{gap:25mm}.document-note{margin-top:7mm}.empty-state{display:none!important}
 }
+
+/* V21 — Dashboard inteligente */
+.operational-cards{grid-template-columns:repeat(7,minmax(145px,1fr))}
+.dashboard-insights-grid{grid-template-columns:minmax(0,1.7fr) minmax(300px,.8fr);align-items:stretch}
+.alert-panel{min-height:100%}
+.notification-badge{display:grid;place-items:center;min-width:34px;height:34px;padding:0 10px;border-radius:999px;background:#fff0e8;color:#e74a13;font-weight:800}
+.dashboard-notifications{display:grid;gap:10px;margin-top:8px}
+.dashboard-note{display:grid;grid-template-columns:38px 1fr auto;gap:11px;align-items:center;padding:12px;border:1px solid #f0ddd3;border-radius:14px;background:#fffaf7}
+.dashboard-note .note-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#fff0e8;font-size:18px}
+.dashboard-note strong{display:block;font-size:14px}.dashboard-note small{display:block;color:#826f69;margin-top:3px;line-height:1.35}
+.dashboard-note a{font-size:12px;font-weight:800;color:#e94b16;text-decoration:none}
+.dashboard-note.ok .note-icon{background:#eaf8ef}.dashboard-note.warn .note-icon{background:#fff4d9}.dashboard-note.danger .note-icon{background:#ffe8e8}
+.dashboard-empty-note{padding:30px 16px;text-align:center;color:#82736e;border:1px dashed #e8d7cf;border-radius:14px}
+.compact-select{min-width:220px;border:1px solid #ead9d1;border-radius:11px;padding:9px 12px;background:#fff;font:inherit;font-weight:700;color:#2e2425}
+.monthly-overview{margin-top:18px}
+.month-chart{height:210px;display:flex;align-items:flex-end;gap:5px;padding:24px 6px 5px;overflow-x:auto;border-bottom:1px solid #eee1da}
+.month-day{min-width:20px;flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;position:relative}
+.month-bars{height:160px;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:2px}
+.month-bars i{display:block;width:7px;min-height:2px;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#ff5c14,#ff2457)}
+.month-bars b{display:block;width:7px;min-height:2px;border-radius:5px 5px 2px 2px;background:#eadbd4}
+.month-day small{font-size:9px;color:#8c7b75}.month-day.is-weekend{opacity:.45}.month-day.is-absence .month-bars:after{content:'!';position:absolute;top:5px;color:#d73b3b;font-weight:900}
+.chart-legend{display:flex;justify-content:flex-end;gap:18px;padding-top:12px;font-size:12px;color:#776761}.chart-legend i{display:inline-block;width:12px;height:8px;border-radius:4px;margin-right:5px}.legend-worked{background:linear-gradient(90deg,#ff5c14,#ff2457)}.legend-expected{background:#eadbd4}
+@media(max-width:1450px){.operational-cards{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:1000px){.dashboard-insights-grid{grid-template-columns:1fr}.operational-cards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.operational-cards{grid-template-columns:1fr}.compact-select{min-width:0;width:100%}.monthly-overview .panel-head{align-items:stretch;flex-direction:column}}
