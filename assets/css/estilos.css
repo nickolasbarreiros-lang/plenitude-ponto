@@ -452,3 +452,90 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
   from{transform:scale(.92);opacity:.55}
   to{transform:scale(1.08);opacity:1}
 }
+
+
+/* RC2.4 — estrutura definitiva da barra lateral
+   A lista de módulos possui rolagem própria e o botão Sair ocupa
+   uma área fixa, sem cobrir Homologação ou Configurações. */
+@media (min-width:781px){
+  .sidebar{
+    height:100vh;
+    overflow:hidden !important;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .sidebar-brand,
+  .sidebar-label{
+    flex:0 0 auto;
+  }
+
+  .sidebar nav{
+    flex:1 1 auto !important;
+    min-height:0;
+    overflow-y:auto;
+    overflow-x:hidden;
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    padding:2px 6px 18px 0;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(255,255,255,.28) transparent;
+  }
+
+  .sidebar nav::-webkit-scrollbar{
+    width:7px;
+  }
+
+  .sidebar nav::-webkit-scrollbar-track{
+    background:transparent;
+  }
+
+  .sidebar nav::-webkit-scrollbar-thumb{
+    background:rgba(255,255,255,.22);
+    border-radius:999px;
+  }
+
+  .sidebar nav::-webkit-scrollbar-thumb:hover{
+    background:rgba(255,255,255,.36);
+  }
+
+  .sidebar nav a{
+    flex:0 0 auto;
+    min-height:44px;
+    padding:10px 13px;
+  }
+
+  .sidebar .link-button{
+    position:static !important;
+    flex:0 0 auto;
+    width:100%;
+    margin:10px 0 0 !important;
+    padding:15px 14px;
+    background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:12px;
+    box-shadow:none !important;
+    z-index:auto;
+  }
+
+  .sidebar .link-button:hover{
+    background:rgba(255,255,255,.12);
+  }
+}
+
+@media (max-width:780px){
+  .sidebar{
+    overflow:visible !important;
+  }
+
+  .sidebar nav{
+    overflow:visible;
+    padding:0;
+  }
+
+  .sidebar .link-button{
+    position:static !important;
+    margin-top:15px !important;
+  }
+}
