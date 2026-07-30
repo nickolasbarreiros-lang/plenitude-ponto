@@ -145,3 +145,6 @@ Execute `supabase-v29-correcao-pin-funcionario.sql` no SQL Editor. Depois, conec
 - Tela do funcionário reorganizada em duas colunas no desktop.
 - Área de registro e saldos à esquerda; movimentações e ajustes à direita.
 - Mantida disposição vertical em celular/tablet.
+
+## V31 — Homologação
+Execute `supabase-v31-homologacao.sql`. Depois abra **Homologação** no painel e clique em **Criar ou reparar funcionário teste**. Não é necessário criar manualmente empresa, funcionário, jornada ou PIN.
