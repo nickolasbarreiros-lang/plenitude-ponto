@@ -32,6 +32,17 @@
   punchButton.setAttribute('aria-label',marks.length<4?actionLabels[marks.length]:'Jornada concluída');
   document.getElementById('punch-progress').innerHTML=labels.map((_,i)=>`<span class="progress-step ${i<marks.length?'done':''}"></span>`).join('');
   document.getElementById('punch-steps').innerHTML=labels.map((n,i)=>`<div class="punch-step ${i<marks.length?'done':''} ${i===marks.length?'current':''}"><span class="step-icon">${i<marks.length?'✓':i+1}</span><strong>${n}</strong><small>${marks[i]?fmt(marks[i].registrado_em):'Aguardando'}</small></div>`).join('');
+  const progressPercent=Math.min(100,marks.length*25);
+  document.getElementById('journey-progress-label').textContent=`${progressPercent}% da jornada`;
+  document.getElementById('journey-progress-stage').textContent=marks.length<4?`Etapa atual: ${labels[marks.length]}`:'Jornada concluída';
+  document.getElementById('journey-progress-fill').style.width=`${progressPercent}%`;
+  const completedCard=document.getElementById('journey-complete-card');
+  const movementPanel=document.querySelector('.movement-employee-panel');
+  if(marks.length>=4){
+    completedCard.hidden=false;
+    document.getElementById('journey-complete-summary').textContent=marks.map(m=>`${label(m.tipo)} ${fmt(m.registrado_em)}`).join(' · ');
+    movementPanel.hidden=true;
+  }else{completedCard.hidden=true;movementPanel.hidden=false;}
   const signed=n=>`${n>=0?'+':'−'}${String(Math.floor(Math.abs(n||0)/60)).padStart(2,'0')}:${String(Math.abs(n||0)%60).padStart(2,'0')}`;
   const todaySummary=todayBank?.resumo||{},todayDay=todayBank?.dias?.[0];
   document.getElementById('self-today-balance').textContent=todayDay?.saldo_minutos==null?(marks.length?'Em andamento':'Aguardando'):signed(todayDay.saldo_minutos);

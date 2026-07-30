@@ -312,3 +312,54 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
   .self-profile-card{grid-template-columns:1.6fr .8fr}
 }
 @media(max-width:900px){.clock-workspace{grid-template-columns:1fr}.clock-secondary-column{position:static}}
+
+/* RC2 — acabamento visual da área do funcionário */
+.employee-mode .premium-clock-card,.kiosk-point-mode .premium-clock-card{max-width:1320px;width:min(1320px,100%)}
+.clock-dashboard-header{grid-template-columns:180px 1fr 100px;margin-bottom:26px}
+.clock-brand-block .clock-logo{width:118px}
+.clock-main-time .clock-date{font-size:.92rem;color:var(--muted);text-transform:capitalize}
+.clock-main-time .clock-time{font-size:clamp(4rem,7vw,6.6rem);font-weight:900;letter-spacing:-.055em}
+.clock-workspace{grid-template-columns:minmax(600px,1.45fr) minmax(340px,.75fr);gap:24px}
+.clock-action-card{padding:22px 24px}
+.punch-button{min-height:84px;font-size:1.22rem;border-radius:20px;box-shadow:0 18px 34px rgba(255,86,41,.22)}
+.punch-steps{gap:10px}
+.punch-step{padding:13px 8px;border-radius:15px}
+.punch-step.done{background:#f2fbf5;border-color:#b9e3c8}
+.punch-step.done .step-icon{background:#24b15b;color:#fff}
+.punch-step.done strong{color:#137b3b}
+.journey-progress-wrap{margin:15px 0 2px;padding:13px 14px;border-radius:15px;background:#fff7f1;border:1px solid #f5d5c2}
+.journey-progress-head{display:flex;justify-content:space-between;gap:14px;margin-bottom:9px;font-size:.82rem}
+.journey-progress-head strong{color:var(--orange-dark)}
+.journey-progress-head span{color:var(--muted)}
+.journey-progress-track{height:9px;border-radius:999px;background:#f1e7e1;overflow:hidden}
+.journey-progress-track span{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,var(--orange),var(--pink));transition:width .35s ease}
+.journey-complete-card{margin-top:16px;display:flex;gap:14px;align-items:center;padding:17px 18px;border:1px solid #b7e4c7;border-radius:17px;background:#effaf3}
+.journey-complete-card[hidden]{display:none!important}
+.journey-complete-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:50%;background:#24b15b;color:#fff;font-size:1.35rem;font-weight:900}
+.journey-complete-card small{color:#137b3b;font-weight:900;letter-spacing:.08em}
+.journey-complete-card h3{margin:3px 0 4px;color:#135f34}
+.journey-complete-card p{margin:0;color:#4e6657;font-size:.86rem}
+.self-balance-grid strong{font-size:1.45rem}
+.self-profile-card{align-items:center;gap:14px;padding:16px 18px}
+.self-profile-main{min-width:0}.self-profile-main strong{font-size:1rem}.self-profile-main span{margin-top:3px}
+.self-profile-code{text-align:left}
+.self-pin-button{justify-self:end;white-space:nowrap}
+.clock-secondary-column>section{padding:18px}
+.clock-secondary-column .movement-employee-panel .muted{margin:9px 0 13px}
+.clock-secondary-column .adjustment-panel{padding-bottom:16px}
+.clock-footnote{margin:12px 0 0;font-size:.72rem;color:#9b8e90}
+@media(min-width:1100px){
+  .self-profile-card{grid-template-columns:1.5fr .65fr auto}
+}
+@media(max-width:1000px){
+  .clock-workspace{grid-template-columns:1fr}
+  .clock-secondary-column{position:static}
+}
+@media(max-width:700px){
+  .clock-dashboard-header{grid-template-columns:1fr;padding-top:28px}
+  .clock-brand-block .clock-logo{width:104px}
+  .clock-main-time .clock-time{font-size:4rem}
+  .journey-progress-head{flex-direction:column;gap:4px}
+  .self-profile-card{grid-template-columns:1fr}
+  .self-pin-button{justify-self:stretch}
+}

@@ -6,7 +6,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="#ff6500" name="theme-color"/>
 <title>Registrar ponto | Plenitude</title>
-<link href="assets/css/estilos.css?v=1.0.0-rc1.1" rel="stylesheet"/>
+<link href="assets/css/estilos.css?v=1.0.0-rc2" rel="stylesheet"/>
 </head>
 <body>
 <main class="clock-page">
@@ -14,15 +14,16 @@
 <div class="clock-avatar" id="clock-avatar"><span>P</span></div>
 <div class="clock-employee-data"><small>Funcionário</small><strong id="clock-employee">Funcionário da loja</strong><em id="clock-status">Ativo</em></div>
 <select aria-label="Selecionar funcionário" class="employee-select" hidden="" id="ponto-funcionario-select"></select>
-</div><button class="punch-button" id="registrar"><span>◷</span> Registrar ponto</button><p class="next-mark" id="proxima"></p><div class="punch-steps" id="punch-steps"></div><div class="punch-progress" id="punch-progress"></div><div class="punch-list punch-list-premium" id="lista-pontos"></div></section><section class="employee-self-service" hidden="" id="employee-self-service">
+</div><button class="punch-button" id="registrar"><span>◷</span> Registrar ponto</button><p class="next-mark" id="proxima"></p><div class="punch-steps" id="punch-steps"></div><div class="journey-progress-wrap"><div class="journey-progress-head"><strong id="journey-progress-label">0% da jornada</strong><span id="journey-progress-stage">Aguardando entrada</span></div><div class="journey-progress-track"><span id="journey-progress-fill"></span></div></div><div class="punch-progress" id="punch-progress"></div><div class="punch-list punch-list-premium" id="lista-pontos"></div><section class="journey-complete-card" id="journey-complete-card" hidden><div class="journey-complete-icon">✓</div><div><small>JORNADA ENCERRADA</small><h3>Até amanhã!</h3><p id="journey-complete-summary"></p></div></section></section><section class="employee-self-service" hidden="" id="employee-self-service">
 <div class="homologation-note" hidden id="homologation-note">🧪 Ambiente de homologação: os saldos semanal e mensal começam no dia atual para facilitar os testes.</div><div class="self-balance-grid">
 <article><span>Saldo de hoje</span><strong id="self-today-balance">—</strong></article>
 <article><span>Saldo da semana</span><strong id="self-week-balance">00:00</strong></article>
 <article><span>Saldo do mês</span><strong id="self-month-balance">00:00</strong></article>
 </div>
 <div class="self-profile-card">
-<div><small>MEU PERFIL</small><strong id="self-profile-name">—</strong><span id="self-profile-role">—</span></div>
-<div><small>MATRÍCULA / CÓDIGO</small><strong id="self-profile-code">—</strong></div>
+<div class="self-profile-main"><small>MEU PERFIL</small><strong id="self-profile-name">—</strong><span id="self-profile-role">—</span></div>
+<div class="self-profile-code"><small>MATRÍCULA / CÓDIGO</small><strong id="self-profile-code">—</strong></div>
+<button class="btn ghost self-pin-button" id="abrir-troca-pin" type="button">🔑 Alterar meu PIN</button>
 </div>
 </section></div><aside class="clock-secondary-column"><section class="movement-employee-panel">
 <div class="panel-head"><div><small>SAÍDAS DURANTE O EXPEDIENTE</small><h3>Movimentação temporária</h3></div><span class="badge" id="movement-state">Dentro da loja</span></div>
@@ -43,10 +44,10 @@
 <button class="btn primary" type="submit">Enviar solicitação</button>
 </form>
 <div class="my-adjustments" id="my-adjustments"></div>
-</section><section class="change-pin-panel" hidden="" id="change-pin-panel"><h3>Alterar meu PIN</h3><div class="pin-change-grid"><input id="pin-atual" inputmode="numeric" maxlength="4" placeholder="PIN atual" type="password"/><input id="pin-novo" inputmode="numeric" maxlength="4" placeholder="Novo PIN" type="password"/><input id="pin-confirmar" inputmode="numeric" maxlength="4" placeholder="Confirmar novo PIN" type="password"/><button class="btn secondary" id="alterar-meu-pin" type="button">Salvar novo PIN</button></div></section><button class="link-button change-pin-link" id="abrir-troca-pin" type="button">Alterar meu PIN</button></aside></div><p class="clock-footnote">O horário oficial é gerado e gravado pelo servidor do Supabase.</p></section>
+</section><section class="change-pin-panel" hidden="" id="change-pin-panel"><h3>Alterar meu PIN</h3><div class="pin-change-grid"><input id="pin-atual" inputmode="numeric" maxlength="4" placeholder="PIN atual" type="password"/><input id="pin-novo" inputmode="numeric" maxlength="4" placeholder="Novo PIN" type="password"/><input id="pin-confirmar" inputmode="numeric" maxlength="4" placeholder="Confirmar novo PIN" type="password"/><button class="btn secondary" id="alterar-meu-pin" type="button">Salvar novo PIN</button></div></section></aside></div><p class="clock-footnote">O horário oficial é gerado e gravado pelo servidor do Supabase.</p></section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc1"></script><script src="assets/js/auth.js?v=1.0.0-rc1"></script>
 <script src="assets/js/database.js?v=1.0.0-rc1"></script><script src="assets/js/app.js?v=1.0.0-rc1"></script>
-<script src="assets/js/ponto-pin.js?v=1.0.0-rc1.1"></script>
+<script src="assets/js/ponto-pin.js?v=1.0.0-rc2"></script>
 </body>
 </html>
