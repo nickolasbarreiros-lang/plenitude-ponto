@@ -66,10 +66,12 @@
     const { data, error } = await client.auth.signInWithPassword({ email, password });
     if (error) throw error;
     cachedAccess = null;
+    try { await client.rpc('registrar_evento_auditoria',{p_acao:'LOGIN',p_tabela:'sistema',p_registro_id:data.user?.id||null,p_descricao:'Login administrativo realizado',p_dados_novos:{email:data.user?.email||email},p_origem:'web'}); } catch (_) {}
     return data;
   }
 
   async function signOut() {
+    try { await client.rpc('registrar_evento_auditoria',{p_acao:'LOGOUT',p_tabela:'sistema',p_registro_id:null,p_descricao:'Saída do painel administrativo',p_dados_novos:null,p_origem:'web'}); } catch (_) {}
     cachedAccess = null;
     const { error } = await client.auth.signOut({ scope: 'local' });
     if (error) throw error;

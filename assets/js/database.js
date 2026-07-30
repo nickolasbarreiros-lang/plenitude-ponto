@@ -226,6 +226,25 @@
     if(error) throw error; return Array.isArray(data)?data[0]:data;
   }
 
+
+  async function auditLogs(filters={}){
+    const {data,error}=await client.rpc('listar_auditoria_admin',{
+      p_inicio:filters.start?`${filters.start}T00:00:00-03:00`:null,
+      p_fim:filters.end?`${filters.end}T23:59:59-03:00`:null,
+      p_acao:filters.action||null,p_tabela:filters.table||null,p_busca:filters.query||null,
+      p_limite:filters.limit||100,p_offset:filters.offset||0
+    });
+    if(error) throw error; return data||[];
+  }
+  async function securitySummary(){
+    const {data,error}=await client.rpc('resumo_seguranca_admin');
+    if(error) throw error; return data||{};
+  }
+  async function recordAuditEvent(action,description='',details=null){
+    const {error}=await client.rpc('registrar_evento_auditoria',{p_acao:action,p_tabela:'sistema',p_registro_id:null,p_descricao:description,p_dados_novos:details,p_origem:'web'});
+    if(error) console.warn('Auditoria:',error.message);
+  }
+
   async function defineEmployeePin(employeeId,pin,requireChange=false,active=true){
     const {data,error}=await client.rpc('admin_definir_pin',{p_funcionario_id:employeeId,p_pin:pin,p_exigir_troca:requireChange,p_acesso_ativo:active});
     if(error) throw error;
@@ -237,5 +256,5 @@
     if(error) throw error;
   }
 
-  window.PlenitudeDB=Object.freeze({profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks});
+  window.PlenitudeDB=Object.freeze({auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks});
 })();

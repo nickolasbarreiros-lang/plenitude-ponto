@@ -90,3 +90,11 @@ Políticas configuráveis, tolerância de entrada padrão de 15 minutos, preserv
 - Gráfico da jornada dos últimos 30 dias por funcionário.
 - Seletor rápido de funcionário no painel.
 - Utiliza apenas estruturas já existentes no Supabase; não exige nova migração SQL.
+
+## V22 — Auditoria e segurança
+
+1. Execute `supabase-v22-auditoria-seguranca.sql` no SQL Editor do Supabase.
+2. Publique os arquivos desta versão.
+3. A nova tela **Auditoria** permite filtrar, consultar detalhes e exportar CSV.
+4. Logins, logouts e alterações críticas são gravados com horário do servidor.
+5. A tabela de auditoria só pode ser lida por administradores da mesma empresa.
