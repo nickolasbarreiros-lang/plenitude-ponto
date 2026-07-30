@@ -34,8 +34,14 @@
   try{const d=await rpc('dados_funcionario_token',{p_token:token});employee=Array.isArray(d)?d[0]:d;if(!employee)throw new Error('Sessão inválida.');
    document.getElementById('clock-employee').textContent=employee.nome;document.getElementById('clock-status').textContent='Pronto para registrar';document.getElementById('clock-avatar').innerHTML=`<span>${employee.nome.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase()}</span>`;
    const self=document.getElementById('employee-self-service');self.hidden=false;document.getElementById('self-profile-name').textContent=employee.nome;document.getElementById('self-profile-role').textContent=employee.cargo||'Funcionário';document.getElementById('self-profile-code').textContent=employee.matricula;
-   document.getElementById('change-pin-panel').hidden=!employee.exigir_troca_pin;await Promise.all([load(),loadAdjustments(),loadMovements()]);
-  }catch(e){alert(e.message);sessionStorage.removeItem('plenitude-employee-session');location.replace('index.html')}
+   document.getElementById('change-pin-panel').hidden=!employee.exigir_troca_pin;
+   const results=await Promise.allSettled([load(),loadAdjustments(),loadMovements()]);
+   results.forEach((result,index)=>{if(result.status==='rejected'){console.warn(['Resumo de ponto indisponível','Ajustes indisponíveis','Movimentações indisponíveis'][index],result.reason)}});
+  }catch(e){
+   console.error('Falha ao iniciar área do funcionário',e);
+   toast(e.message||'Não foi possível abrir a área do funcionário.','warn');
+   if(/sessão|token|inválid/i.test(String(e.message||''))){sessionStorage.removeItem('plenitude-employee-session');setTimeout(()=>location.replace('index.html'),1200)}
+  }
  }
  document.getElementById('registrar').onclick=async()=>{const b=document.getElementById('registrar');b.disabled=true;try{const deviceToken=localStorage.getItem('plenitude-device-token')||'';if(!deviceToken)throw new Error('Registro bloqueado: computador não autorizado.');const data=await rpc('registrar_ponto_dispositivo',{p_token:token,p_dispositivo_token:deviceToken,p_user_agent:navigator.userAgent});const m=Array.isArray(data)?data[0]:data;showSuccess(`${label(m.tipo)} registrada às ${fmt(m.registrado_em)}`);toast(`${label(m.tipo)} registrada às ${fmt(m.registrado_em)}.`);await load()}catch(e){toast(e.message,'warn');b.disabled=false}};
  document.getElementById('fullscreen-toggle').onclick=async()=>{try{if(!document.fullscreenElement){await document.documentElement.requestFullscreen();document.getElementById('fullscreen-toggle').textContent='✕ Sair da tela cheia'}else{await document.exitFullscreen();document.getElementById('fullscreen-toggle').textContent='⛶ Tela cheia'}}catch(e){toast('O navegador não permitiu ativar a tela cheia.','warn')}};
