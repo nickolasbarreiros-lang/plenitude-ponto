@@ -70,6 +70,18 @@
     return data;
   }
 
+  async function requestPasswordReset(email) {
+    const redirectTo = new URL('redefinir-senha.html', location.href).href;
+    const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) throw error;
+  }
+
+  async function updatePassword(password) {
+    const { data, error } = await client.auth.updateUser({ password });
+    if (error) throw error;
+    return data;
+  }
+
   async function signOut() {
     try { await client.rpc('registrar_evento_auditoria',{p_acao:'LOGOUT',p_tabela:'sistema',p_registro_id:null,p_descricao:'Saída do painel administrativo',p_dados_novos:null,p_origem:'web'}); } catch (_) {}
     cachedAccess = null;
@@ -95,6 +107,6 @@
 
   window.PlenitudeAuth = Object.freeze({
     client, getSession, getAccessContext, requireAccess, requireSession,
-    redirectIfAuthenticated, homeForRole, signIn, signOut, friendlyAuthError
+    redirectIfAuthenticated, homeForRole, signIn, signOut, requestPasswordReset, updatePassword, friendlyAuthError
   });
 })();

@@ -16,6 +16,7 @@
       <p class="eyebrow">SISTEMA INTERNO</p>
       <h1 id="titulo-login">Plenitude Ponto</h1>
       <p class="muted access-subtitle">Escolha o tipo de acesso.</p>
+      <div class="access-live-status" aria-live="polite"><span id="access-online-dot" class="live-dot"></span><strong id="access-clock">--:--:--</strong><span id="access-date">Carregando data...</span><small id="access-network">Verificando conexão</small></div>
 
       <div id="access-choice" class="access-choice-grid">
         <button id="choose-employee" class="access-choice-card employee-choice" type="button">
@@ -64,6 +65,7 @@
           <label for="senha">Senha</label>
           <div class="input-wrap large-input"><span>●</span><input id="senha" type="password" placeholder="Digite sua senha" autocomplete="current-password" required><button id="mostrar-senha" class="eye-btn" type="button" aria-label="Mostrar senha">Mostrar</button></div>
           <button type="submit" class="btn primary login-btn">Entrar no painel</button>
+          <button id="forgot-password" class="forgot-password-link" type="button">Esqueci minha senha</button>
           <p id="login-feedback" class="login-feedback" role="status" aria-live="polite"></p>
         </form>
       </section>
@@ -76,5 +78,6 @@
   <script src="assets/js/auth.js"></script>
   <script src="assets/js/login.js"></script>
   <script src="assets/js/employee-login.js"></script>
+  <script src="assets/js/access-status.js"></script>
 </body>
 </html>

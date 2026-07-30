@@ -108,5 +108,19 @@ Políticas configuráveis, tolerância de entrada padrão de 15 minutos, preserv
 - Não requer novo SQL; utiliza as políticas e funções da V22.
 
 
-## V24 — Fechamento mensal
+## V25 — Fechamento mensal
 Execute `supabase-v24-fechamento-mensal.sql` antes de publicar. A página `fechamento.html` permite fechar e reabrir competências com auditoria e bloqueio de alterações em marcações e ocorrências.
+
+
+## V25 — Acabamento profissional
+
+- recuperação de senha do administrador por e-mail via Supabase Auth;
+- tela segura para definição de nova senha;
+- indicador de força da senha;
+- relógio, data e estado da conexão na tela inicial;
+- estados de carregamento e mensagens de sucesso mais claras;
+- revisão dos retornos protegidos para todas as páginas administrativas;
+- melhorias de foco, acessibilidade e responsividade.
+
+### Configuração obrigatória no Supabase
+Em Authentication > URL Configuration, inclua a URL publicada de `redefinir-senha.html` em **Redirect URLs**. Exemplo: `https://SEU-USUARIO.github.io/SEU-REPOSITORIO/redefinir-senha.html`.
