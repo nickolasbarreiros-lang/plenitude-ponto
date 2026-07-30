@@ -6,7 +6,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="#ff6500" name="theme-color"/>
 <title>Registrar ponto | Plenitude</title>
-<link href="assets/css/estilos.css?v=1.0.0-rc3" rel="stylesheet"/>
+<link href="assets/css/estilos.css?v=1.0.0-rc3.3" rel="stylesheet"/>
 </head>
 <body>
 <main class="clock-page">
@@ -35,8 +35,8 @@
 </div>
 <div class="movement-history" id="my-movements"></div>
 </section><section class="adjustment-panel" id="adjustment-panel">
-<div class="panel-head"><div><small>CORREÇÃO DE PONTO</small><h3>Solicitar marcação esquecida</h3></div><button class="btn outline" id="toggle-adjustment" type="button">Nova solicitação</button></div>
-<form class="adjustment-form" hidden="" id="adjustment-form">
+<div class="panel-head"><div><small>CORREÇÃO DE PONTO</small><h3>Solicitar marcação esquecida</h3></div><button class="btn outline" id="toggle-adjustment" type="button">Abrir nova solicitação</button></div>
+<p class="adjustment-help" id="adjustment-help">Clique em <b>Abrir nova solicitação</b> para preencher uma correção de ponto.</p><form class="adjustment-form" hidden="" id="adjustment-form">
 <label>Data<input id="ajuste-data" required="" type="date"/></label>
 <label>Marcação<select id="ajuste-tipo" required=""><option value="entrada">Entrada</option><option value="inicio_intervalo">Início do almoço</option><option value="fim_intervalo">Retorno do almoço</option><option value="saida">Saída</option></select></label>
 <label>Horário correto<input id="ajuste-horario" required="" type="time"/></label>
@@ -46,8 +46,8 @@
 <div class="my-adjustments" id="my-adjustments"></div>
 </section><section class="change-pin-panel" hidden="" id="change-pin-panel"><h3>Alterar meu PIN</h3><div class="pin-change-grid"><input id="pin-atual" inputmode="numeric" maxlength="4" placeholder="PIN atual" type="password"/><input id="pin-novo" inputmode="numeric" maxlength="4" placeholder="Novo PIN" type="password"/><input id="pin-confirmar" inputmode="numeric" maxlength="4" placeholder="Confirmar novo PIN" type="password"/><button class="btn secondary" id="alterar-meu-pin" type="button">Salvar novo PIN</button></div></section></aside></div><p class="clock-footnote">O horário oficial é gerado e gravado pelo servidor do Supabase.</p></section>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc3"></script><script src="assets/js/auth.js?v=1.0.0-rc3"></script>
-<script src="assets/js/database.js?v=1.0.0-rc3"></script><script src="assets/js/app.js?v=1.0.0-rc3"></script>
-<script src="assets/js/ponto-pin.js?v=1.0.0-rc3"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc3.3"></script><script src="assets/js/auth.js?v=1.0.0-rc3.3"></script>
+<script src="assets/js/database.js?v=1.0.0-rc3.3"></script><script src="assets/js/app.js?v=1.0.0-rc3.3"></script>
+<script src="assets/js/ponto-pin.js?v=1.0.0-rc3.3"></script>
 </body>
 </html>

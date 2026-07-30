@@ -648,3 +648,27 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
   font-weight:800;
   letter-spacing:.02em;
 }
+
+
+/* RC3.3 — fluxo claro de solicitação de ajuste */
+.adjustment-help{
+  margin:0 0 14px;
+  padding:11px 13px;
+  border:1px dashed #e2d2ca;
+  border-radius:11px;
+  background:#fffaf7;
+  color:#766963;
+  line-height:1.45;
+}
+#toggle-adjustment.danger-soft{
+  background:#fff2ef;
+  border-color:#efb7aa;
+  color:#a63b26;
+}
+#adjustment-form:not([hidden]){
+  animation:adjustmentOpen .18s ease-out;
+}
+@keyframes adjustmentOpen{
+  from{opacity:0;transform:translateY(-4px)}
+  to{opacity:1;transform:translateY(0)}
+}

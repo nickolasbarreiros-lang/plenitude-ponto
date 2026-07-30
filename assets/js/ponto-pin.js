@@ -171,8 +171,53 @@ document.getElementById('registrar').onclick=async()=>{
   const data=await rpc('listar_meus_ajustes',{p_token:token}),box=document.getElementById('my-adjustments');
   const rows=data||[];box.innerHTML=rows.length?`<h4>Minhas solicitações</h4>${rows.slice(0,8).map(r=>`<div class="adjustment-item"><div><strong>${new Date(r.data_marcacao+'T12:00:00').toLocaleDateString('pt-BR')} · ${label(r.tipo_marcacao)}</strong><small>${String(r.horario_solicitado).slice(0,5)} — ${r.justificativa}</small>${r.resposta_administrador?`<em>Resposta: ${r.resposta_administrador}</em>`:''}</div><span class="request-status ${r.status}">${r.status}</span></div>`).join('')}`:'<div class="mini-empty">Nenhuma solicitação de ajuste.</div>';
  }
- document.getElementById('toggle-adjustment').onclick=()=>{const f=document.getElementById('adjustment-form');f.hidden=!f.hidden;document.getElementById('ajuste-data').value=dateKey(new Date())};
- document.getElementById('adjustment-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;try{await rpc('solicitar_ajuste_ponto',{p_token:token,p_data:document.getElementById('ajuste-data').value,p_tipo:document.getElementById('ajuste-tipo').value,p_horario:document.getElementById('ajuste-horario').value,p_justificativa:document.getElementById('ajuste-justificativa').value});toast('Solicitação enviada para análise.');e.currentTarget.reset();e.currentTarget.hidden=true;await loadAdjustments()}catch(err){toast(err.message,'warn')}finally{b.disabled=false}};
+ const adjustmentToggle=document.getElementById('toggle-adjustment');
+ const adjustmentForm=document.getElementById('adjustment-form');
+ const adjustmentHelp=document.getElementById('adjustment-help');
+
+ function setAdjustmentEditing(open){
+  adjustmentForm.hidden=!open;
+  adjustmentToggle.textContent=open?'Cancelar solicitação':'Abrir nova solicitação';
+  adjustmentToggle.classList.toggle('danger-soft',open);
+  adjustmentToggle.setAttribute('aria-expanded',String(open));
+  adjustmentHelp.hidden=open;
+
+  if(open){
+   document.getElementById('ajuste-data').value=dateKey(new Date());
+   requestAnimationFrame(()=>document.getElementById('ajuste-data').focus());
+  }else{
+   adjustmentForm.reset();
+  }
+ }
+
+ adjustmentToggle.onclick=()=>setAdjustmentEditing(adjustmentForm.hidden);
+ adjustmentForm.onsubmit=async e=>{
+  e.preventDefault();
+  const b=e.submitter;
+  if(b.disabled)return;
+
+  b.disabled=true;
+  b.textContent='Enviando...';
+
+  try{
+   await rpc('solicitar_ajuste_ponto',{
+    p_token:token,
+    p_data:document.getElementById('ajuste-data').value,
+    p_tipo:document.getElementById('ajuste-tipo').value,
+    p_horario:document.getElementById('ajuste-horario').value,
+    p_justificativa:document.getElementById('ajuste-justificativa').value
+   });
+
+   toast('Solicitação enviada para análise.');
+   setAdjustmentEditing(false);
+   await loadAdjustments();
+  }catch(err){
+   toast(err.message,'warn');
+  }finally{
+   b.disabled=false;
+   b.textContent='Enviar solicitação';
+  }
+ };
 
  document.getElementById('alterar-meu-pin').onclick=async()=>{const a=document.getElementById('pin-atual').value,n=document.getElementById('pin-novo').value,c=document.getElementById('pin-confirmar').value;if(!/^\d{4}$/.test(n)||n!==c)return toast('O novo PIN deve ter 4 números e coincidir com a confirmação.','warn');try{await rpc('alterar_proprio_pin',{p_token:token,p_pin_atual:a,p_novo_pin:n});toast('PIN alterado com sucesso.');document.getElementById('change-pin-panel').hidden=true}catch(e){toast(e.message,'warn')}};
  init();
