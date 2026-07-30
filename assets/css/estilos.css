@@ -366,3 +366,70 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
 
 /* RC2.1 — homologação e diagnóstico */
 .homolog-actions{display:flex;gap:8px;flex-wrap:wrap}.homolog-summary{padding:14px 16px;border-radius:12px;background:#f7f3f0;margin-bottom:14px}.homolog-summary.ok{background:#eaf8ef;color:#176b38}.homolog-summary.warn{background:#fff4d8;color:#8a5a00}.homolog-summary.fail{background:#fdecec;color:#a32626}.homolog-diagnostic-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.homolog-diagnostic{padding:12px 14px;border:1px solid #eadfd9;border-radius:12px;display:flex;flex-direction:column;gap:4px}.homolog-diagnostic.ok{background:#f0faf4;border-color:#bfe4cd}.homolog-diagnostic.fail{background:#fff0f0;border-color:#efbcbc}.homolog-diagnostic small{color:#786b66}.homolog-progress-text{font-weight:700;margin:14px 0 8px}.homolog-progress{height:10px;border-radius:999px;background:#eee4df;overflow:hidden;margin-bottom:18px}.homolog-progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff5a0a,#ff2457);transition:width .25s ease}.homolog-checklist{columns:2;column-gap:22px}.homolog-checklist h3{break-after:avoid;margin:14px 0 7px;color:#d94b08;font-size:13px;text-transform:uppercase;letter-spacing:.06em}.homolog-check{break-inside:avoid;display:flex;align-items:flex-start;gap:9px;padding:8px 10px;border-radius:9px;margin-bottom:5px;background:#fbf8f6;cursor:pointer}.homolog-check:hover{background:#fff0e9}.homolog-check input{margin-top:3px;accent-color:#ff4d1a}@media(max-width:900px){.homolog-diagnostic-grid{grid-template-columns:1fr 1fr}.homolog-checklist{columns:1}}@media(max-width:600px){.homolog-diagnostic-grid{grid-template-columns:1fr}}
+
+
+/* RC2.2 — Homologação guiada */
+.homolog-summary{
+  padding:16px;
+  border:1px solid #eadbd4;
+  border-radius:14px;
+  background:#fff9f6;
+  margin:14px 0;
+}
+.homolog-summary.ok{background:#eaf8ef;border-color:#b7e2c5;color:#18743c}
+.homolog-summary.warn{background:#fff5dc;border-color:#f0d48a;color:#795500}
+.homolog-summary.fail{background:#fff0f0;border-color:#f0b6b6;color:#9e2525}
+.homolog-diagnostic-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.homolog-diagnostic{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-height:70px;
+  padding:14px;
+  border-radius:14px;
+  border:1px solid #e9ddd8;
+}
+.homolog-diagnostic.ok{background:#eef9f2;border-color:#b7e2c5}
+.homolog-diagnostic.fail{background:#fff0f0;border-color:#f0b6b6}
+.homolog-diagnostic small{color:#756a66}
+.homolog-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.homolog-progress-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.homolog-progress{height:12px;background:#f1e7e2;border-radius:999px;overflow:hidden;margin:12px 0 22px}
+.homolog-progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff5d0d,#ff2458);transition:width .25s ease}
+.homolog-checklist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 18px}
+.homolog-checklist h3{grid-column:1/-1;margin:18px 0 4px;padding-top:12px;border-top:1px solid #eee1db}
+.homolog-check{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:10px 12px;
+  border:1px solid #eadfd9;
+  border-radius:12px;
+  background:#fff;
+  cursor:pointer;
+}
+.homolog-check:has(input:checked){background:#eef9f2;border-color:#b7e2c5}
+.homolog-check input{margin-top:3px;accent-color:#ef4b1b}
+.homolog-notes{
+  width:100%;
+  min-height:150px;
+  resize:vertical;
+  padding:14px;
+  border:1px solid #e5d6cf;
+  border-radius:14px;
+  font:inherit;
+}
+.badge.success{background:#eaf8ef;color:#18743c;border-color:#b7e2c5}
+@media(max-width:980px){
+  .homolog-diagnostic-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .homolog-checklist{grid-template-columns:1fr}
+}
+@media(max-width:650px){
+  .homolog-diagnostic-grid{grid-template-columns:1fr}
+  .homolog-actions{justify-content:flex-start}
+  .homolog-progress-head{align-items:flex-start;flex-direction:column}
+}

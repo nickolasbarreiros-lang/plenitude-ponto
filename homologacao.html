@@ -1,9 +1,114 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Homologação | Plenitude Ponto</title><link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc2.1"></head><body><div class="app-shell"><aside class="sidebar"><div class="sidebar-brand"><img class="logo" src="assets/img/logo-plenitude.png" alt="Plenitude"></div><p class="sidebar-label">CONTROLE DE PONTO</p><nav>
-<a href="admin.html"><span>▦</span><b>Painel</b></a><a href="ponto.html"><span>◷</span><b>Registrar ponto</b></a><a href="funcionarios.html"><span>♙</span><b>Funcionário</b></a><a href="jornada.html"><span>▤</span><b>Jornada</b></a><a href="calendario.html"><span>▣</span><b>Calendário</b></a><a href="ajustes.html"><span>✓</span><b>Ajustes</b></a><a href="relatorios.html"><span>▥</span><b>Relatórios</b></a><a href="fechamento.html"><span>🔒</span><b>Fechamento</b></a><a href="auditoria.html"><span>⌕</span><b>Auditoria</b></a><a href="backup.html"><span>⇩</span><b>Backup</b></a><a href="dispositivos.html"><span>▣</span><b>Dispositivo</b></a><a class="active" href="homologacao.html"><span>🧪</span><b>Homologação</b></a><a href="configuracoes.html"><span>⚙</span><b>Configurações</b></a></nav><button id="sair" class="link-button">↪ Sair do sistema</button></aside>
-<main class="content"><header class="topbar"><div><p class="eyebrow">AMBIENTE DE TESTES</p><h1>Homologação</h1><p class="muted">Teste registros sem utilizar o cadastro real da Roseli.</p></div><span class="badge">Somente administrador</span></header>
-<section class="panel"><div class="panel-head"><div><p class="panel-kicker">FUNCIONÁRIO PADRÃO</p><h2>TESTE HOMOLOGAÇÃO</h2></div></div><div class="backup-grid"><article class="backup-card"><strong>Matrícula</strong><span style="font-size:28px">999</span><small>Login exclusivo de teste</small></article><article class="backup-card"><strong>PIN</strong><span style="font-size:28px">9999</span><small>É redefinido a cada reset</small></article><article class="backup-card"><strong>Jornada</strong><span style="font-size:22px">Segunda a sexta</span><small>Horários padrão da loja</small></article></div><div class="backup-main-action" style="margin-top:20px"><button id="criar" class="btn primary">Criar ou reparar funcionário teste</button><span id="status" class="muted"></span></div></section>
-<section class="panel"><div class="panel-head"><div><p class="panel-kicker">LIMPEZA SEGURA</p><h2>Resetar dados de teste</h2></div></div><p class="muted">Remove marcações, ocorrências, ajustes, movimentações e sessões somente da matrícula 999. O cadastro e a jornada são preservados.</p><button id="resetar" class="btn outline">Resetar funcionário de testes</button></section>
-<section class="panel"><div class="panel-head"><div><p class="panel-kicker">DIAGNÓSTICO</p><h2>Saúde técnica da instalação</h2></div><button id="diagnosticar" class="btn outline">Executar diagnóstico</button></div><div id="diagnostico-resumo" class="homolog-summary muted">Ainda não executado.</div><div id="diagnostico-lista" class="homolog-diagnostic-grid"></div></section>
-<section class="panel"><div class="panel-head"><div><p class="panel-kicker">CHECKLIST DE ACEITAÇÃO</p><h2>Homologação da versão 1.0</h2></div><div class="homolog-actions"><button id="marcar-todos" class="btn outline">Marcar todos</button><button id="limpar-checklist" class="btn outline">Limpar</button></div></div><p class="muted">Marque cada cenário somente depois de testá-lo de ponta a ponta. O progresso fica salvo neste navegador.</p><div id="checklist-progresso" class="homolog-progress-text">0 de 0 testes concluídos</div><div class="homolog-progress"><span id="checklist-barra"></span></div><div id="checklist" class="homolog-checklist"></div></section>
-<section class="panel"><div class="panel-head"><div><p class="panel-kicker">COMO USAR</p><h2>Sequência recomendada</h2></div></div><ol><li>Execute o diagnóstico técnico e resolva qualquer item vermelho.</li><li>Crie ou repare o funcionário de teste.</li><li>Use matrícula <b>999</b> e PIN <b>9999</b> no computador autorizado.</li><li>Complete o checklist de aceitação abaixo.</li><li>Resete o funcionário para repetir cenários quando necessário.</li></ol></section></main></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc1"></script><script src="assets/js/auth.js?v=1.0.0-rc1"></script><script src="assets/js/homologacao.js?v=1.0.0-rc2.1"></script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Homologação | Plenitude Ponto</title>
+  <link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc2.2">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><img class="logo" src="assets/img/logo-plenitude.png" alt="Plenitude"></div>
+    <p class="sidebar-label">CONTROLE DE PONTO</p>
+    <nav>
+      <a href="admin.html"><span>▦</span><b>Painel</b></a>
+      <a href="ponto.html"><span>◷</span><b>Registrar ponto</b></a>
+      <a href="funcionarios.html"><span>♙</span><b>Funcionário</b></a>
+      <a href="jornada.html"><span>▤</span><b>Jornada</b></a>
+      <a href="calendario.html"><span>▣</span><b>Calendário</b></a>
+      <a href="ajustes.html"><span>✓</span><b>Ajustes</b></a>
+      <a href="relatorios.html"><span>▥</span><b>Relatórios</b></a>
+      <a href="fechamento.html"><span>🔒</span><b>Fechamento</b></a>
+      <a href="auditoria.html"><span>⌕</span><b>Auditoria</b></a>
+      <a href="backup.html"><span>⇩</span><b>Backup</b></a>
+      <a href="dispositivos.html"><span>▣</span><b>Dispositivo</b></a>
+      <a class="active" href="homologacao.html"><span>🧪</span><b>Homologação</b></a>
+      <a href="configuracoes.html"><span>⚙</span><b>Configurações</b></a>
+    </nav>
+    <button id="sair" class="link-button">↪ Sair do sistema</button>
+  </aside>
+
+  <main class="content">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">RELEASE CANDIDATE 1.0</p>
+        <h1>Homologação guiada</h1>
+        <p class="muted">Valide os fluxos essenciais antes de liberar o uso diário.</p>
+      </div>
+      <span class="badge">RC2.2</span>
+    </header>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div><p class="panel-kicker">DIAGNÓSTICO</p><h2>Saúde técnica da instalação</h2></div>
+        <button id="diagnosticar" class="btn outline">Executar diagnóstico</button>
+      </div>
+      <div id="diagnostico-resumo" class="homolog-summary">Execute o diagnóstico para conferir banco, RPCs, segurança e homologação.</div>
+      <div id="diagnostico-lista" class="homolog-diagnostic-grid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div><p class="panel-kicker">FUNCIONÁRIO PADRÃO</p><h2>TESTE HOMOLOGAÇÃO</h2></div>
+      </div>
+      <div class="backup-grid">
+        <article class="backup-card"><strong>Matrícula</strong><span style="font-size:28px">999</span><small>Login exclusivo de teste</small></article>
+        <article class="backup-card"><strong>PIN</strong><span style="font-size:28px">9999</span><small>Redefinido ao reparar o cadastro</small></article>
+        <article class="backup-card"><strong>Jornada</strong><span style="font-size:22px">Segunda a sexta</span><small>Horários padrão de teste</small></article>
+      </div>
+      <div class="backup-main-action" style="margin-top:20px">
+        <button id="criar" class="btn primary">Criar ou reparar funcionário teste</button>
+        <button id="resetar" class="btn outline">Resetar dados de teste</button>
+        <span id="status" class="muted" role="status"></span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div><p class="panel-kicker">ACEITAÇÃO FUNCIONAL</p><h2>Checklist da versão 1.0</h2></div>
+        <div class="homolog-actions">
+          <button id="exportar-relatorio" class="btn outline">Exportar relatório</button>
+          <button id="marcar-todos" class="btn outline">Marcar todos</button>
+          <button id="limpar-checklist" class="btn outline">Limpar</button>
+        </div>
+      </div>
+      <div class="homolog-progress-head">
+        <strong id="checklist-progresso">0 testes concluídos</strong>
+        <span id="resultado-final" class="badge">Em andamento</span>
+      </div>
+      <div class="homolog-progress"><span id="checklist-barra"></span></div>
+      <div id="checklist" class="homolog-checklist"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div><p class="panel-kicker">ANOTAÇÕES</p><h2>Ocorrências encontradas</h2></div>
+      </div>
+      <p class="muted">Registre qualquer comportamento inesperado, tela, horário e passo que provocou o problema.</p>
+      <textarea id="notas-homologacao" class="homolog-notes" placeholder="Ex.: Ao registrar retorno do almoço, a próxima etapa não atualizou..."></textarea>
+      <div class="backup-main-action">
+        <button id="salvar-notas" class="btn outline">Salvar anotações</button>
+        <span id="notas-status" class="muted"></span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><div><p class="panel-kicker">ORDEM RECOMENDADA</p><h2>Como executar</h2></div></div>
+      <ol>
+        <li>Execute o diagnóstico técnico e confirme 100% aprovado.</li>
+        <li>Repare e depois resete o funcionário de homologação.</li>
+        <li>Faça os testes na ordem do checklist, usando matrícula <b>999</b> e PIN <b>9999</b>.</li>
+        <li>Confira os resultados no painel, relatórios, auditoria e fechamento.</li>
+        <li>Registre falhas nas anotações e exporte o relatório ao final.</li>
+      </ol>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-config.js?v=1.0.0-rc2.2"></script>
+<script src="assets/js/auth.js?v=1.0.0-rc2.2"></script>
+<script src="assets/js/homologacao.js?v=1.0.0-rc2.2"></script>
+</body>
+</html>
