@@ -7,7 +7,7 @@
     const {data:{user},error:userError}=await client.auth.getUser();
     if(userError) throw userError;
     if(!user) throw new Error('Sessão não encontrada.');
-    const {data,error}=await client.from('perfis').select('id,nome,papel,empresa_id,empresas(nome_fantasia,razao_social,endereco,cidade,uf)').eq('id',user.id).single();
+    const {data,error}=await client.from('perfis').select('id,nome,papel,empresa_id,empresas(nome_fantasia,razao_social,endereco,cidade,uf,tolerancia_entrada_minutos,tolerancia_saida_minutos,intervalo_minimo_minutos,intervalo_maximo_minutos,horas_extras_automaticas,limite_banco_horas_minutos)').eq('id',user.id).single();
     if(error) throw error;
     return {...data,email:user.email};
   }
@@ -104,6 +104,11 @@
     const {error:profileError}=await client.from('perfis').update({nome:values.adminNome?.trim()||p.nome}).eq('id',p.id);
     if(profileError) throw profileError;
     return profile();
+  }
+
+  async function savePointPolicies(values){
+    const {data,error}=await client.rpc('salvar_politicas_ponto',{p_tolerancia_entrada:values.entrada,p_tolerancia_saida:values.saida,p_intervalo_minimo:values.intervaloMinimo,p_intervalo_maximo:values.intervaloMaximo,p_horas_extras_automaticas:values.extrasAutomaticas,p_limite_banco_horas:values.limiteBanco});
+    if(error) throw error; return data;
   }
 
   async function occurrencesForRange(employeeId,start,end){
@@ -211,6 +216,16 @@
   }
 
 
+
+  async function adminAdjustmentRequests(status=null){
+    const {data,error}=await client.rpc('listar_ajustes_admin',{p_status:status||null});
+    if(error) throw error; return data||[];
+  }
+  async function decideAdjustment(id,decision,response=''){
+    const {data,error}=await client.rpc('analisar_ajuste_ponto',{p_solicitacao_id:id,p_decisao:decision,p_resposta:response||null});
+    if(error) throw error; return Array.isArray(data)?data[0]:data;
+  }
+
   async function defineEmployeePin(employeeId,pin,requireChange=false,active=true){
     const {data,error}=await client.rpc('admin_definir_pin',{p_funcionario_id:employeeId,p_pin:pin,p_exigir_troca:requireChange,p_acesso_ativo:active});
     if(error) throw error;
@@ -222,5 +237,5 @@
     if(error) throw error;
   }
 
-  window.PlenitudeDB=Object.freeze({profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,registerPoint,subscribeMarks});
+  window.PlenitudeDB=Object.freeze({profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks});
 })();

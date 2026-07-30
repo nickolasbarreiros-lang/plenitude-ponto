@@ -61,3 +61,24 @@ Nenhum novo SQL é necessário nesta versão. Antes do primeiro acesso da funcio
 ## V17 — Banco de horas automático
 
 Antes de publicar esta versão, execute `supabase-v17-banco-horas.sql` no SQL Editor do Supabase. O módulo calcula jornada prevista, horas trabalhadas, créditos, débitos, faltas, pendências e ocorrências aprovadas para o administrador e para a sessão por matrícula + PIN.
+
+
+## V18 — Ajustes de ponto
+- Funcionário solicita marcação esquecida por matrícula/PIN.
+- Administrador aprova ou rejeita em Ajustes.
+- Aprovação cria marcação ajustada com horário solicitado e auditoria.
+- Execute `supabase-v18-ajustes-ponto.sql` antes de publicar.
+
+
+## V19
+Políticas configuráveis, tolerância de entrada padrão de 15 minutos, preservação do horário real e alertas de intervalo.
+
+
+## V20 — Espelho de ponto mensal
+
+- Cabeçalho A4 com dados da empresa, funcionário e competência.
+- Apuração diária e totais mensais.
+- Campos para assinatura do funcionário e da empresa.
+- Botão **Imprimir / Salvar PDF**, usando a impressão nativa do navegador.
+- Layout de impressão A4 em orientação paisagem.
+- Não exige nova migração SQL: utiliza os dados e funções já instalados na V19.

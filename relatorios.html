@@ -8,11 +8,30 @@
     <a data-page="funcionarios" href="funcionarios.html"><span>♙</span><b>Funcionário</b></a>
     <a data-page="jornada" href="jornada.html"><span>▤</span><b>Jornada</b></a>
     <a data-page="calendario" href="calendario.html"><span>▣</span><b>Calendário</b></a>
+    <a data-page="ajustes" href="ajustes.html"><span>✓</span><b>Ajustes</b></a>
     <a data-page="relatorios" class="active" href="relatorios.html"><span>▥</span><b>Relatórios</b></a>
     <a data-page="configuracoes" href="configuracoes.html"><span>⚙</span><b>Configurações</b></a>
   </nav>
   <button id="sair" class="link-button">↪ Sair do sistema</button>
 </aside><main class="content"><header class="topbar"><div><p class="eyebrow">BANCO DE HORAS</p><h1>Relatório mensal</h1><p class="muted">Jornada prevista, horas trabalhadas, créditos, débitos e pendências.</p></div><span class="badge">Cálculo automático</span></header>
-<section class="report-filters panel"><label>Funcionário<select id="rel-funcionario"></select></label><label>Mês<input id="rel-mes" type="month"></label><button id="atualizar-relatorio" class="btn primary">Atualizar relatório</button><button id="imprimir-relatorio" class="btn outline">Imprimir</button></section>
+<section class="report-filters panel no-print"><label>Funcionário<select id="rel-funcionario"></select></label><label>Mês<input id="rel-mes" type="month"></label><button id="atualizar-relatorio" class="btn primary">Atualizar relatório</button><button id="imprimir-relatorio" class="btn outline">Imprimir / Salvar PDF</button></section>
+<section id="espelho-documento" class="time-sheet-document">
+  <header class="time-sheet-header">
+    <img src="assets/img/logo-plenitude.png" alt="Plenitude">
+    <div><p>ESPELHO DE PONTO MENSAL</p><h2 id="espelho-empresa">Livraria Plenitude</h2><span id="espelho-endereco">—</span></div>
+    <div class="time-sheet-period"><small>Competência</small><strong id="espelho-periodo">—</strong><small>Emitido em</small><strong id="espelho-emissao">—</strong></div>
+  </header>
+  <div class="time-sheet-identification">
+    <div><small>Funcionário</small><strong id="espelho-funcionario">—</strong></div>
+    <div><small>Matrícula</small><strong id="espelho-matricula">—</strong></div>
+    <div><small>Cargo</small><strong id="espelho-cargo">—</strong></div>
+    <div><small>Admissão</small><strong id="espelho-admissao">—</strong></div>
+  </div>
+</section>
 <section class="cards report-balance-cards"><article class="metric-card"><i>▤</i><span>Dias completos</span><strong id="rel-dias">0</strong><small>Jornadas concluídas</small></article><article class="metric-card"><i>◫</i><span>Horas previstas</span><strong id="rel-previsto">00:00</strong><small>Carga contratada</small></article><article class="metric-card"><i>◷</i><span>Horas trabalhadas</span><strong id="rel-horas">00:00</strong><small>Total registrado</small></article><article class="metric-card"><i>±</i><span>Saldo acumulado</span><strong id="rel-saldo">+00:00</strong><small>Créditos menos débitos</small></article><article class="metric-card positive-card"><i>＋</i><span>Créditos</span><strong id="rel-creditos">+00:00</strong><small>Horas excedentes</small></article><article class="metric-card negative-card"><i>−</i><span>Débitos</span><strong id="rel-debitos">−00:00</strong><small>Atrasos e faltas</small></article><article class="metric-card warning-card"><i>!</i><span>Pendências</span><strong id="rel-pendencias">0</strong><small>Faltas ou marcações incompletas</small></article></section>
-<article class="panel"><div class="panel-head"><div><p class="panel-kicker">ESPELHO MENSAL</p><h2>Apuração diária</h2></div></div><div class="table-wrap"><table><thead><tr><th>Data</th><th>Entrada</th><th>Almoço</th><th>Retorno</th><th>Saída</th><th>Previsto</th><th>Trabalhado</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="relatorio-body"></tbody></table></div><p id="relatorio-vazio" class="empty-state">Nenhum dado encontrado para o período.</p></article></main></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js"></script><script src="assets/js/auth.js"></script><script src="assets/js/database.js"></script><script src="assets/js/app.js"></script><script>initRelatorios()</script></body></html>
+<article class="panel"><div class="panel-head"><div><p class="panel-kicker">ESPELHO MENSAL</p><h2>Apuração diária</h2></div></div><div class="table-wrap"><table><thead><tr><th>Data</th><th>Entrada</th><th>Almoço</th><th>Retorno</th><th>Saída</th><th>Previsto</th><th>Trabalhado</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="relatorio-body"></tbody></table></div><p id="relatorio-vazio" class="empty-state">Nenhum dado encontrado para o período.</p></article>
+<section class="time-sheet-footer">
+  <div class="time-sheet-declaration">Declaro que conferi as marcações e os totais apresentados neste espelho de ponto.</div>
+  <div class="signature-grid"><div><span></span><strong>Assinatura do funcionário</strong><small>Data: ____/____/________</small></div><div><span></span><strong>Assinatura da empresa</strong><small>Data: ____/____/________</small></div></div>
+  <p class="document-note">Os horários reais permanecem preservados. Tolerâncias e ajustes são aplicados somente na apuração, conforme as políticas cadastradas.</p>
+</section></main></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js"></script><script src="assets/js/auth.js"></script><script src="assets/js/database.js"></script><script src="assets/js/app.js"></script><script>initRelatorios()</script></body></html>

@@ -42,6 +42,19 @@
       </div>
     </section>
 
+
+    <section id="adjustment-panel" class="adjustment-panel">
+      <div class="panel-head"><div><small>CORREÇÃO DE PONTO</small><h3>Solicitar marcação esquecida</h3></div><button id="toggle-adjustment" class="btn outline" type="button">Nova solicitação</button></div>
+      <form id="adjustment-form" class="adjustment-form" hidden>
+        <label>Data<input id="ajuste-data" type="date" required></label>
+        <label>Marcação<select id="ajuste-tipo" required><option value="entrada">Entrada</option><option value="inicio_intervalo">Início do almoço</option><option value="fim_intervalo">Retorno do almoço</option><option value="saida">Saída</option></select></label>
+        <label>Horário correto<input id="ajuste-horario" type="time" required></label>
+        <label class="wide">Justificativa<textarea id="ajuste-justificativa" minlength="10" maxlength="1000" required placeholder="Explique por que a marcação não foi realizada."></textarea></label>
+        <button class="btn primary" type="submit">Enviar solicitação</button>
+      </form>
+      <div id="my-adjustments" class="my-adjustments"></div>
+    </section>
+
     <section id="change-pin-panel" class="change-pin-panel" hidden><h3>Alterar meu PIN</h3><div class="pin-change-grid"><input id="pin-atual" type="password" inputmode="numeric" maxlength="4" placeholder="PIN atual"><input id="pin-novo" type="password" inputmode="numeric" maxlength="4" placeholder="Novo PIN"><input id="pin-confirmar" type="password" inputmode="numeric" maxlength="4" placeholder="Confirmar novo PIN"><button id="alterar-meu-pin" class="btn secondary" type="button">Salvar novo PIN</button></div></section><button id="abrir-troca-pin" class="link-button change-pin-link" type="button">Alterar meu PIN</button><p class="clock-footnote">O horário oficial é gerado e gravado pelo servidor do Supabase.</p>
   </section>
 </main>

@@ -199,7 +199,8 @@ async function initRelatorios(){
   const month=document.getElementById('rel-mes'),now=new Date();
   month.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   try{
-    const employees=await window.PlenitudeDB.employees();
+    const [employees,profile]=await Promise.all([window.PlenitudeDB.employees(),window.PlenitudeDB.profile()]);
+    DB_STATE.employees=employees;DB_STATE.profile=profile;
     const select=document.getElementById('rel-funcionario');
     select.innerHTML=employees.length?employees.map(f=>`<option value="${f.id}">${f.nome} — ${f.matricula||'sem matrícula'}</option>`).join(''):'<option value="">Nenhum funcionário cadastrado</option>';
     document.getElementById('atualizar-relatorio').onclick=renderRelatorio;
@@ -215,6 +216,17 @@ async function renderRelatorio(){
     const selected=document.getElementById('rel-mes').value,employeeId=document.getElementById('rel-funcionario').value;
     if(!selected||!employeeId){document.getElementById('relatorio-body').innerHTML='';document.getElementById('relatorio-vazio').style.display='block';return}
     const [year,month]=selected.split('-').map(Number),last=new Date(year,month,0).getDate(),start=`${selected}-01`,end=`${selected}-${String(last).padStart(2,'0')}`;
+    const employee=DB_STATE.employees.find(f=>f.id===employeeId)||{};
+    const company=DB_STATE.profile?.empresas||{};
+    document.getElementById('espelho-empresa').textContent=company.nome_fantasia||company.razao_social||'Livraria Plenitude';
+    document.getElementById('espelho-endereco').textContent=[company.endereco,company.cidade,company.uf].filter(Boolean).join(' — ')||'—';
+    document.getElementById('espelho-periodo').textContent=new Intl.DateTimeFormat('pt-BR',{month:'long',year:'numeric'}).format(new Date(year,month-1,1));
+    document.getElementById('espelho-emissao').textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short'}).format(new Date());
+    document.getElementById('espelho-funcionario').textContent=employee.nome||'—';
+    document.getElementById('espelho-matricula').textContent=employee.matricula||'—';
+    document.getElementById('espelho-cargo').textContent=employee.cargo||'—';
+    document.getElementById('espelho-admissao').textContent=employee.data_admissao?new Intl.DateTimeFormat('pt-BR').format(dateFromKey(employee.data_admissao)):'—';
+    document.title=`Espelho de Ponto - ${employee.nome||'Funcionário'} - ${selected}`;
     const result=await window.PlenitudeDB.bankHours(employeeId,start,end),summary=result.resumo||{},days=result.dias||[];
     document.getElementById('rel-dias').textContent=summary.dias_trabalhados||0;
     document.getElementById('rel-previsto').textContent=fmtMinutes(summary.previsto_minutos||0);
@@ -228,7 +240,7 @@ async function renderRelatorio(){
     body.innerHTML=relevant.map(r=>{
       const marks=(r.marcacoes||[]).map(v=>formatDbTime(v));
       const saldo=r.saldo_minutos===null||r.saldo_minutos===undefined?'—':signedMinutes(r.saldo_minutos);
-      return `<tr><td>${new Intl.DateTimeFormat('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}).format(dateFromKey(r.data))}</td>${[0,1,2,3].map(i=>`<td>${marks[i]||'—'}</td>`).join('')}<td>${fmtMinutes(r.previsto_minutos||0)}</td><td>${fmtMinutes(r.trabalhado_minutos||0)}</td><td class="${r.saldo_minutos<0?'negative':r.saldo_minutos>0?'positive':''}">${saldo}</td><td><span class="report-status ${balanceStatusClass(r.status)}">${balanceStatusLabel(r.status)}</span></td></tr>`;
+      return `<tr><td>${new Intl.DateTimeFormat('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}).format(dateFromKey(r.data))}</td>${[0,1,2,3].map(i=>`<td>${marks[i]||'—'}</td>`).join('')}<td>${fmtMinutes(r.previsto_minutos||0)}</td><td>${fmtMinutes(r.trabalhado_minutos||0)}</td><td class="${r.saldo_minutos<0?'negative':r.saldo_minutos>0?'positive':''}">${saldo}</td><td><span class="report-status ${balanceStatusClass(r.status)}">${balanceStatusLabel(r.status)}</span>${r.tolerancia_aplicada?' <small title="Horário real preservado; tolerância aplicada apenas ao cálculo">Tolerância</small>':''}${r.alerta_intervalo?' <small class="negative">'+(r.alerta_intervalo==='intervalo_curto'?'Intervalo curto':'Intervalo excedido')+'</small>':''}</td></tr>`;
     }).join('');
     empty.style.display=relevant.length?'none':'block';
   }catch(error){toast(errorText(error),'warn');console.error(error)}
@@ -244,6 +256,7 @@ async function initConfiguracoes(){
     document.getElementById('admin-nome').value=profile.nome||'Administrador';
     document.getElementById('admin-email').value=profile.email||session.user.email||'';
     document.getElementById('admin-email').readOnly=true;
+    document.getElementById('tol-entrada').value=company.tolerancia_entrada_minutos??15;document.getElementById('tol-saida').value=company.tolerancia_saida_minutos??10;document.getElementById('int-min').value=company.intervalo_minimo_minutos??60;document.getElementById('int-max').value=company.intervalo_maximo_minutos??120;document.getElementById('extras-auto').checked=company.horas_extras_automaticas!==false;document.getElementById('limite-banco').value=Math.round((company.limite_banco_horas_minutos??2400)/60);
     document.getElementById('config-form').onsubmit=async e=>{
       e.preventDefault();
       const button=e.submitter; if(button)button.disabled=true;
@@ -256,6 +269,7 @@ async function initConfiguracoes(){
         toast('Configurações salvas no Supabase.');
       }catch(error){toast(errorText(error),'warn');console.error(error)}finally{if(button)button.disabled=false}
     };
+    document.getElementById('politicas-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter;if(b)b.disabled=true;try{await window.PlenitudeDB.savePointPolicies({entrada:Number(document.getElementById('tol-entrada').value),saida:Number(document.getElementById('tol-saida').value),intervaloMinimo:Number(document.getElementById('int-min').value),intervaloMaximo:Number(document.getElementById('int-max').value),extrasAutomaticas:document.getElementById('extras-auto').checked,limiteBanco:Number(document.getElementById('limite-banco').value)*60});toast('Políticas de ponto salvas.');}catch(error){toast(errorText(error),'warn')}finally{if(b)b.disabled=false}};
     document.getElementById('exportar-backup').onclick=async()=>{
       const button=document.getElementById('exportar-backup');button.disabled=true;
       try{
@@ -317,3 +331,11 @@ async function renderCalendar(){
   });
 }
 
+
+
+async function initAjustes(){
+ const context=await initCommon(['administrador']);if(!context)return;
+ const filter=document.getElementById('adjustment-filter');
+ async function render(){try{const rows=await window.PlenitudeDB.adminAdjustmentRequests(filter.value||null),list=document.getElementById('adjustments-list');document.getElementById('adjustment-count').textContent=`${rows.filter(r=>r.status==='pendente').length} pendentes`;document.getElementById('adjustments-empty').style.display=rows.length?'none':'block';list.innerHTML=rows.map(r=>`<article class="adjustment-admin-card"><div class="adjustment-admin-main"><div class="request-heading"><div><small>${r.matricula||'—'}</small><h3>${r.funcionario_nome}</h3></div><span class="request-status ${r.status}">${r.status}</span></div><div class="request-facts"><span><b>Data</b>${new Date(r.data_marcacao+'T12:00:00').toLocaleDateString('pt-BR')}</span><span><b>Marcação</b>${labelForMarkType(r.tipo_marcacao)}</span><span><b>Horário</b>${String(r.horario_solicitado).slice(0,5)}</span></div><p>${r.justificativa}</p>${r.resposta_administrador?`<div class="admin-response"><b>Resposta:</b> ${r.resposta_administrador}</div>`:''}</div>${r.status==='pendente'?`<div class="request-actions"><textarea id="response-${r.id}" placeholder="Resposta opcional para a funcionária"></textarea><button class="btn primary" data-decision="aprovada" data-id="${r.id}">Aprovar e incluir ponto</button><button class="btn outline danger" data-decision="rejeitada" data-id="${r.id}">Rejeitar</button></div>`:''}</article>`).join('');list.querySelectorAll('[data-decision]').forEach(b=>b.onclick=async()=>{const decision=b.dataset.decision,id=b.dataset.id,response=document.getElementById(`response-${id}`)?.value||'';if(!confirm(decision==='aprovada'?'Aprovar e criar esta marcação?':'Rejeitar esta solicitação?'))return;b.disabled=true;try{await window.PlenitudeDB.decideAdjustment(id,decision,response);toast(decision==='aprovada'?'Ajuste aprovado e ponto incluído.':'Solicitação rejeitada.');await render()}catch(e){toast(errorText(e),'warn')}finally{b.disabled=false}})}catch(e){toast(errorText(e),'warn');console.error(e)}}
+ filter.onchange=render;document.getElementById('refresh-adjustments').onclick=render;await render();
+}
