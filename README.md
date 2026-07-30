@@ -132,3 +132,6 @@ Execute `supabase-v26-dispositivo-autorizado.sql`, publique os arquivos e acesse
 
 ## V28 — Movimentações de jornada
 Inclui saídas temporárias, retorno, justificativas médicas, serviço externo, saída particular, compensação e autorização de horas extras. Execute `supabase-v28-movimentacoes-jornada.sql` após a V27.
+
+## V29 — correção do PIN de funcionário
+Execute `supabase-v29-correcao-pin-funcionario.sql` no SQL Editor. Depois, conectado como administrador, abra **Funcionário**, informe e confirme o PIN de 4 dígitos e clique em **Definir / alterar PIN**. A interface agora só confirma sucesso depois que o Supabase devolve `pin_configurado = true`.

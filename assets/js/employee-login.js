@@ -16,17 +16,7 @@
  document.getElementById('choose-employee').onclick=()=>openPanel('employee');
  document.getElementById('choose-admin').onclick=()=>openPanel('admin');
  document.querySelectorAll('.access-back').forEach(b=>b.onclick=home);
- const mostrarPin=document.getElementById('mostrar-pin');
- if(mostrarPin&&pin){
-   mostrarPin.addEventListener('click',()=>{
-     const mostrar=pin.type==='password';
-     pin.type=mostrar?'text':'password';
-     mostrarPin.textContent=mostrar?'Ocultar':'Mostrar';
-     mostrarPin.setAttribute('aria-label',mostrar?'Ocultar PIN':'Mostrar PIN');
-     mostrarPin.setAttribute('aria-pressed',String(mostrar));
-     pin.focus({preventScroll:true});
-   });
- }
+ document.getElementById('mostrar-pin').onclick=()=>{const show=pin.type==='password';pin.type=show?'text':'password';document.getElementById('mostrar-pin').textContent=show?'Ocultar':'Mostrar'};
  document.getElementById('pin-keypad').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.key&&pin.value.length<4)pin.value+=b.dataset.key;if(b.dataset.action==='clear')pin.value='';if(b.dataset.action==='backspace')pin.value=pin.value.slice(0,-1);pin.dispatchEvent(new Event('input'));});
  pin.addEventListener('input',()=>{pin.value=pin.value.replace(/\D/g,'').slice(0,4)});
  matricula.addEventListener('input',()=>{matricula.value=matricula.value.replace(/\D/g,'').slice(0,10)});

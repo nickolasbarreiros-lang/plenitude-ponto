@@ -293,9 +293,16 @@
   }
 
   async function defineEmployeePin(employeeId,pin,requireChange=false,active=true){
-    const {data,error}=await client.rpc('admin_definir_pin',{p_funcionario_id:employeeId,p_pin:pin,p_exigir_troca:requireChange,p_acesso_ativo:active});
+    const {data,error}=await client.rpc('admin_definir_pin',{
+      p_funcionario_id:employeeId,
+      p_pin:pin,
+      p_exigir_troca:requireChange,
+      p_acesso_ativo:active
+    });
     if(error) throw error;
-    return Array.isArray(data)?data[0]:data;
+    const saved=Array.isArray(data)?data[0]:data;
+    if(!saved?.pin_configurado) throw new Error('O Supabase não confirmou a gravação do PIN.');
+    return saved;
   }
 
   async function setEmployeePinAccess(employeeId,active){
