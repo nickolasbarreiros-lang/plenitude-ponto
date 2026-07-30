@@ -38,13 +38,13 @@
     const {year,month}=selectedParts(),button=document.getElementById('fc-fechar');if(!year||!month)return;
     if(!confirm(`Fechar ${competence(year,month)}? As alterações desse mês serão bloqueadas.`))return;
     button.disabled=true;
-    try{await window.PlenitudeDB.closeMonth(year,month,document.getElementById('fc-observacao').value);toast('Competência fechada e protegida.');document.getElementById('fc-observacao').value='';await load()}catch(error){toast(errorText(error),'warn');console.error(error)}finally{renderSelected()}
+    const masterPin=prompt('Digite o PIN Mestre de 6 números para fechar a competência:')||'';if(!/^\d{6}$/.test(masterPin)){toast('PIN Mestre inválido.','warn');button.disabled=false;return}try{await window.PlenitudeDB.closeMonth(year,month,document.getElementById('fc-observacao').value,masterPin);toast('Competência fechada e protegida.');document.getElementById('fc-observacao').value='';await load()}catch(error){toast(errorText(error),'warn');console.error(error)}finally{renderSelected()}
   }
   function openReopen(year,month){state.selected={year,month};document.getElementById('fc-dialog-title').textContent=`Reabrir ${competence(year,month)}`;document.getElementById('fc-motivo').value='';document.getElementById('fc-dialog').showModal()}
   document.getElementById('fc-dialog').addEventListener('close',async e=>{
     if(e.target.returnValue!=='default'||!state.selected)return;
     const reason=document.getElementById('fc-motivo').value.trim();if(reason.length<5){toast('Informe um motivo com pelo menos 5 caracteres.','warn');return}
-    try{await window.PlenitudeDB.reopenMonth(state.selected.year,state.selected.month,reason);toast('Competência reaberta. A ação foi auditada.');state.selected=null;await load()}catch(error){toast(errorText(error),'warn');console.error(error)}
+    const masterPin=prompt('Digite o PIN Mestre de 6 números para reabrir a competência:')||'';if(!/^\d{6}$/.test(masterPin)){toast('PIN Mestre inválido.','warn');return}try{await window.PlenitudeDB.reopenMonth(state.selected.year,state.selected.month,reason,masterPin);toast('Competência reaberta. A ação foi auditada.');state.selected=null;await load()}catch(error){toast(errorText(error),'warn');console.error(error)}
   });
   document.getElementById('fc-fechar').onclick=closeMonth;document.getElementById('fc-refresh').onclick=load;monthInput.onchange=renderSelected;
   await load();

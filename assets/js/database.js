@@ -251,13 +251,23 @@
     const {data,error}=await client.rpc('listar_fechamentos_admin',{p_ano_inicio:startYear,p_ano_fim:endYear});
     if(error) throw error; return data||[];
   }
-  async function closeMonth(year,month,note=''){
-    const {data,error}=await client.rpc('fechar_competencia_admin',{p_ano:year,p_mes:month,p_observacao:note||null});
+  async function closeMonth(year,month,note='',masterPin=''){
+    const {data,error}=await client.rpc('fechar_competencia_master_admin',{p_ano:year,p_mes:month,p_observacao:note||null,p_master_pin:masterPin});
     if(error) throw error; return Array.isArray(data)?data[0]:data;
   }
-  async function reopenMonth(year,month,reason){
-    const {data,error}=await client.rpc('reabrir_competencia_admin',{p_ano:year,p_mes:month,p_motivo:reason});
+  async function reopenMonth(year,month,reason,masterPin=''){
+    const {data,error}=await client.rpc('reabrir_competencia_master_admin',{p_ano:year,p_mes:month,p_motivo:reason,p_master_pin:masterPin});
     if(error) throw error; return Array.isArray(data)?data[0]:data;
+  }
+
+
+  async function masterPinStatus(){
+    const {data,error}=await client.rpc('status_pin_mestre_admin');
+    if(error) throw error; return Array.isArray(data)?data[0]:data;
+  }
+  async function setMasterPin(newPin,currentPin=''){
+    const {error}=await client.rpc('definir_pin_mestre_admin',{p_novo_pin:newPin,p_pin_atual:currentPin||null});
+    if(error) throw error;
   }
 
   async function defineEmployeePin(employeeId,pin,requireChange=false,active=true){
@@ -271,5 +281,5 @@
     if(error) throw error;
   }
 
-  window.PlenitudeDB=Object.freeze({monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks});
+  window.PlenitudeDB=Object.freeze({masterPinStatus,setMasterPin,monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks});
 })();
