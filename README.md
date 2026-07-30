@@ -130,6 +130,5 @@ Em Authentication > URL Configuration, inclua a URL publicada de `redefinir-senh
 Execute `supabase-v26-dispositivo-autorizado.sql`, publique os arquivos e acesse **Dispositivo** no painel administrativo. Autorizar uma nova máquina revoga automaticamente a anterior. A autorização é vinculada ao navegador por token seguro; limpar os dados, trocar de navegador ou formatar o computador exige nova autorização.
 
 
-## V27 — PIN Mestre
-
-Execute `supabase-v27-pin-mestre.sql` após a V26. Depois acesse **Configurações → PIN Mestre** e defina um código de 6 números. O PIN será exigido para autorizar/revogar o computador de ponto e para fechar/reabrir competências. Cinco tentativas erradas bloqueiam o PIN por 15 minutos.
+## V28 — Movimentações de jornada
+Inclui saídas temporárias, retorno, justificativas médicas, serviço externo, saída particular, compensação e autorização de horas extras. Execute `supabase-v28-movimentacoes-jornada.sql` após a V27.

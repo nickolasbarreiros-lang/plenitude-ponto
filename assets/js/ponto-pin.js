@@ -34,7 +34,7 @@
   try{const d=await rpc('dados_funcionario_token',{p_token:token});employee=Array.isArray(d)?d[0]:d;if(!employee)throw new Error('Sessão inválida.');
    document.getElementById('clock-employee').textContent=employee.nome;document.getElementById('clock-status').textContent='Pronto para registrar';document.getElementById('clock-avatar').innerHTML=`<span>${employee.nome.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase()}</span>`;
    const self=document.getElementById('employee-self-service');self.hidden=false;document.getElementById('self-profile-name').textContent=employee.nome;document.getElementById('self-profile-role').textContent=employee.cargo||'Funcionário';document.getElementById('self-profile-code').textContent=employee.matricula;
-   document.getElementById('change-pin-panel').hidden=!employee.exigir_troca_pin;await Promise.all([load(),loadAdjustments()]);
+   document.getElementById('change-pin-panel').hidden=!employee.exigir_troca_pin;await Promise.all([load(),loadAdjustments(),loadMovements()]);
   }catch(e){alert(e.message);sessionStorage.removeItem('plenitude-employee-session');location.replace('index.html')}
  }
  document.getElementById('registrar').onclick=async()=>{const b=document.getElementById('registrar');b.disabled=true;try{const deviceToken=localStorage.getItem('plenitude-device-token')||'';if(!deviceToken)throw new Error('Registro bloqueado: computador não autorizado.');const data=await rpc('registrar_ponto_dispositivo',{p_token:token,p_dispositivo_token:deviceToken,p_user_agent:navigator.userAgent});const m=Array.isArray(data)?data[0]:data;showSuccess(`${label(m.tipo)} registrada às ${fmt(m.registrado_em)}`);toast(`${label(m.tipo)} registrada às ${fmt(m.registrado_em)}.`);await load()}catch(e){toast(e.message,'warn');b.disabled=false}};
@@ -42,6 +42,29 @@
  document.addEventListener('fullscreenchange',()=>{document.getElementById('fullscreen-toggle').textContent=document.fullscreenElement?'✕ Sair da tela cheia':'⛶ Tela cheia'});
  document.getElementById('sair').onclick=async()=>{try{await rpc('encerrar_sessao_funcionario',{p_token:token})}catch{}sessionStorage.removeItem('plenitude-employee-session');location.replace('index.html')};
  document.getElementById('abrir-troca-pin').onclick=()=>document.getElementById('change-pin-panel').hidden=false;
+
+
+ async function loadMovements(){
+  const today=dateKey(new Date()),rows=await rpc('listar_minhas_movimentacoes',{p_token:token,p_inicio:today,p_fim:today});
+  const open=(rows||[]).find(r=>r.status==='aberta');
+  document.getElementById('movement-state').textContent=open?'Fora da loja':'Dentro da loja';
+  document.getElementById('movement-state').className=`badge ${open?'warn':''}`;
+  document.getElementById('temporary-exit').hidden=!!open;
+  document.getElementById('temporary-return').hidden=!open;
+  document.getElementById('movement-reason').disabled=!!open;
+  const box=document.getElementById('my-movements');
+  box.innerHTML=(rows||[]).length?(rows||[]).map(r=>`<div class="movement-item"><div><strong>${r.status==='aberta'?'Saída temporária em andamento':'Saída temporária'}</strong><small>${fmt(r.inicio_em)}${r.fim_em?` → ${fmt(r.fim_em)}`:' → aguardando retorno'}${r.motivo_informado?` · ${r.motivo_informado}`:''}</small></div><span class="request-status ${r.aprovado?'aprovada':'pendente'}">${r.aprovado?(r.classificacao||'analisada'):'aguardando análise'}</span></div>`).join(''):'<div class="mini-empty">Nenhuma saída temporária hoje.</div>';
+ }
+ async function registerMovement(action){
+  const deviceToken=localStorage.getItem('plenitude-device-token')||'';
+  if(!deviceToken)return toast('Registro bloqueado: computador não autorizado.','warn');
+  const reason=document.getElementById('movement-reason').value.trim();
+  if(action==='saida'&&reason.length<3)return toast('Informe resumidamente o motivo da saída.','warn');
+  const btn=action==='saida'?document.getElementById('temporary-exit'):document.getElementById('temporary-return');btn.disabled=true;
+  try{const r=await rpc('registrar_movimentacao_dispositivo',{p_token:token,p_dispositivo_token:deviceToken,p_acao:action,p_motivo:reason||null,p_user_agent:navigator.userAgent});showSuccess(action==='saida'?`Saída temporária registrada às ${fmt(r.inicio_em)}`:`Retorno registrado às ${fmt(r.fim_em)}`);document.getElementById('movement-reason').value='';await Promise.all([loadMovements(),load()])}catch(e){toast(e.message,'warn')}finally{btn.disabled=false}
+ }
+ document.getElementById('temporary-exit').onclick=()=>registerMovement('saida');
+ document.getElementById('temporary-return').onclick=()=>registerMovement('retorno');
 
  async function loadAdjustments(){
   const data=await rpc('listar_meus_ajustes',{p_token:token}),box=document.getElementById('my-adjustments');

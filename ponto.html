@@ -43,6 +43,18 @@
     </section>
 
 
+
+    <section class="movement-employee-panel">
+      <div class="panel-head"><div><small>SAÍDAS DURANTE O EXPEDIENTE</small><h3>Movimentação temporária</h3></div><span id="movement-state" class="badge">Dentro da loja</span></div>
+      <p class="muted">Use apenas quando precisar sair e retornar durante a jornada. O horário real será gravado pelo servidor.</p>
+      <div class="movement-actions">
+        <input id="movement-reason" type="text" maxlength="180" placeholder="Motivo resumido (ex.: consulta, banco, serviço externo)">
+        <button id="temporary-exit" class="btn warning" type="button">Registrar saída temporária</button>
+        <button id="temporary-return" class="btn primary" type="button" hidden>Registrar retorno</button>
+      </div>
+      <div id="my-movements" class="movement-history"></div>
+    </section>
+
     <section id="adjustment-panel" class="adjustment-panel">
       <div class="panel-head"><div><small>CORREÇÃO DE PONTO</small><h3>Solicitar marcação esquecida</h3></div><button id="toggle-adjustment" class="btn outline" type="button">Nova solicitação</button></div>
       <form id="adjustment-form" class="adjustment-form" hidden>
