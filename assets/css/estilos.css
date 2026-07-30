@@ -240,3 +240,47 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
   .clock-secondary-column .adjustment-form>*{grid-column:1!important}
   .clock-action-card{padding:14px}
 }
+
+
+/* V31.2 — menu lateral com rolagem e botão de saída sempre acessível */
+.sidebar{
+  overflow-y:auto;
+  overflow-x:hidden;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(255,255,255,.28) transparent;
+}
+.sidebar::-webkit-scrollbar{width:8px}
+.sidebar::-webkit-scrollbar-track{background:transparent}
+.sidebar::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,.22);
+  border-radius:999px;
+}
+.sidebar::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.34)}
+.sidebar nav{
+  flex:0 0 auto;
+}
+.sidebar .link-button{
+  position:sticky;
+  bottom:0;
+  z-index:5;
+  width:100%;
+  margin-top:18px;
+  padding:15px 14px;
+  background:linear-gradient(180deg,rgba(29,23,24,.94),rgba(29,23,24,1));
+  border-top:1px solid rgba(255,255,255,.08);
+  box-shadow:0 -12px 22px rgba(29,23,24,.92);
+}
+.sidebar .link-button:hover{
+  background:rgba(255,255,255,.08);
+}
+@media(max-width:780px){
+  .sidebar{
+    max-height:none;
+    overflow:visible;
+  }
+  .sidebar .link-button{
+    position:static;
+    box-shadow:none;
+    border-top:0;
+  }
+}
