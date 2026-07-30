@@ -98,3 +98,11 @@ Políticas configuráveis, tolerância de entrada padrão de 15 minutos, preserv
 3. A nova tela **Auditoria** permite filtrar, consultar detalhes e exportar CSV.
 4. Logins, logouts e alterações críticas são gravados com horário do servidor.
 5. A tabela de auditoria só pode ser lida por administradores da mesma empresa.
+
+
+## V23 — Backup e exportações
+
+- Backup completo em ZIP com CSVs, JSON, manifesto e diagnóstico de integridade.
+- Exportações individuais de funcionários, jornadas, marcações, ocorrências, banco de horas, ajustes e auditoria.
+- Validação segura de arquivo JSON sem restauração automática.
+- Não requer novo SQL; utiliza as políticas e funções da V22.
