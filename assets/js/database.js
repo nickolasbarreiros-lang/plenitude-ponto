@@ -245,6 +245,21 @@
     if(error) console.warn('Auditoria:',error.message);
   }
 
+
+
+  async function monthClosures(startYear=null,endYear=null){
+    const {data,error}=await client.rpc('listar_fechamentos_admin',{p_ano_inicio:startYear,p_ano_fim:endYear});
+    if(error) throw error; return data||[];
+  }
+  async function closeMonth(year,month,note=''){
+    const {data,error}=await client.rpc('fechar_competencia_admin',{p_ano:year,p_mes:month,p_observacao:note||null});
+    if(error) throw error; return Array.isArray(data)?data[0]:data;
+  }
+  async function reopenMonth(year,month,reason){
+    const {data,error}=await client.rpc('reabrir_competencia_admin',{p_ano:year,p_mes:month,p_motivo:reason});
+    if(error) throw error; return Array.isArray(data)?data[0]:data;
+  }
+
   async function defineEmployeePin(employeeId,pin,requireChange=false,active=true){
     const {data,error}=await client.rpc('admin_definir_pin',{p_funcionario_id:employeeId,p_pin:pin,p_exigir_troca:requireChange,p_acesso_ativo:active});
     if(error) throw error;
@@ -256,5 +271,5 @@
     if(error) throw error;
   }
 
-  window.PlenitudeDB=Object.freeze({auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks});
+  window.PlenitudeDB=Object.freeze({monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks});
 })();

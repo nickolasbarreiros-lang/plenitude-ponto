@@ -106,3 +106,7 @@ Políticas configuráveis, tolerância de entrada padrão de 15 minutos, preserv
 - Exportações individuais de funcionários, jornadas, marcações, ocorrências, banco de horas, ajustes e auditoria.
 - Validação segura de arquivo JSON sem restauração automática.
 - Não requer novo SQL; utiliza as políticas e funções da V22.
+
+
+## V24 — Fechamento mensal
+Execute `supabase-v24-fechamento-mensal.sql` antes de publicar. A página `fechamento.html` permite fechar e reabrir competências com auditoria e bloqueio de alterações em marcações e ocorrências.
