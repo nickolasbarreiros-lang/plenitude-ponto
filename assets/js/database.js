@@ -180,6 +180,14 @@
     return data||[];
   }
 
+
+  async function bankHours(employeeId,start,end){
+    if(!employeeId) throw new Error('Selecione um funcionário.');
+    const {data,error}=await client.rpc('banco_horas_admin',{p_funcionario_id:employeeId,p_inicio:start,p_fim:end});
+    if(error) throw error;
+    return data||{resumo:{},dias:[]};
+  }
+
   async function marksForRange(start,end){
     const {data,error}=await client.from('marcacoes').select('*').gte('data_local',start).lte('data_local',end).order('registrado_em');
     if(error) throw error;
@@ -214,5 +222,5 @@
     if(error) throw error;
   }
 
-  window.PlenitudeDB=Object.freeze({profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,registerPoint,subscribeMarks});
+  window.PlenitudeDB=Object.freeze({profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,registerPoint,subscribeMarks});
 })();

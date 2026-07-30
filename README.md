@@ -57,3 +57,7 @@ Antes de publicar, execute `supabase-v12-storage-acesso.sql` no SQL Editor. A fo
 - Conta ainda não vinculada recebe uma mensagem clara e não consegue registrar ponto.
 
 Nenhum novo SQL é necessário nesta versão. Antes do primeiro acesso da funcionária, crie a conta dela em Authentication > Users e use o botão "Vincular conta de acesso" no cadastro do funcionário.
+
+## V17 — Banco de horas automático
+
+Antes de publicar esta versão, execute `supabase-v17-banco-horas.sql` no SQL Editor do Supabase. O módulo calcula jornada prevista, horas trabalhadas, créditos, débitos, faltas, pendências e ocorrências aprovadas para o administrador e para a sessão por matrícula + PIN.

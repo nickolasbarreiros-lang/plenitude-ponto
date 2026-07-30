@@ -194,22 +194,43 @@ async function renderEmployeeSummary(todayMarks){
   }catch(error){console.error(error)}
 }
 
-async function initRelatorios(){const context=await initCommon(['administrador']);if(!context)return;const session=context.session;const month=document.getElementById('rel-mes'),now=new Date();month.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;document.getElementById('atualizar-relatorio').onclick=renderRelatorio;document.getElementById('imprimir-relatorio').onclick=()=>window.print();await renderRelatorio()}
+async function initRelatorios(){
+  const context=await initCommon(['administrador']);if(!context)return;
+  const month=document.getElementById('rel-mes'),now=new Date();
+  month.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  try{
+    const employees=await window.PlenitudeDB.employees();
+    const select=document.getElementById('rel-funcionario');
+    select.innerHTML=employees.length?employees.map(f=>`<option value="${f.id}">${f.nome} — ${f.matricula||'sem matrícula'}</option>`).join(''):'<option value="">Nenhum funcionário cadastrado</option>';
+    document.getElementById('atualizar-relatorio').onclick=renderRelatorio;
+    document.getElementById('imprimir-relatorio').onclick=()=>window.print();
+    select.onchange=renderRelatorio;month.onchange=renderRelatorio;
+    await renderRelatorio();
+  }catch(error){toast(errorText(error),'warn');console.error(error)}
+}
+function balanceStatusLabel(status){return({completo:'Completo',falta:'Falta',pendente:'Pendente',aguardando:'Aguardando',futuro:'Futuro',sem_jornada:'Sem jornada',extra:'Hora extra',folga:'Folga',ferias:'Férias',feriado:'Feriado',atestado:'Atestado'})[status]||status||'—'}
+function balanceStatusClass(status){return ['falta','pendente'].includes(status)?'negative':['completo','extra'].includes(status)?'positive':''}
 async function renderRelatorio(){
   try{
-    const selected=document.getElementById('rel-mes').value,[year,month]=selected.split('-').map(Number),last=new Date(year,month,0).getDate();
-    const start=`${selected}-01`,end=`${selected}-${String(last).padStart(2,'0')}`;
-    const [employees,marks]=await Promise.all([window.PlenitudeDB.employees(),window.PlenitudeDB.marksForRange(start,end)]);
-    const employee=employees[0]||null,employeeMarks=employee?marks.filter(m=>m.funcionario_id===employee.id):marks;
-    const grouped={};employeeMarks.forEach(m=>(grouped[m.data_local]??=[]).push(m));
-    let worked=0,diff=0;const rows=[];
-    for(const k of Object.keys(grouped).sort()){
-      const d=dateFromKey(k),dayMarks=grouped[k].sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em)),p=dayMarks.map(m=>formatDbTime(m.registrado_em));
-      const scheduleRows=employee?dbScheduleToUi(await window.PlenitudeDB.schedules(employee.id)):defaultSchedule,c=calcPunchDay(p,scheduleForDateFrom(scheduleRows,d));
-      if(c){worked+=c.worked;diff+=c.diff}rows.push({k,p,c});
-    }
-    document.getElementById('rel-dias').textContent=rows.length;document.getElementById('rel-horas').textContent=fmtMinutes(worked);document.getElementById('rel-saldo').textContent=signedMinutes(diff);
-    const body=document.getElementById('relatorio-body'),empty=document.getElementById('relatorio-vazio');body.innerHTML=rows.map(r=>`<tr><td>${new Intl.DateTimeFormat('pt-BR').format(dateFromKey(r.k))}</td>${[0,1,2,3].map(i=>`<td>${r.p[i]||'—'}</td>`).join('')}<td>${r.c?fmtMinutes(r.c.worked):'—'}</td><td class="${r.c&&r.c.diff<0?'negative':'positive'}">${r.c?signedMinutes(r.c.diff):'—'}</td></tr>`).join('');empty.style.display=rows.length?'none':'block';
+    const selected=document.getElementById('rel-mes').value,employeeId=document.getElementById('rel-funcionario').value;
+    if(!selected||!employeeId){document.getElementById('relatorio-body').innerHTML='';document.getElementById('relatorio-vazio').style.display='block';return}
+    const [year,month]=selected.split('-').map(Number),last=new Date(year,month,0).getDate(),start=`${selected}-01`,end=`${selected}-${String(last).padStart(2,'0')}`;
+    const result=await window.PlenitudeDB.bankHours(employeeId,start,end),summary=result.resumo||{},days=result.dias||[];
+    document.getElementById('rel-dias').textContent=summary.dias_trabalhados||0;
+    document.getElementById('rel-previsto').textContent=fmtMinutes(summary.previsto_minutos||0);
+    document.getElementById('rel-horas').textContent=fmtMinutes(summary.trabalhado_minutos||0);
+    document.getElementById('rel-saldo').textContent=signedMinutes(summary.saldo_minutos||0);
+    document.getElementById('rel-creditos').textContent=`+${fmtMinutes(summary.credito_minutos||0)}`;
+    document.getElementById('rel-debitos').textContent=`−${fmtMinutes(summary.debito_minutos||0)}`;
+    document.getElementById('rel-pendencias').textContent=String((summary.pendencias||0)+(summary.faltas||0));
+    const relevant=days.filter(d=>d.previsto_minutos>0||d.quantidade_marcacoes>0||d.ocorrencia);
+    const body=document.getElementById('relatorio-body'),empty=document.getElementById('relatorio-vazio');
+    body.innerHTML=relevant.map(r=>{
+      const marks=(r.marcacoes||[]).map(v=>formatDbTime(v));
+      const saldo=r.saldo_minutos===null||r.saldo_minutos===undefined?'—':signedMinutes(r.saldo_minutos);
+      return `<tr><td>${new Intl.DateTimeFormat('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}).format(dateFromKey(r.data))}</td>${[0,1,2,3].map(i=>`<td>${marks[i]||'—'}</td>`).join('')}<td>${fmtMinutes(r.previsto_minutos||0)}</td><td>${fmtMinutes(r.trabalhado_minutos||0)}</td><td class="${r.saldo_minutos<0?'negative':r.saldo_minutos>0?'positive':''}">${saldo}</td><td><span class="report-status ${balanceStatusClass(r.status)}">${balanceStatusLabel(r.status)}</span></td></tr>`;
+    }).join('');
+    empty.style.display=relevant.length?'none':'block';
   }catch(error){toast(errorText(error),'warn');console.error(error)}
 }
 

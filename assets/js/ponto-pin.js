@@ -12,11 +12,22 @@
  function successSound(){try{const C=window.AudioContext||window.webkitAudioContext,ctx=new C();[523.25,659.25,783.99].forEach((f,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(.0001,ctx.currentTime+i*.11);g.gain.exponentialRampToValueAtTime(.16,ctx.currentTime+i*.11+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+i*.11+.18);o.connect(g);g.connect(ctx.destination);o.start(ctx.currentTime+i*.11);o.stop(ctx.currentTime+i*.11+.2)});setTimeout(()=>ctx.close(),800)}catch{}}
  function showSuccess(message){const b=document.getElementById('success-banner');b.querySelector('strong').textContent=message;b.hidden=false;b.classList.remove('show');void b.offsetWidth;b.classList.add('show');successSound();setTimeout(()=>{b.classList.remove('show');setTimeout(()=>b.hidden=true,250)},3200)}
  async function load(){
-  const today=dateKey(new Date()),data=await rpc('marcacoes_funcionario_token',{p_token:token,p_inicio:today,p_fim:today}),marks=data||[];
+  const now=new Date(),today=dateKey(now),monday=new Date(now);monday.setDate(now.getDate()-((now.getDay()+6)%7));const firstMonth=new Date(now.getFullYear(),now.getMonth(),1);
+  const [data,todayBank,weekBank,monthBank]=await Promise.all([
+    rpc('marcacoes_funcionario_token',{p_token:token,p_inicio:today,p_fim:today}),
+    rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:today,p_fim:today}),
+    rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:dateKey(monday),p_fim:today}),
+    rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:dateKey(firstMonth),p_fim:today})
+  ]),marks=data||[];
   document.getElementById('lista-pontos').innerHTML=marks.length?marks.map(m=>`<div class="punch-item"><span>${label(m.tipo)}</span><strong>${fmt(m.registrado_em)}</strong></div>`).join(''):'<div class="mini-empty">Nenhuma marcação feita hoje.</div>';
   const labels=['Entrada','Almoço','Retorno','Saída'];document.getElementById('proxima').textContent=marks.length<4?`Próxima marcação: ${labels[marks.length]}`:'Jornada de hoje concluída';
   document.getElementById('punch-progress').innerHTML=labels.map((_,i)=>`<span class="progress-step ${i<marks.length?'done':''}"></span>`).join('');
   document.getElementById('punch-steps').innerHTML=labels.map((n,i)=>`<div class="punch-step ${i<marks.length?'done':''} ${i===marks.length?'current':''}"><span class="step-icon">${i<marks.length?'✓':i+1}</span><strong>${n}</strong><small>${marks[i]?fmt(marks[i].registrado_em):'Aguardando'}</small></div>`).join('');
+  const signed=n=>`${n>=0?'+':'−'}${String(Math.floor(Math.abs(n||0)/60)).padStart(2,'0')}:${String(Math.abs(n||0)%60).padStart(2,'0')}`;
+  const todaySummary=todayBank?.resumo||{},todayDay=todayBank?.dias?.[0];
+  document.getElementById('self-today-balance').textContent=todayDay?.saldo_minutos==null?(marks.length?'Em andamento':'Aguardando'):signed(todayDay.saldo_minutos);
+  document.getElementById('self-week-balance').textContent=signed(weekBank?.resumo?.saldo_minutos||0);
+  document.getElementById('self-month-balance').textContent=signed(monthBank?.resumo?.saldo_minutos||0);
   document.getElementById('registrar').disabled=marks.length>=4;
  }
  async function init(){document.body.classList.add('employee-mode','kiosk-point-mode');document.getElementById('ponto-funcionario-select').hidden=true;clock();setInterval(clock,1000);
