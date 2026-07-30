@@ -174,3 +174,22 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
 /* V28 — Movimentações de jornada */
 .movement-employee-panel{margin-top:22px;padding:20px;border:1px solid var(--line);border-radius:18px;background:#fffaf7;text-align:left}.movement-actions{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center}.movement-actions input{min-width:0}.movement-history{margin-top:14px}.movement-item{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}.movement-item small{display:block;color:var(--muted);margin-top:4px}.badge.warn{background:#fff4da;color:#9a5a00}.movement-create{margin-bottom:20px}.movement-admin-list{display:grid;gap:16px}.movement-admin-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--shadow-soft)}.movement-card-head{display:flex;justify-content:space-between;gap:14px}.movement-card-head h3{margin:5px 0}.movement-card-head p{margin:0;color:var(--muted)}.movement-review-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}.movement-review-grid label{display:grid;gap:6px}.movement-review-grid .wide{grid-column:1/-1}.check-label{display:flex!important;align-items:center;gap:8px}.check-label input{width:auto}.btn.warning{background:#fff3e8;color:var(--orange-dark);border:1px solid #ffc69f}
 @media(max-width:780px){.movement-actions,.movement-review-grid{grid-template-columns:1fr}.movement-item,.movement-card-head{align-items:flex-start;flex-direction:column}}
+
+
+/* V30 — fluxo seguro e inequívoco para alteração de PIN */
+.pin-access-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;grid-column:1/-1}
+.pin-status-badge{display:inline-flex;align-items:center;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:800;border:1px solid var(--border)}
+.pin-status-badge.configured{background:#eaf8ef;color:#087a39;border-color:#b9e3c8}
+.pin-status-badge.pending{background:#fff4e8;color:#a34b00;border-color:#ffd0a5}
+.pin-access-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;grid-column:1/-1}
+.pin-access-summary>div{background:var(--soft);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:grid;gap:4px}
+.pin-access-summary span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:800}
+.pin-access-summary strong{font-size:14px}
+.pin-edit-area{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:16px;border:1px dashed #efb99f;border-radius:16px;background:rgba(255,247,242,.75)}
+.pin-edit-area[hidden]{display:none!important}
+.pin-generate-row{grid-column:1/-1;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pin-generate-row small,.employee-save-actions small{color:var(--muted)}
+.btn.ghost{background:transparent;border:1px solid var(--border);color:var(--ink)}
+.employee-save-actions{justify-content:space-between;align-items:center;gap:18px;border-top:1px solid var(--border);padding-top:18px}
+.employee-save-actions small{max-width:560px}
+@media(max-width:760px){.pin-access-summary,.pin-edit-area{grid-template-columns:1fr}.pin-access-header,.employee-save-actions{align-items:stretch;flex-direction:column}.employee-save-actions .btn{width:100%}}

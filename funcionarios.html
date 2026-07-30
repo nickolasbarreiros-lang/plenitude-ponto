@@ -27,8 +27,31 @@
     <label>Status<select id="func-status"><option value="ativo">Ativo</option><option value="ferias">Férias</option><option value="afastado">Afastado</option><option value="inativo">Inativo</option></select></label>
     <label class="full">Foto do funcionário<input id="func-foto" type="file" accept="image/png,image/jpeg,image/webp"><small class="field-help">A imagem será recortada, comprimida e enviada ao Supabase Storage.</small></label>
     <div class="photo-actions full"><button id="remover-foto" class="btn secondary" type="button">Remover foto</button><span id="foto-status" class="field-help">Nenhuma nova imagem selecionada.</span></div>
-    <div class="pin-admin-box full"><div><p class="panel-kicker">ACESSO AO PONTO</p><strong>Matrícula + PIN de 4 dígitos</strong></div><label>Novo PIN<input id="func-pin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="••••"></label><label>Confirmar PIN<input id="func-pin-confirm" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="••••"></label><label class="check-label"><input id="exigir-troca-pin" type="checkbox"> Exigir troca no próximo acesso</label><label class="check-label"><input id="acesso-pin-ativo" type="checkbox" checked> Permitir registrar ponto</label><div class="access-actions"><button id="salvar-pin" class="btn secondary" type="button">Definir / alterar PIN</button><button id="gerar-pin" class="btn secondary" type="button">Gerar PIN aleatório</button><span id="acesso-status" class="field-help">Defina um PIN após salvar o funcionário.</span></div></div>
-    <div class="actions full"><button class="btn primary" type="submit">Salvar funcionário</button></div>
+    <div class="pin-admin-box full" id="pin-access-box">
+      <div class="pin-access-header">
+        <div><p class="panel-kicker">ACESSO AO PONTO</p><strong>Matrícula + PIN de 4 dígitos</strong></div>
+        <span id="pin-status-badge" class="pin-status-badge pending">Não configurado</span>
+      </div>
+      <div id="pin-access-summary" class="pin-access-summary">
+        <div><span>Matrícula</span><strong id="pin-summary-matricula">—</strong></div>
+        <div><span>PIN</span><strong id="pin-summary-status">Não configurado</strong></div>
+        <div><span>Registro de ponto</span><strong id="pin-summary-access">Aguardando cadastro</strong></div>
+      </div>
+      <div id="pin-edit-area" class="pin-edit-area" hidden>
+        <label>Novo PIN<input id="func-pin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="••••" disabled></label>
+        <label>Confirmar PIN<input id="func-pin-confirm" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="••••" disabled></label>
+        <label class="check-label"><input id="exigir-troca-pin" type="checkbox" disabled> Exigir troca no próximo acesso</label>
+        <label class="check-label"><input id="acesso-pin-ativo" type="checkbox" checked disabled> Permitir registrar ponto</label>
+        <div class="pin-generate-row"><button id="gerar-pin" class="btn secondary" type="button" disabled>Gerar PIN aleatório</button><small>O PIN será gravado somente ao confirmar esta alteração.</small></div>
+      </div>
+      <div class="access-actions">
+        <button id="editar-pin" class="btn secondary" type="button">Definir novo PIN</button>
+        <button id="salvar-pin" class="btn primary" type="button" hidden>Confirmar alteração do PIN</button>
+        <button id="cancelar-pin" class="btn ghost" type="button" hidden>Cancelar</button>
+        <span id="acesso-status" class="field-help">Salve primeiro os dados cadastrais.</span>
+      </div>
+    </div>
+    <div class="actions full employee-save-actions"><small>Este botão salva apenas os dados cadastrais. O PIN possui confirmação própria acima.</small><button class="btn primary" type="submit">Salvar dados cadastrais</button></div>
   </form>
 </article>
 <article class="panel employee-preview employee-profile-card">

@@ -1,3 +1,7 @@
+# Plenitude Ponto — V30
+
+Refinamento de UX do cadastro de funcionário: alteração de PIN separada dos dados cadastrais, campos bloqueados até ação explícita, confirmação própria e status visual.
+
 # Plenitude Ponto — V9
 
 Sistema de controle de ponto da Livraria Plenitude, hospedado no GitHub Pages e conectado ao Supabase.
