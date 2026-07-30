@@ -286,3 +286,29 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
 }
 
 /* RC1 release marker: 1.0.0-rc1 */
+
+
+/* Plenitude Ponto 1.0.0 RC1.1 — polimento da área do funcionário */
+.clock-action-card,.movement-employee-panel,.adjustment-panel,.change-pin-panel,.employee-self-service{
+  border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.97);box-shadow:var(--shadow-soft)
+}
+.clock-action-card{padding:20px}
+.clock-primary-column .employee-self-service{padding:0;background:transparent;border:0;box-shadow:none}
+.clock-secondary-column>section{padding:20px}
+.clock-workspace{grid-template-columns:minmax(520px,1.2fr) minmax(380px,.8fr);gap:22px}
+.punch-button{display:flex;align-items:center;justify-content:center;gap:9px;min-height:76px}
+.punch-button.loading{cursor:wait}
+.punch-step.current{border-color:rgba(255,101,0,.55);box-shadow:0 0 0 3px rgba(255,101,0,.08)}
+.punch-step.current .step-icon{background:#fff1e8;color:var(--orange-dark)}
+.self-balance-grid article{min-height:92px;display:flex;flex-direction:column;justify-content:center}
+.self-balance-grid strong{font-variant-numeric:tabular-nums}
+.homologation-note{padding:11px 14px;border-radius:13px;background:#fff8dc;border:1px solid #efd887;color:#725707;font-size:.84rem;line-height:1.35}
+.homologation-note[hidden]{display:none}
+.homologation-employee .clock-status{color:#795600}
+.movement-employee-panel .muted,.adjustment-panel .muted{line-height:1.45}
+@media(min-width:1100px){
+  .clock-dashboard-header{grid-template-columns:230px 1fr 120px}
+  .clock-primary-column{grid-template-columns:1fr}
+  .self-profile-card{grid-template-columns:1.6fr .8fr}
+}
+@media(max-width:900px){.clock-workspace{grid-template-columns:1fr}.clock-secondary-column{position:static}}

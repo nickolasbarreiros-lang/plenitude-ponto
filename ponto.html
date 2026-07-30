@@ -6,7 +6,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="#ff6500" name="theme-color"/>
 <title>Registrar ponto | Plenitude</title>
-<link href="assets/css/estilos.css?v=1.0.0-rc1" rel="stylesheet"/>
+<link href="assets/css/estilos.css?v=1.0.0-rc1.1" rel="stylesheet"/>
 </head>
 <body>
 <main class="clock-page">
@@ -15,7 +15,7 @@
 <div class="clock-employee-data"><small>Funcionário</small><strong id="clock-employee">Funcionário da loja</strong><em id="clock-status">Ativo</em></div>
 <select aria-label="Selecionar funcionário" class="employee-select" hidden="" id="ponto-funcionario-select"></select>
 </div><button class="punch-button" id="registrar"><span>◷</span> Registrar ponto</button><p class="next-mark" id="proxima"></p><div class="punch-steps" id="punch-steps"></div><div class="punch-progress" id="punch-progress"></div><div class="punch-list punch-list-premium" id="lista-pontos"></div></section><section class="employee-self-service" hidden="" id="employee-self-service">
-<div class="self-balance-grid">
+<div class="homologation-note" hidden id="homologation-note">🧪 Ambiente de homologação: os saldos semanal e mensal começam no dia atual para facilitar os testes.</div><div class="self-balance-grid">
 <article><span>Saldo de hoje</span><strong id="self-today-balance">—</strong></article>
 <article><span>Saldo da semana</span><strong id="self-week-balance">00:00</strong></article>
 <article><span>Saldo do mês</span><strong id="self-month-balance">00:00</strong></article>
@@ -47,6 +47,6 @@
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc1"></script><script src="assets/js/auth.js?v=1.0.0-rc1"></script>
 <script src="assets/js/database.js?v=1.0.0-rc1"></script><script src="assets/js/app.js?v=1.0.0-rc1"></script>
-<script src="assets/js/ponto-pin.js?v=1.0.0-rc1"></script>
+<script src="assets/js/ponto-pin.js?v=1.0.0-rc1.1"></script>
 </body>
 </html>

@@ -13,14 +13,23 @@
  function showSuccess(message){const b=document.getElementById('success-banner');b.querySelector('strong').textContent=message;b.hidden=false;b.classList.remove('show');void b.offsetWidth;b.classList.add('show');successSound();setTimeout(()=>{b.classList.remove('show');setTimeout(()=>b.hidden=true,250)},3200)}
  async function load(){
   const now=new Date(),today=dateKey(now),monday=new Date(now);monday.setDate(now.getDate()-((now.getDay()+6)%7));const firstMonth=new Date(now.getFullYear(),now.getMonth(),1);
+  const isHomologation=String(employee?.matricula||'').replace(/^0+/,'')==='999';
+  const weekStart=isHomologation?today:dateKey(monday);
+  const monthStart=isHomologation?today:dateKey(firstMonth);
   const [data,todayBank,weekBank,monthBank]=await Promise.all([
     rpc('marcacoes_funcionario_token',{p_token:token,p_inicio:today,p_fim:today}),
     rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:today,p_fim:today}),
-    rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:dateKey(monday),p_fim:today}),
-    rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:dateKey(firstMonth),p_fim:today})
+    rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:weekStart,p_fim:today}),
+    rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:monthStart,p_fim:today})
   ]),marks=data||[];
   document.getElementById('lista-pontos').innerHTML=marks.length?marks.map(m=>`<div class="punch-item"><span>${label(m.tipo)}</span><strong>${fmt(m.registrado_em)}</strong></div>`).join(''):'<div class="mini-empty">Nenhuma marcação feita hoje.</div>';
-  const labels=['Entrada','Almoço','Retorno','Saída'];document.getElementById('proxima').textContent=marks.length<4?`Próxima marcação: ${labels[marks.length]}`:'Jornada de hoje concluída';
+  const labels=['Entrada','Almoço','Retorno','Saída'];
+  const actionLabels=['Registrar entrada','Registrar saída para almoço','Registrar retorno do almoço','Registrar saída final'];
+  const nextLabel=marks.length<4?labels[marks.length]:null;
+  document.getElementById('proxima').textContent=nextLabel?`Próxima marcação: ${nextLabel}`:'Jornada de hoje concluída';
+  const punchButton=document.getElementById('registrar');
+  punchButton.innerHTML=marks.length<4?`<span>◷</span> ${actionLabels[marks.length]}`:'<span>✓</span> Jornada concluída';
+  punchButton.setAttribute('aria-label',marks.length<4?actionLabels[marks.length]:'Jornada concluída');
   document.getElementById('punch-progress').innerHTML=labels.map((_,i)=>`<span class="progress-step ${i<marks.length?'done':''}"></span>`).join('');
   document.getElementById('punch-steps').innerHTML=labels.map((n,i)=>`<div class="punch-step ${i<marks.length?'done':''} ${i===marks.length?'current':''}"><span class="step-icon">${i<marks.length?'✓':i+1}</span><strong>${n}</strong><small>${marks[i]?fmt(marks[i].registrado_em):'Aguardando'}</small></div>`).join('');
   const signed=n=>`${n>=0?'+':'−'}${String(Math.floor(Math.abs(n||0)/60)).padStart(2,'0')}:${String(Math.abs(n||0)%60).padStart(2,'0')}`;
@@ -28,7 +37,9 @@
   document.getElementById('self-today-balance').textContent=todayDay?.saldo_minutos==null?(marks.length?'Em andamento':'Aguardando'):signed(todayDay.saldo_minutos);
   document.getElementById('self-week-balance').textContent=signed(weekBank?.resumo?.saldo_minutos||0);
   document.getElementById('self-month-balance').textContent=signed(monthBank?.resumo?.saldo_minutos||0);
-  document.getElementById('registrar').disabled=marks.length>=4;
+  punchButton.disabled=marks.length>=4;
+  document.body.classList.toggle('homologation-employee',isHomologation);
+  const note=document.getElementById('homologation-note');if(note)note.hidden=!isHomologation;
  }
  async function init(){document.body.classList.add('employee-mode','kiosk-point-mode');document.getElementById('ponto-funcionario-select').hidden=true;clock();setInterval(clock,1000);
   try{const d=await rpc('dados_funcionario_token',{p_token:token});employee=Array.isArray(d)?d[0]:d;if(!employee)throw new Error('Sessão inválida.');
@@ -43,7 +54,7 @@
    if(/sessão|token|inválid/i.test(String(e.message||''))){sessionStorage.removeItem('plenitude-employee-session');setTimeout(()=>location.replace('index.html'),1200)}
   }
  }
- document.getElementById('registrar').onclick=async()=>{const b=document.getElementById('registrar');b.disabled=true;try{const deviceToken=localStorage.getItem('plenitude-device-token')||'';if(!deviceToken)throw new Error('Registro bloqueado: computador não autorizado.');const data=await rpc('registrar_ponto_dispositivo',{p_token:token,p_dispositivo_token:deviceToken,p_user_agent:navigator.userAgent});const m=Array.isArray(data)?data[0]:data;showSuccess(`${label(m.tipo)} registrada às ${fmt(m.registrado_em)}`);toast(`${label(m.tipo)} registrada às ${fmt(m.registrado_em)}.`);await load()}catch(e){toast(e.message,'warn');b.disabled=false}};
+ document.getElementById('registrar').onclick=async()=>{const b=document.getElementById('registrar'),previous=b.innerHTML;b.disabled=true;b.classList.add('loading');try{const deviceToken=localStorage.getItem('plenitude-device-token')||'';if(!deviceToken)throw new Error('Registro bloqueado: computador não autorizado.');const data=await rpc('registrar_ponto_dispositivo',{p_token:token,p_dispositivo_token:deviceToken,p_user_agent:navigator.userAgent});const m=Array.isArray(data)?data[0]:data;showSuccess(`${label(m.tipo)} registrada às ${fmt(m.registrado_em)}`);toast(`${label(m.tipo)} registrada às ${fmt(m.registrado_em)}.`);await load()}catch(e){toast(e.message,'warn');b.disabled=false;b.innerHTML=previous}finally{b.classList.remove('loading')}};
  document.getElementById('fullscreen-toggle').onclick=async()=>{try{if(!document.fullscreenElement){await document.documentElement.requestFullscreen();document.getElementById('fullscreen-toggle').textContent='✕ Sair da tela cheia'}else{await document.exitFullscreen();document.getElementById('fullscreen-toggle').textContent='⛶ Tela cheia'}}catch(e){toast('O navegador não permitiu ativar a tela cheia.','warn')}};
  document.addEventListener('fullscreenchange',()=>{document.getElementById('fullscreen-toggle').textContent=document.fullscreenElement?'✕ Sair da tela cheia':'⛶ Tela cheia'});
  document.getElementById('sair').onclick=async()=>{try{await rpc('encerrar_sessao_funcionario',{p_token:token})}catch{}sessionStorage.removeItem('plenitude-employee-session');location.replace('index.html')};
