@@ -193,3 +193,50 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
 .employee-save-actions{justify-content:space-between;align-items:center;gap:18px;border-top:1px solid var(--border);padding-top:18px}
 .employee-save-actions small{max-width:560px}
 @media(max-width:760px){.pin-access-summary,.pin-edit-area{grid-template-columns:1fr}.pin-access-header,.employee-save-actions{align-items:stretch;flex-direction:column}.employee-save-actions .btn{width:100%}}
+
+
+/* V30.4 — painel do funcionário horizontal e melhor uso da largura */
+.employee-mode .clock-page,.kiosk-point-mode .clock-page{align-items:flex-start;padding:24px}
+.employee-mode .premium-clock-card,.kiosk-point-mode .premium-clock-card{width:min(1180px,100%);max-width:1180px;padding:28px 30px;margin:0 auto}
+.clock-dashboard-header{display:grid;grid-template-columns:220px 1fr 220px;align-items:center;gap:24px;margin:2px 0 18px}
+.clock-brand-block{grid-column:1;text-align:left;display:grid;justify-items:center;gap:4px}
+.clock-brand-block .clock-logo{width:148px;margin:0}
+.clock-brand-block .eyebrow{margin:0;font-size:10px;letter-spacing:.18em}
+.clock-main-time{grid-column:2;text-align:center}
+.clock-main-time .clock-date{margin:0 0 5px}
+.clock-main-time .clock-time{font-size:clamp(3.4rem,6vw,5.8rem);line-height:.95;margin:0}
+.clock-workspace{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(380px,.88fr);gap:20px;align-items:start;text-align:left}
+.clock-primary-column,.clock-secondary-column{display:grid;gap:16px;min-width:0}
+.clock-action-card{padding:20px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg,#fff,#fff9f5);box-shadow:0 10px 30px rgba(91,45,28,.06)}
+.clock-action-card .clock-employee-box{margin:0 0 14px}
+.clock-action-card .punch-button{margin:0;width:100%}
+.clock-action-card .next-mark{text-align:center;margin:10px 0 14px}
+.clock-action-card .punch-list{margin-top:12px}
+.clock-primary-column .employee-self-service{margin-top:0}
+.clock-secondary-column .movement-employee-panel,.clock-secondary-column .adjustment-panel{margin-top:0;background:#fff}
+.clock-secondary-column .panel-head{align-items:flex-start}
+.clock-secondary-column .movement-actions{grid-template-columns:1fr}
+.clock-secondary-column .movement-actions .btn{width:100%}
+.clock-secondary-column .adjustment-form{grid-template-columns:1fr 1fr}
+.clock-secondary-column .adjustment-form .wide,.clock-secondary-column .adjustment-form .btn{grid-column:1/-1}
+.clock-secondary-column .change-pin-link{margin:0 auto;color:var(--orange-dark);text-align:center}
+.clock-footnote{text-align:center;margin-top:18px}
+@media(min-width:901px){
+  .clock-secondary-column{position:sticky;top:18px}
+  .clock-kiosk{top:18px;left:18px}.clock-logout{top:18px;right:18px}
+}
+@media(max-width:900px){
+  .employee-mode .clock-page,.kiosk-point-mode .clock-page{padding:14px}
+  .employee-mode .premium-clock-card,.kiosk-point-mode .premium-clock-card{padding:22px 18px}
+  .clock-dashboard-header{grid-template-columns:1fr;gap:10px;padding-top:32px}
+  .clock-brand-block,.clock-main-time{grid-column:1;text-align:center}
+  .clock-brand-block{justify-items:center}
+  .clock-workspace{grid-template-columns:1fr}
+  .clock-secondary-column{position:static}
+}
+@media(max-width:560px){
+  .clock-main-time .clock-time{font-size:3.5rem}
+  .clock-secondary-column .adjustment-form{grid-template-columns:1fr}
+  .clock-secondary-column .adjustment-form>*{grid-column:1!important}
+  .clock-action-card{padding:14px}
+}

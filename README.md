@@ -139,3 +139,9 @@ Inclui saídas temporárias, retorno, justificativas médicas, serviço externo,
 
 ## V29 — correção do PIN de funcionário
 Execute `supabase-v29-correcao-pin-funcionario.sql` no SQL Editor. Depois, conectado como administrador, abra **Funcionário**, informe e confirme o PIN de 4 dígitos e clique em **Definir / alterar PIN**. A interface agora só confirma sucesso depois que o Supabase devolve `pin_configurado = true`.
+
+
+## V30.4
+- Tela do funcionário reorganizada em duas colunas no desktop.
+- Área de registro e saldos à esquerda; movimentações e ajustes à direita.
+- Mantida disposição vertical em celular/tablet.
