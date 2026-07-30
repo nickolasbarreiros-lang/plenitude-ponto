@@ -37,64 +37,85 @@
     );
 
   const scenarios = [
-    ['1. Preparação','Diagnóstico técnico com todas as verificações aprovadas'],
-    ['1. Preparação','Funcionário 999 criado ou reparado'],
-    ['1. Preparação','Dados de homologação resetados'],
-    ['1. Preparação','Computador de testes autorizado'],
+    {grupo:'1. Preparação', teste:'Diagnóstico técnico com todas as verificações aprovadas'},
+    {grupo:'1. Preparação', teste:'Funcionário 999 criado ou reparado'},
+    {grupo:'1. Preparação', teste:'Dados de homologação resetados'},
+    {grupo:'1. Preparação', teste:'Computador de testes autorizado'},
 
-    ['2. Jornada','Login com matrícula 999 e PIN 9999'],
-    ['2. Jornada','Registrar entrada'],
-    ['2. Jornada','Confirmar horário e próxima ação'],
-    ['2. Jornada','Registrar saída para almoço'],
-    ['2. Jornada','Registrar retorno do almoço'],
-    ['2. Jornada','Registrar saída final'],
-    ['2. Jornada','Confirmar jornada encerrada e resumo'],
+    {grupo:'2. Jornada', teste:'Login com matrícula 999 e PIN 9999'},
+    {grupo:'2. Jornada', teste:'Registrar entrada'},
+    {grupo:'2. Jornada', teste:'Confirmar horário e próxima ação'},
+    {grupo:'2. Jornada', teste:'Registrar saída para almoço'},
+    {grupo:'2. Jornada', teste:'Registrar retorno do almoço'},
+    {grupo:'2. Jornada', teste:'Registrar saída final'},
+    {grupo:'2. Jornada', teste:'Confirmar jornada encerrada e resumo'},
 
-    ['3. Movimentação temporária','Registrar saída temporária com motivo'],
-    ['3. Movimentação temporária','Confirmar status Fora da loja'],
-    ['3. Movimentação temporária','Registrar retorno temporário'],
-    ['3. Movimentação temporária','Classificar movimentação no painel'],
+    {grupo:'3. Movimentação temporária', teste:'Registrar saída temporária com motivo'},
+    {grupo:'3. Movimentação temporária', teste:'Confirmar status Fora da loja'},
+    {grupo:'3. Movimentação temporária', teste:'Registrar retorno temporário'},
+    {grupo:'3. Movimentação temporária', teste:'Classificar movimentação no painel'},
 
-    ['4. Ajustes','Solicitar entrada esquecida'],
-    ['4. Ajustes','Solicitar saída esquecida'],
-    ['4. Ajustes','Aprovar uma solicitação'],
-    ['4. Ajustes','Rejeitar uma solicitação'],
-    ['4. Ajustes','Confirmar reflexo no relatório e auditoria'],
+    {grupo:'4. Ajustes', teste:'Solicitar entrada esquecida'},
+    {grupo:'4. Ajustes', teste:'Solicitar saída esquecida'},
+    {grupo:'4. Ajustes', teste:'Aprovar uma solicitação'},
+    {grupo:'4. Ajustes', teste:'Rejeitar uma solicitação'},
+    {grupo:'4. Ajustes', teste:'Confirmar reflexo no relatório e auditoria'},
 
-    ['5. Banco de horas','Conferir tolerância de entrada'],
-    ['5. Banco de horas','Conferir saldo diário'],
-    ['5. Banco de horas','Conferir saldo semanal'],
-    ['5. Banco de horas','Conferir saldo mensal'],
-    ['5. Banco de horas','Conferir hora extra e saída antecipada'],
+    {grupo:'5. Banco de horas', teste:'Conferir tolerância de entrada'},
+    {grupo:'5. Banco de horas', teste:'Conferir saldo diário'},
+    {grupo:'5. Banco de horas', teste:'Conferir saldo semanal'},
+    {grupo:'5. Banco de horas', teste:'Conferir saldo mensal'},
+    {grupo:'5. Banco de horas', teste:'Conferir hora extra e saída antecipada'},
 
-    ['6. Administração','Criar e editar funcionário'],
-    ['6. Administração','Definir ou alterar PIN'],
-    ['6. Administração','Bloquear e reativar acesso ao ponto'],
-    ['6. Administração','Autorizar e revogar dispositivo'],
-    ['6. Administração','Consultar auditoria'],
-    ['6. Administração','Gerar backup e exportações'],
+    {grupo:'6. Administração', teste:'Criar e editar funcionário'},
+    {grupo:'6. Administração', teste:'Definir ou alterar PIN'},
+    {grupo:'6. Administração', teste:'Bloquear e reativar acesso ao ponto'},
+    {grupo:'6. Administração', teste:'Autorizar e revogar dispositivo'},
+    {grupo:'6. Administração', teste:'Consultar auditoria'},
+    {grupo:'6. Administração', teste:'Gerar backup e exportações'},
 
-    ['7. Fechamento','Fechar competência'],
-    ['7. Fechamento','Confirmar bloqueio de alterações'],
-    ['7. Fechamento','Reabrir com motivo e PIN Mestre'],
+    {grupo:'7. Fechamento', teste:'Fechar competência'},
+    {grupo:'7. Fechamento', teste:'Confirmar bloqueio de alterações'},
+    {grupo:'7. Fechamento', teste:'Reabrir com motivo e PIN Mestre'},
 
-    ['8. Relatórios','Gerar espelho mensal'],
-    ['8. Relatórios','Imprimir ou salvar PDF'],
-    ['8. Relatórios','Exportar CSV'],
+    {grupo:'8. Relatórios', teste:'Gerar espelho mensal'},
+    {grupo:'8. Relatórios', teste:'Imprimir ou salvar PDF'},
+    {grupo:'8. Relatórios', teste:'Exportar CSV'},
 
-    ['9. Segurança','Testar PIN incorreto'],
-    ['9. Segurança','Confirmar bloqueio após tentativas inválidas'],
-    ['9. Segurança','Testar computador não autorizado'],
-    ['9. Segurança','Testar logout e sessão expirada'],
+    {grupo:'9. Segurança', teste:'Testar PIN incorreto'},
+    {grupo:'9. Segurança', teste:'Confirmar bloqueio após tentativas inválidas'},
+    {grupo:'9. Segurança', teste:'Testar computador não autorizado'},
+    {grupo:'9. Segurança', teste:'Testar logout e sessão expirada'},
 
-    ['10. Resiliência','Testar sem internet e mensagem amigável'],
-    ['10. Resiliência','Testar duas abas abertas'],
-    ['10. Resiliência','Atualizar com Ctrl+F5 e confirmar ausência de erros no Console']
+    {grupo:'10. Robustez operacional', teste:'Proteção contra múltiplos cliques', detalhe:'Vários cliques rápidos devem registrar apenas uma marcação.'},
+    {grupo:'10. Robustez operacional', teste:'Persistência após atualizar a página (F5)', detalhe:'A marcação e a próxima etapa devem permanecer corretas.'},
+    {grupo:'10. Robustez operacional', teste:'Proteção com duas abas abertas', detalhe:'Chamadas concorrentes não podem pular etapas.'},
+    {grupo:'10. Robustez operacional', teste:'Proteção contra etapas fora da ordem', detalhe:'Não deve ser possível pular Retorno ou Saída.'},
+    {grupo:'10. Robustez operacional', teste:'Bloqueio após jornada concluída', detalhe:'Uma quinta marcação deve ser recusada.'},
+    {grupo:'10. Robustez operacional', teste:'Janela mínima entre marcações', detalhe:'Nova marcação em menos de 5 segundos deve ser bloqueada.'},
+
+    {grupo:'11. Resiliência', teste:'Testar sem internet e mensagem amigável'},
+    {grupo:'11. Resiliência', teste:'Testar duas abas abertas sem inconsistência'},
+    {grupo:'11. Resiliência', teste:'Atualizar com Ctrl+F5 e confirmar ausência de erros no Console'}
   ];
 
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(checklistKey) || '{}'); }
   catch (_) { saved = {}; }
+
+  const normalizarRegistro = (valor) => {
+    if (typeof valor === 'boolean') {
+      return {status: valor ? 'aprovado' : 'nao_iniciado', observacao: ''};
+    }
+    return {
+      status: valor?.status || 'nao_iniciado',
+      observacao: valor?.observacao || ''
+    };
+  };
+
+  scenarios.forEach((_, i) => {
+    saved[i] = normalizarRegistro(saved[i]);
+  });
 
   const list = document.getElementById('checklist');
   const progressText = document.getElementById('checklist-progresso');
@@ -102,54 +123,97 @@
   const finalBadge = document.getElementById('resultado-final');
 
   function updateProgress() {
-    const done = scenarios.filter((_, i) => saved[i]).length;
-    const pct = Math.round(done / scenarios.length * 100);
-    progressText.textContent = `${done} de ${scenarios.length} testes concluídos (${pct}%)`;
+    const aprovados = scenarios.filter((_, i) => saved[i]?.status === 'aprovado').length;
+    const reprovados = scenarios.filter((_, i) => saved[i]?.status === 'reprovado').length;
+    const emTeste = scenarios.filter((_, i) => saved[i]?.status === 'em_teste').length;
+    const pct = Math.round(aprovados / scenarios.length * 100);
+
+    progressText.textContent =
+      `${aprovados} de ${scenarios.length} aprovados (${pct}%) · ` +
+      `${emTeste} em teste · ${reprovados} reprovado(s)`;
+
     progressBar.style.width = `${pct}%`;
-    finalBadge.textContent = pct === 100 ? 'Aprovado' : 'Em andamento';
-    finalBadge.classList.toggle('success', pct === 100);
+
+    if (reprovados > 0) {
+      finalBadge.textContent = 'Reprovado';
+      finalBadge.className = 'badge danger';
+    } else if (aprovados === scenarios.length) {
+      finalBadge.textContent = 'Aprovado';
+      finalBadge.className = 'badge success';
+    } else {
+      finalBadge.textContent = 'Em andamento';
+      finalBadge.className = 'badge';
+    }
   }
 
   function renderChecklist() {
     list.innerHTML = '';
     let lastGroup = '';
-    scenarios.forEach(([group, label], index) => {
-      if (group !== lastGroup) {
+
+    scenarios.forEach((item, index) => {
+      if (item.grupo !== lastGroup) {
         const heading = document.createElement('h3');
-        heading.textContent = group;
+        heading.textContent = item.grupo;
         list.appendChild(heading);
-        lastGroup = group;
+        lastGroup = item.grupo;
       }
 
-      const row = document.createElement('label');
-      row.className = 'homolog-check';
+      const row = document.createElement('article');
+      row.className = `homolog-case status-${saved[index].status}`;
       row.innerHTML = `
-        <input type="checkbox" data-index="${index}" ${saved[index] ? 'checked' : ''}>
-        <span>${label}</span>
+        <div class="homolog-case-main">
+          <strong>${item.teste}</strong>
+          ${item.detalhe ? `<small>${item.detalhe}</small>` : ''}
+        </div>
+        <select class="homolog-status" data-index="${index}" aria-label="Status do teste">
+          <option value="nao_iniciado">Não iniciado</option>
+          <option value="em_teste">Em teste</option>
+          <option value="aprovado">Aprovado</option>
+          <option value="reprovado">Reprovado</option>
+        </select>
+        <textarea
+          class="homolog-case-note"
+          data-note-index="${index}"
+          placeholder="Observação deste teste..."
+          aria-label="Observação do teste"
+        >${saved[index].observacao || ''}</textarea>
       `;
+
+      const select = row.querySelector('select');
+      select.value = saved[index].status;
+      select.onchange = () => {
+        saved[index].status = select.value;
+        localStorage.setItem(checklistKey, JSON.stringify(saved));
+        renderChecklist();
+      };
+
+      const note = row.querySelector('textarea');
+      note.onchange = () => {
+        saved[index].observacao = note.value;
+        localStorage.setItem(checklistKey, JSON.stringify(saved));
+      };
+
       list.appendChild(row);
     });
 
-    list.querySelectorAll('input[type="checkbox"]').forEach(input => {
-      input.onchange = () => {
-        saved[input.dataset.index] = input.checked;
-        localStorage.setItem(checklistKey, JSON.stringify(saved));
-        updateProgress();
-      };
-    });
     updateProgress();
   }
 
   document.getElementById('marcar-todos').onclick = () => {
-    if (!confirm('Marcar todos os testes como concluídos?')) return;
-    scenarios.forEach((_, index) => saved[index] = true);
+    if (!confirm('Marcar todos os testes como aprovados?')) return;
+    scenarios.forEach((_, index) => {
+      saved[index] = {status:'aprovado', observacao:saved[index]?.observacao || ''};
+    });
     localStorage.setItem(checklistKey, JSON.stringify(saved));
     renderChecklist();
   };
 
   document.getElementById('limpar-checklist').onclick = () => {
-    if (!confirm('Limpar todo o checklist deste navegador?')) return;
+    if (!confirm('Limpar status e observações de todos os testes?')) return;
     saved = {};
+    scenarios.forEach((_, index) => {
+      saved[index] = {status:'nao_iniciado', observacao:''};
+    });
     localStorage.removeItem(checklistKey);
     renderChecklist();
   };
@@ -169,9 +233,19 @@
       'PLENITUDE PONTO — RELATÓRIO DE HOMOLOGAÇÃO RC2.2',
       `Gerado em: ${new Date().toLocaleString('pt-BR')}`,
       '',
-      ...scenarios.map(([group, label], index) =>
-        `${saved[index] ? '[APROVADO]' : '[PENDENTE]'} ${group} — ${label}`
-      ),
+      ...scenarios.flatMap((item, index) => {
+        const registro = saved[index] || {status:'nao_iniciado', observacao:''};
+        const rotulo = {
+          nao_iniciado:'NÃO INICIADO',
+          em_teste:'EM TESTE',
+          aprovado:'APROVADO',
+          reprovado:'REPROVADO'
+        }[registro.status] || registro.status.toUpperCase();
+
+        const linhas = [`[${rotulo}] ${item.grupo} — ${item.teste}`];
+        if (registro.observacao) linhas.push(`  Observação: ${registro.observacao}`);
+        return linhas;
+      }),
       '',
       'ANOTAÇÕES:',
       notes.value || 'Nenhuma anotação registrada.'

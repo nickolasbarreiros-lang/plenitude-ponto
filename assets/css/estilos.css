@@ -539,3 +539,73 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
     margin-top:15px !important;
   }
 }
+
+
+/* RC2.5 — checklist de homologação com status e observação */
+.homolog-checklist{
+  grid-template-columns:1fr !important;
+}
+.homolog-case{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 170px;
+  gap:10px 14px;
+  align-items:start;
+  padding:14px;
+  border:1px solid #eadfd9;
+  border-radius:14px;
+  background:#fff;
+}
+.homolog-case-main{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+.homolog-case-main small{
+  color:#756a66;
+  line-height:1.4;
+}
+.homolog-status{
+  width:100%;
+  min-height:42px;
+  padding:9px 11px;
+  border:1px solid #dfd1ca;
+  border-radius:10px;
+  background:#fff;
+  font:inherit;
+  font-weight:700;
+}
+.homolog-case-note{
+  grid-column:1/-1;
+  width:100%;
+  min-height:58px;
+  resize:vertical;
+  padding:10px 12px;
+  border:1px solid #e5d8d2;
+  border-radius:10px;
+  font:inherit;
+}
+.homolog-case.status-em_teste{
+  background:#fff8e7;
+  border-color:#ebd286;
+}
+.homolog-case.status-aprovado{
+  background:#eef9f2;
+  border-color:#b7e2c5;
+}
+.homolog-case.status-reprovado{
+  background:#fff0f0;
+  border-color:#efb3b3;
+}
+.badge.danger{
+  background:#fff0f0;
+  color:#9e2525;
+  border-color:#efb3b3;
+}
+@media(max-width:680px){
+  .homolog-case{
+    grid-template-columns:1fr;
+  }
+  .homolog-case-note{
+    grid-column:auto;
+  }
+}
