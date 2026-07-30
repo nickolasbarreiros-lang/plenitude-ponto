@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Homologação | Plenitude Ponto</title>
-  <link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc2.5">
+  <link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc3">
 </head>
 <body>
 <div class="app-shell">
@@ -68,6 +68,7 @@
       <div class="panel-head">
         <div><p class="panel-kicker">ACEITAÇÃO FUNCIONAL</p><h2>Checklist da versão 1.0</h2></div>
         <div class="homolog-actions">
+          <button id="validar-automaticamente" class="btn primary">Validar automaticamente</button>
           <button id="exportar-relatorio" class="btn outline">Exportar relatório</button>
           <button id="marcar-todos" class="btn outline">Marcar todos</button>
           <button id="limpar-checklist" class="btn outline">Limpar</button>
@@ -78,6 +79,7 @@
         <span id="resultado-final" class="badge">Em andamento</span>
       </div>
       <div class="homolog-progress"><span id="checklist-barra"></span></div>
+      <div id="validacao-automatica-resumo" class="homolog-auto-summary">Alguns testes podem ser comprovados automaticamente pelo Supabase. Os testes visuais e de interação continuam manuais.</div>
       <div id="checklist" class="homolog-checklist"></div>
     </section>
 
@@ -107,8 +109,8 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/js/supabase-config.js?v=1.0.0-rc2.5"></script>
-<script src="assets/js/auth.js?v=1.0.0-rc2.5"></script>
-<script src="assets/js/homologacao.js?v=1.0.0-rc2.5"></script>
+<script src="assets/js/supabase-config.js?v=1.0.0-rc3"></script>
+<script src="assets/js/auth.js?v=1.0.0-rc3"></script>
+<script src="assets/js/homologacao.js?v=1.0.0-rc3"></script>
 </body>
 </html>

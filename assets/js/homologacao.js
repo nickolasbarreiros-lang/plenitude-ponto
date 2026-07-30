@@ -37,29 +37,29 @@
     );
 
   const scenarios = [
-    {grupo:'1. Preparação', teste:'Diagnóstico técnico com todas as verificações aprovadas'},
-    {grupo:'1. Preparação', teste:'Funcionário 999 criado ou reparado'},
+    {grupo:'1. Preparação', teste:'Diagnóstico técnico com todas as verificações aprovadas', auto:'diagnostico_tecnico'},
+    {grupo:'1. Preparação', teste:'Funcionário 999 criado ou reparado', auto:'funcionario_999'},
     {grupo:'1. Preparação', teste:'Dados de homologação resetados'},
-    {grupo:'1. Preparação', teste:'Computador de testes autorizado'},
+    {grupo:'1. Preparação', teste:'Computador de testes autorizado', auto:'dispositivo_autorizado'},
 
     {grupo:'2. Jornada', teste:'Login com matrícula 999 e PIN 9999'},
-    {grupo:'2. Jornada', teste:'Registrar entrada'},
+    {grupo:'2. Jornada', teste:'Registrar entrada', auto:'entrada_registrada'},
     {grupo:'2. Jornada', teste:'Confirmar horário e próxima ação'},
-    {grupo:'2. Jornada', teste:'Registrar saída para almoço'},
-    {grupo:'2. Jornada', teste:'Registrar retorno do almoço'},
-    {grupo:'2. Jornada', teste:'Registrar saída final'},
-    {grupo:'2. Jornada', teste:'Confirmar jornada encerrada e resumo'},
+    {grupo:'2. Jornada', teste:'Registrar saída para almoço', auto:'almoco_registrado'},
+    {grupo:'2. Jornada', teste:'Registrar retorno do almoço', auto:'retorno_registrado'},
+    {grupo:'2. Jornada', teste:'Registrar saída final', auto:'saida_registrada'},
+    {grupo:'2. Jornada', teste:'Confirmar jornada encerrada e resumo', auto:'jornada_concluida'},
 
-    {grupo:'3. Movimentação temporária', teste:'Registrar saída temporária com motivo'},
-    {grupo:'3. Movimentação temporária', teste:'Confirmar status Fora da loja'},
-    {grupo:'3. Movimentação temporária', teste:'Registrar retorno temporário'},
-    {grupo:'3. Movimentação temporária', teste:'Classificar movimentação no painel'},
+    {grupo:'3. Movimentação temporária', teste:'Registrar saída temporária com motivo', auto:'movimentacao_saida'},
+    {grupo:'3. Movimentação temporária', teste:'Confirmar status Fora da loja', auto:'movimentacao_fora'},
+    {grupo:'3. Movimentação temporária', teste:'Registrar retorno temporário', auto:'movimentacao_retorno'},
+    {grupo:'3. Movimentação temporária', teste:'Classificar movimentação no painel', auto:'movimentacao_classificada'},
 
-    {grupo:'4. Ajustes', teste:'Solicitar entrada esquecida'},
+    {grupo:'4. Ajustes', teste:'Solicitar entrada esquecida', auto:'ajuste_solicitado'},
     {grupo:'4. Ajustes', teste:'Solicitar saída esquecida'},
-    {grupo:'4. Ajustes', teste:'Aprovar uma solicitação'},
-    {grupo:'4. Ajustes', teste:'Rejeitar uma solicitação'},
-    {grupo:'4. Ajustes', teste:'Confirmar reflexo no relatório e auditoria'},
+    {grupo:'4. Ajustes', teste:'Aprovar uma solicitação', auto:'ajuste_aprovado'},
+    {grupo:'4. Ajustes', teste:'Rejeitar uma solicitação', auto:'ajuste_rejeitado'},
+    {grupo:'4. Ajustes', teste:'Confirmar reflexo no relatório e auditoria', auto:'ajuste_refletido'},
 
     {grupo:'5. Banco de horas', teste:'Conferir tolerância de entrada'},
     {grupo:'5. Banco de horas', teste:'Conferir saldo diário'},
@@ -71,12 +71,12 @@
     {grupo:'6. Administração', teste:'Definir ou alterar PIN'},
     {grupo:'6. Administração', teste:'Bloquear e reativar acesso ao ponto'},
     {grupo:'6. Administração', teste:'Autorizar e revogar dispositivo'},
-    {grupo:'6. Administração', teste:'Consultar auditoria'},
-    {grupo:'6. Administração', teste:'Gerar backup e exportações'},
+    {grupo:'6. Administração', teste:'Consultar auditoria', auto:'auditoria_funcionario'},
+    {grupo:'6. Administração', teste:'Gerar backup e exportações', auto:'backup_disponivel'},
 
-    {grupo:'7. Fechamento', teste:'Fechar competência'},
+    {grupo:'7. Fechamento', teste:'Fechar competência', auto:'competencia_fechada'},
     {grupo:'7. Fechamento', teste:'Confirmar bloqueio de alterações'},
-    {grupo:'7. Fechamento', teste:'Reabrir com motivo e PIN Mestre'},
+    {grupo:'7. Fechamento', teste:'Reabrir com motivo e PIN Mestre', auto:'competencia_reaberta'},
 
     {grupo:'8. Relatórios', teste:'Gerar espelho mensal'},
     {grupo:'8. Relatórios', teste:'Imprimir ou salvar PDF'},
@@ -90,8 +90,8 @@
     {grupo:'10. Robustez operacional', teste:'Proteção contra múltiplos cliques', detalhe:'Vários cliques rápidos devem registrar apenas uma marcação.'},
     {grupo:'10. Robustez operacional', teste:'Persistência após atualizar a página (F5)', detalhe:'A marcação e a próxima etapa devem permanecer corretas.'},
     {grupo:'10. Robustez operacional', teste:'Proteção com duas abas abertas', detalhe:'Chamadas concorrentes não podem pular etapas.'},
-    {grupo:'10. Robustez operacional', teste:'Proteção contra etapas fora da ordem', detalhe:'Não deve ser possível pular Retorno ou Saída.'},
-    {grupo:'10. Robustez operacional', teste:'Bloqueio após jornada concluída', detalhe:'Uma quinta marcação deve ser recusada.'},
+    {grupo:'10. Robustez operacional', teste:'Proteção contra etapas fora da ordem', auto:'ordem_jornada', detalhe:'Não deve ser possível pular Retorno ou Saída.'},
+    {grupo:'10. Robustez operacional', teste:'Bloqueio após jornada concluída', auto:'sem_quinta_marcacao', detalhe:'Uma quinta marcação deve ser recusada.'},
     {grupo:'10. Robustez operacional', teste:'Janela mínima entre marcações', detalhe:'Nova marcação em menos de 5 segundos deve ser bloqueada.'},
 
     {grupo:'11. Resiliência', teste:'Testar sem internet e mensagem amigável'},
@@ -164,6 +164,7 @@
         <div class="homolog-case-main">
           <strong>${item.teste}</strong>
           ${item.detalhe ? `<small>${item.detalhe}</small>` : ''}
+          ${item.auto ? '<span class="homolog-auto-badge">Verificação automática</span>' : ''}
         </div>
         <select class="homolog-status" data-index="${index}" aria-label="Status do teste">
           <option value="nao_iniciado">Não iniciado</option>
@@ -257,6 +258,66 @@
     link.download = `homologacao-plenitude-${new Date().toISOString().slice(0,10)}.txt`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+
+  const autoButton = document.getElementById('validar-automaticamente');
+  const autoSummary = document.getElementById('validacao-automatica-resumo');
+
+  autoButton.onclick = async () => {
+    autoButton.disabled = true;
+    autoButton.textContent = 'Validando...';
+    autoSummary.className = 'homolog-auto-summary';
+    autoSummary.textContent = 'Consultando registros, auditoria, ajustes, movimentações e fechamento...';
+
+    try {
+      const {data, error} = await client.rpc('validar_homologacao_automatica_admin');
+      if (error) throw error;
+
+      const checks = data?.checks || {};
+      let aprovados = 0;
+      let reprovados = 0;
+      let ignorados = 0;
+
+      scenarios.forEach((item, index) => {
+        if (!item.auto) {
+          ignorados += 1;
+          return;
+        }
+
+        const resultado = checks[item.auto];
+        if (!resultado) {
+          saved[index] = {
+            status: 'em_teste',
+            observacao: 'A verificação automática não retornou resultado para este item.'
+          };
+          return;
+        }
+
+        saved[index] = {
+          status: resultado.ok ? 'aprovado' : 'reprovado',
+          observacao: `[Automático em ${new Date().toLocaleString('pt-BR')}] ${resultado.detalhe || ''}`.trim()
+        };
+
+        if (resultado.ok) aprovados += 1;
+        else reprovados += 1;
+      });
+
+      localStorage.setItem(checklistKey, JSON.stringify(saved));
+      renderChecklist();
+
+      autoSummary.className =
+        `homolog-auto-summary ${reprovados ? 'warn' : 'ok'}`;
+      autoSummary.textContent =
+        `${aprovados} verificação(ões) automática(s) aprovada(s), ` +
+        `${reprovados} reprovada(s) e ${ignorados} teste(s) mantido(s) para validação manual.`;
+    } catch (error) {
+      autoSummary.className = 'homolog-auto-summary fail';
+      autoSummary.textContent = `Validação automática indisponível: ${error.message}`;
+    } finally {
+      autoButton.disabled = false;
+      autoButton.textContent = 'Validar automaticamente';
+    }
   };
 
   document.getElementById('diagnosticar').onclick = async () => {

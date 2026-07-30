@@ -609,3 +609,42 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
     grid-column:auto;
   }
 }
+
+
+/* RC3 — validação automática da homologação */
+.homolog-auto-summary{
+  margin:0 0 20px;
+  padding:13px 15px;
+  border:1px solid #e6d9d3;
+  border-radius:12px;
+  background:#fff9f6;
+  color:#6d625d;
+}
+.homolog-auto-summary.ok{
+  background:#eef9f2;
+  border-color:#b7e2c5;
+  color:#18743c;
+}
+.homolog-auto-summary.warn{
+  background:#fff8e7;
+  border-color:#ebd286;
+  color:#795500;
+}
+.homolog-auto-summary.fail{
+  background:#fff0f0;
+  border-color:#efb3b3;
+  color:#9e2525;
+}
+.homolog-auto-badge{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  margin-top:3px;
+  padding:4px 8px;
+  border-radius:999px;
+  background:#edf4ff;
+  color:#335f9d;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.02em;
+}
