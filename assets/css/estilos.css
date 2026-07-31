@@ -976,3 +976,6 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
 #temporary-return:not([hidden]){
   box-shadow:0 10px 24px rgba(222,69,29,.16);
 }
+
+#movement-state.warn{background:#fff0c9;border-color:#e9c466;color:#8a5b00}
+#temporary-return:not([hidden]){width:100%;box-shadow:0 10px 24px rgba(222,69,29,.16)}

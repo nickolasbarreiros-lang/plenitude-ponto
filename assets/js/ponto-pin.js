@@ -148,71 +148,100 @@ document.getElementById('registrar').onclick=async()=>{
  async function loadMovements(){
   const today=dateKey(new Date());
 
-  const [rows,statusData]=await Promise.all([
-   rpc('listar_minhas_movimentacoes',{p_token:token,p_inicio:today,p_fim:today}),
-   rpc('status_movimentacao_funcionario',{p_token:token})
+  let rows=[];
+  let status=null;
+
+  const results=await Promise.allSettled([
+   rpc('status_movimentacao_funcionario',{p_token:token}),
+   rpc('listar_minhas_movimentacoes',{p_token:token,p_inicio:today,p_fim:today})
   ]);
 
-  const status=Array.isArray(statusData)?statusData[0]:statusData;
-  const open=status?.fora_da_loja ? status.movimentacao_aberta : null;
+  if(results[0].status==='fulfilled'){
+   const raw=results[0].value;
+   status=Array.isArray(raw)?raw[0]:raw;
+  }else{
+   console.error('Falha ao consultar o estado da movimentação:',results[0].reason);
+  }
+
+  if(results[1].status==='fulfilled'){
+   rows=results[1].value||[];
+  }else{
+   console.warn('Histórico de movimentações indisponível:',results[1].reason);
+  }
+
+  // Fonte principal: RPC específica. Fallback: listagem do próprio dia.
+  const fallbackOpen=(rows||[]).find(item=>item.status==='aberta');
+  const open=status?.fora_da_loja
+   ?status.movimentacao_aberta
+   :fallbackOpen||null;
 
   const pendingAlert=document.getElementById('movement-pending-alert');
   const pendingCount=Number(status?.pendencias_antigas||0);
 
-  if(pendingCount>0){
-   pendingAlert.hidden=false;
-   const oldest=status?.pendencia_mais_antiga
-    ?new Date(status.pendencia_mais_antiga+'T12:00:00').toLocaleDateString('pt-BR')
-    :'data anterior';
+  if(pendingAlert){
+   if(pendingCount>0){
+    const oldest=status?.pendencia_mais_antiga
+     ?new Date(status.pendencia_mais_antiga+'T12:00:00').toLocaleDateString('pt-BR')
+     :'data anterior';
 
-   pendingAlert.innerHTML=`
-    <strong>⚠ ${pendingCount} retorno${pendingCount===1?'':'s'} não registrado${pendingCount===1?'':'s'}</strong>
-    <span>A pendência mais antiga é de ${oldest}. Ela não bloqueia uma nova saída hoje, mas deve ser regularizada pelo administrador.</span>`;
-  }else{
-   pendingAlert.hidden=true;
-   pendingAlert.innerHTML='';
+    pendingAlert.hidden=false;
+    pendingAlert.innerHTML=`
+     <strong>⚠ ${pendingCount} retorno${pendingCount===1?'':'s'} não registrado${pendingCount===1?'':'s'}</strong>
+     <span>A pendência mais antiga é de ${oldest}. Ela não bloqueia uma nova saída hoje, mas deve ser regularizada pelo administrador.</span>`;
+   }else{
+    pendingAlert.hidden=true;
+    pendingAlert.innerHTML='';
+   }
   }
 
   const state=document.getElementById('movement-state');
-  state.textContent=open?'Fora da loja':'Dentro da loja';
-  state.className=`badge ${open?'warn':''}`;
-
   const exitTrigger=document.getElementById('temporary-exit');
   const exitForm=document.getElementById('movement-exit-form');
   const exitReason=document.getElementById('movement-reason');
   const returnButton=document.getElementById('temporary-return');
+  const box=document.getElementById('my-movements');
 
-  exitTrigger.hidden=!!open;
-  returnButton.hidden=!open;
+  if(state){
+   state.textContent=open?'Fora da loja':'Dentro da loja';
+   state.className=`badge ${open?'warn':''}`;
+  }
+
+  if(exitTrigger)exitTrigger.hidden=!!open;
+  if(returnButton)returnButton.hidden=!open;
 
   if(open){
-   exitForm.hidden=true;
-   exitReason.disabled=true;
-   exitReason.value='';
-   exitTrigger.setAttribute('aria-expanded','false');
-  }else if(exitForm.hidden){
+   if(exitForm)exitForm.hidden=true;
+   if(exitReason){
+    exitReason.disabled=true;
+    exitReason.value='';
+   }
+   if(exitTrigger)exitTrigger.setAttribute('aria-expanded','false');
+  }else if(exitForm?.hidden && exitReason){
    exitReason.disabled=true;
   }
 
-  const box=document.getElementById('my-movements');
-  const todayRows=rows||[];
+  const todayRows=Array.isArray(rows)?[...rows]:[];
 
   if(open && !todayRows.some(item=>item.id===open.id)){
    todayRows.unshift(open);
   }
 
-  box.innerHTML=todayRows.length
-   ?todayRows.map(r=>`
-    <div class="movement-item">
-     <div>
-      <strong>${r.status==='aberta'?'Saída temporária em andamento':'Saída temporária'}</strong>
-      <small>${fmt(r.inicio_em)}${r.fim_em?` → ${fmt(r.fim_em)}`:' → aguardando retorno'}${r.motivo_informado?` · ${r.motivo_informado}`:''}</small>
-     </div>
-     <span class="request-status ${r.status==='aberta'?'pendente':r.aprovado?'aprovada':'pendente'}">
-      ${r.status==='aberta'?'fora da loja':r.aprovado?(r.classificacao||'analisada'):'aguardando análise'}
-     </span>
-    </div>`).join('')
-   :'<div class="mini-empty">Nenhuma saída temporária hoje.</div>';
+  if(box){
+   box.innerHTML=todayRows.length
+    ?todayRows.map(r=>`
+     <div class="movement-item">
+      <div>
+       <strong>${r.status==='aberta'?'Saída temporária em andamento':'Saída temporária'}</strong>
+       <small>${fmt(r.inicio_em)}${r.fim_em?` → ${fmt(r.fim_em)}`:' → aguardando retorno'}${r.motivo_informado?` · ${r.motivo_informado}`:''}</small>
+      </div>
+      <span class="request-status ${r.status==='aberta'?'pendente':r.aprovado?'aprovada':'pendente'}">
+       ${r.status==='aberta'?'fora da loja':r.aprovado?(r.classificacao||'analisada'):'aguardando análise'}
+      </span>
+     </div>`).join('')
+    :'<div class="mini-empty">Nenhuma saída temporária hoje.</div>';
+  }
+
+  return {open,status,rows:todayRows};
  }
  function setTemporaryExitEditing(open){
   const trigger=document.getElementById('temporary-exit');
@@ -269,6 +298,22 @@ document.getElementById('registrar').onclick=async()=>{
    await Promise.all([loadMovements(),load()]);
   }catch(e){
    toast(e.message,'warn');
+
+   if(action==='saida' && /já existe uma saída temporária/i.test(e.message||'')){
+    const state=document.getElementById('movement-state');
+    const exitForm=document.getElementById('movement-exit-form');
+    const exitTrigger=document.getElementById('temporary-exit');
+    const returnButton=document.getElementById('temporary-return');
+
+    if(state){
+     state.textContent='Fora da loja';
+     state.className='badge warn';
+    }
+    if(exitForm)exitForm.hidden=true;
+    if(exitTrigger)exitTrigger.hidden=true;
+    if(returnButton)returnButton.hidden=false;
+   }
+
    await loadMovements().catch(error=>console.warn('Não foi possível atualizar o estado da movimentação.',error));
   }finally{
    btn.disabled=false;

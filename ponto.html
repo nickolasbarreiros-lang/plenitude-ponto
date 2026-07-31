@@ -6,7 +6,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="#ff6500" name="theme-color"/>
 <title>Registrar ponto | Plenitude</title>
-<link href="assets/css/estilos.css?v=1.0.0-rc4.5" rel="stylesheet"/>
+<link href="assets/css/estilos.css?v=1.0.0-rc4.6" rel="stylesheet"/>
 </head>
 <body>
 <main class="clock-page">
@@ -28,6 +28,7 @@
 </section></div><aside class="clock-secondary-column"><section class="movement-employee-panel">
 <div class="panel-head"><div><small>SAÍDAS DURANTE O EXPEDIENTE</small><h3>Movimentação temporária</h3></div><span class="badge" id="movement-state">Dentro da loja</span></div>
 <p class="muted">Use apenas quando precisar sair e retornar durante a jornada. O horário real será gravado pelo servidor.</p>
+<div class="movement-pending-alert" hidden="" id="movement-pending-alert"></div>
 <div class="movement-actions" id="movement-actions">
 <button class="btn warning" id="temporary-exit" type="button">Registrar saída temporária</button>
 
@@ -55,8 +56,8 @@
 <div class="my-adjustments" id="my-adjustments"></div>
 </section><section class="change-pin-panel" hidden="" id="change-pin-panel"><h3>Alterar meu PIN</h3><div class="pin-change-grid"><input id="pin-atual" inputmode="numeric" maxlength="4" placeholder="PIN atual" type="password"/><input id="pin-novo" inputmode="numeric" maxlength="4" placeholder="Novo PIN" type="password"/><input id="pin-confirmar" inputmode="numeric" maxlength="4" placeholder="Confirmar novo PIN" type="password"/><button class="btn secondary" id="alterar-meu-pin" type="button">Salvar novo PIN</button></div></section></aside></div><p class="clock-footnote">O horário oficial é gerado e gravado pelo servidor do Supabase.</p></section>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc4.5"></script><script src="assets/js/auth.js?v=1.0.0-rc4.5"></script>
-<script src="assets/js/database.js?v=1.0.0-rc4.5"></script><script src="assets/js/app.js?v=1.0.0-rc4.5"></script>
-<script src="assets/js/ponto-pin.js?v=1.0.0-rc4.5"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc4.6"></script><script src="assets/js/auth.js?v=1.0.0-rc4.6"></script>
+<script src="assets/js/database.js?v=1.0.0-rc4.6"></script><script src="assets/js/app.js?v=1.0.0-rc4.6"></script>
+<script src="assets/js/ponto-pin.js?v=1.0.0-rc4.6"></script>
 </body>
 </html>
