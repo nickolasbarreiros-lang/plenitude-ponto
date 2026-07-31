@@ -1520,3 +1520,22 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
   border-radius:12px;
   box-shadow:0 10px 30px rgba(0,0,0,.15);
 }
+
+
+/* RC5.6 — estado diário conhecido no modo offline */
+.offline-day-state-warning{
+  display:grid;
+  gap:3px;
+  margin:10px 0 0;
+  padding:10px 12px;
+  border:1px solid #e5a13b;
+  border-radius:10px;
+  background:#fff4d6;
+  color:#77530d;
+  font-size:11px;
+  line-height:1.4;
+}
+.offline-day-state-warning strong{
+  color:#9a4c00;
+  font-size:12px;
+}

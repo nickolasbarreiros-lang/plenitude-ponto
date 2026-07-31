@@ -3,7 +3,7 @@
  function stored(){try{return JSON.parse(sessionStorage.getItem('plenitude-employee-session')||localStorage.getItem('plenitude-offline-employee-session')||'null')}catch{return null}}
  const sess=stored();
  if(!sess){ window.PlenitudeAuth.getSession().then(s=>s?initPonto():location.replace('index.html')); return; }
- const token=sess.token;let employee=null;let onlineMarks=[];let contingencyMode=false;let punchInFlight=false;let punchCooldownUntil=0;let punchCooldownTimer=null;let lunchMinimumTimer=null;
+ const token=sess.token;let employee=null;let onlineMarks=[];let offlineDayStateReady=false;let contingencyMode=false;let punchInFlight=false;let punchCooldownUntil=0;let punchCooldownTimer=null;let lunchMinimumTimer=null;
  const dateKey=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
  const label=t=>({entrada:'Entrada',inicio_intervalo:'Início do almoço',fim_intervalo:'Retorno do almoço',saida:'Saída'})[t]||'Marcação';
  const fmt=v=>new Date(v).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -79,6 +79,67 @@
     status_offline:r.status
    }));
  }
+
+ function dayStateKey(day=dateKey(new Date())){
+  return `day-state:${employee?.id||'unknown'}:${day}`;
+ }
+
+ async function saveOfficialDayState(day,marks){
+  if(!window.PlenitudeOffline||!employee)return;
+
+  await window.PlenitudeOffline.setMeta(
+   dayStateKey(day),
+   {
+    employeeId:employee.id,
+    day,
+    cachedAt:new Date().toISOString(),
+    marks:(marks||[]).map(mark=>({
+     id:mark.id,
+     tipo:mark.tipo,
+     registrado_em:mark.registrado_em,
+     offline:false
+    }))
+   }
+  );
+ }
+
+ async function loadOfficialDayState(day){
+  if(!window.PlenitudeOffline||!employee)return null;
+
+  const snapshot=await window.PlenitudeOffline.getMeta(dayStateKey(day));
+
+  if(
+   !snapshot||
+   snapshot.employeeId!==employee.id||
+   snapshot.day!==day||
+   !Array.isArray(snapshot.marks)
+  ){
+   return null;
+  }
+
+  return snapshot;
+ }
+
+ function setOfflineDayStateWarning(show,message=''){
+  const existing=document.getElementById('offline-day-state-warning');
+  const card=document.querySelector('.clock-action-card');
+
+  if(!show){
+   existing?.remove();
+   return;
+  }
+
+  const warning=existing||document.createElement('div');
+  warning.id='offline-day-state-warning';
+  warning.className='offline-day-state-warning';
+  warning.innerHTML=`<strong>Não foi possível confirmar as marcações de hoje</strong><span>${message}</span>`;
+
+  if(!existing){
+   const status=document.getElementById('offline-point-status');
+   status?.insertAdjacentElement('afterend',warning);
+  }
+ }
+
 
  async function setContingencyUI(active){
   contingencyMode=active;
@@ -183,6 +244,12 @@
   const deviceToken=localStorage.getItem('plenitude-device-token')||'';
   if(!deviceToken)throw new Error('Computador não autorizado para contingência.');
 
+  if(!offlineDayStateReady){
+   throw new Error(
+    'O estado das marcações de hoje não foi preparado antes da queda de internet. Reconecte o sistema para atualizar a jornada.'
+   );
+  }
+
   const localMarks=await localTodayMarks();
   const combined=[...onlineMarks,...localMarks].sort(
    (a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em)
@@ -277,13 +344,35 @@
     rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:weekStart,p_fim:today}),
     rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:monthStart,p_fim:today})
    ]);
+
    onlineMarks=data||[];
+   offlineDayStateReady=true;
+   await saveOfficialDayState(today,onlineMarks);
+   setOfflineDayStateWarning(false);
    await setContingencyUI(false);
   }catch(error){
    if(!isNetworkFailure(error))throw error;
+
    await setContingencyUI(true);
-   data=onlineMarks;
+
+   const snapshot=await loadOfficialDayState(today);
+
+   if(snapshot){
+    onlineMarks=snapshot.marks||[];
+    data=onlineMarks;
+    offlineDayStateReady=true;
+    setOfflineDayStateWarning(false);
+   }else{
+    onlineMarks=[];
+    data=[];
+    offlineDayStateReady=false;
+    setOfflineDayStateWarning(
+     true,
+     'Por segurança, o registro local foi bloqueado. Abra o ponto com internet ao menos uma vez no mesmo dia antes de usar a contingência.'
+    );
+   }
   }
+
   const localMarks=await localTodayMarks();
   const marks=[...(data||[]),...localMarks].sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em));
   document.getElementById('lista-pontos').innerHTML=marks.length?marks.map(m=>`<div class="punch-item ${m.offline?'offline-mark':''}"><span>${label(m.tipo)}${m.offline?' <em>OFFLINE</em>':''}</span><strong>${fmt(m.registrado_em)}</strong></div>`).join(''):'<div class="mini-empty">Nenhuma marcação feita hoje.</div>';
@@ -320,8 +409,23 @@
   document.getElementById('self-week-balance').textContent=signed(weekBank?.resumo?.saldo_minutos||0);
   document.getElementById('self-month-balance').textContent=signed(monthBank?.resumo?.saldo_minutos||0);
   const lunchLocked=applyLunchMinimumRule(marks,punchButton,actionLabels);
+
   if(!lunchLocked){
-   punchButton.disabled=marks.length>=4 || punchInFlight || Date.now()<punchCooldownUntil;
+   punchButton.disabled=
+    marks.length>=4||
+    punchInFlight||
+    Date.now()<punchCooldownUntil||
+    (contingencyMode&&!offlineDayStateReady);
+  }
+
+  if(contingencyMode&&!offlineDayStateReady){
+   punchButton.innerHTML='<span>⚠</span> Jornada não preparada para uso offline';
+   punchButton.setAttribute(
+    'aria-label',
+    'Registro offline indisponível porque as marcações de hoje não foram preparadas.'
+   );
+   document.getElementById('proxima').textContent=
+    'Reconecte o sistema para atualizar as marcações de hoje';
   }
   if(Date.now()>=punchCooldownUntil)punchButton.classList.remove('cooldown');
   document.body.classList.toggle('homologation-employee',isHomologation);

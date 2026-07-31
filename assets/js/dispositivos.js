@@ -420,6 +420,34 @@
    ?await navigator.storage.estimate()
    :null;
 
+  let currentDayPrepared=false;
+  let currentDayPreparedCount=0;
+
+  if('indexedDB' in window&&window.PlenitudeOffline){
+   const today=new Date();
+   const day=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+   for(const employee of preparedEmployeeDetails){
+    const profile=employee.registration;
+    const profiles=JSON.parse(
+     localStorage.getItem('plenitude-offline-employee-profiles')||'{}'
+    );
+    const employeeId=profiles[profile]?.id;
+
+    if(employeeId){
+     const snapshot=await window.PlenitudeOffline.getMeta(
+      `day-state:${employeeId}:${day}`
+     );
+
+     if(snapshot&&Array.isArray(snapshot.marks)){
+      currentDayPreparedCount+=1;
+     }
+    }
+   }
+
+   currentDayPrepared=currentDayPreparedCount>0;
+  }
+
   return {
    authorized:Boolean(deviceResult?.autorizado),
    deviceToken,
@@ -438,7 +466,9 @@
    verifierCount,
    completeEmployeeCount,
    secureContext,
-   storageEstimate
+   storageEstimate,
+   currentDayPrepared,
+   currentDayPreparedCount
   };
  }
 
@@ -503,6 +533,13 @@
     result.authorized&&result.deviceToken
      ?'Login offline vinculado a este computador autorizado.'
      :'Autorize novamente este computador.'
+   ),
+   offlineCheckRow(
+    'Jornada de hoje preparada',
+    result.currentDayPrepared,
+    result.currentDayPrepared
+     ?`${result.currentDayPreparedCount} funcionário(s) com o estado das marcações de hoje armazenado.`
+     :'Abra o ponto com internet hoje para cada funcionário que poderá usar a contingência.'
    )
   ];
 
@@ -530,7 +567,8 @@
    result.employeeProfile&&
    result.employeeSession&&
    result.completeEmployeeCount>0&&
-   result.verifierCount>0;
+   result.verifierCount>0&&
+   result.currentDayPrepared;
 
   badge.textContent=ready?'Pronto para contingência':'Preparação incompleta';
   badge.className=`badge ${ready?'success':'warn'}`;
