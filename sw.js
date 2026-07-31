@@ -1,4 +1,4 @@
-const CACHE='plenitude-ponto-rc5-7';
+const CACHE='plenitude-ponto-rc5-8';
 const CORE=[
  './',
  './index.html',

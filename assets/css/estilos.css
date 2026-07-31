@@ -1644,3 +1644,11 @@ body:has(.device-grid) .topbar{
     padding:16px;
   }
 }
+
+
+/* RC5.8 — bloqueio durante sincronização */
+.punch-button.sync-lock{
+  cursor:wait !important;
+  opacity:.72;
+  filter:saturate(.65);
+}

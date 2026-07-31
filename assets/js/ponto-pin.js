@@ -3,7 +3,7 @@
  function stored(){try{return JSON.parse(sessionStorage.getItem('plenitude-employee-session')||localStorage.getItem('plenitude-offline-employee-session')||'null')}catch{return null}}
  const sess=stored();
  if(!sess){ window.PlenitudeAuth.getSession().then(s=>s?initPonto():location.replace('index.html')); return; }
- const token=sess.token;let employee=null;let onlineMarks=[];let offlineDayStateReady=false;let contingencyMode=false;let punchInFlight=false;let punchCooldownUntil=0;let punchCooldownTimer=null;let lunchMinimumTimer=null;
+ const token=sess.token;let employee=null;let onlineMarks=[];let offlineDayStateReady=false;let contingencyMode=false;let syncInProgress=false;let punchInFlight=false;let punchCooldownUntil=0;let punchCooldownTimer=null;let lunchMinimumTimer=null;
  const dateKey=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
  const label=t=>({entrada:'Entrada',inicio_intervalo:'Início do almoço',fim_intervalo:'Retorno do almoço',saida:'Saída'})[t]||'Marcação';
  const fmt=v=>new Date(v).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -217,27 +217,48 @@
  }
 
  async function syncOfflineQueue(){
-  if(!navigator.onLine||!window.PlenitudeOffline)return;
+  if(!navigator.onLine||!window.PlenitudeOffline)return false;
+
   const deviceToken=localStorage.getItem('plenitude-device-token')||'';
-  if(!deviceToken)return;
+  if(!deviceToken)return false;
 
   const before=await window.PlenitudeOffline.counts();
-  if(!before.local)return;
+  if(!before.local)return true;
 
   const banner=document.getElementById('sync-restored-banner');
   const text=document.getElementById('sync-restored-text');
+  const punchButton=document.getElementById('registrar');
+
+  syncInProgress=true;
   banner.hidden=false;
   text.textContent=`Enviando ${before.local} registro(s) para conferência...`;
 
-  const synced=await window.PlenitudeOffline.syncAll(client,deviceToken);
-  const after=await window.PlenitudeOffline.counts();
+  if(punchButton){
+   punchButton.disabled=true;
+   punchButton.classList.add('sync-lock');
+   punchButton.innerHTML='<span>⏳</span> Sincronizando registros...';
+   punchButton.setAttribute(
+    'aria-label',
+    'Aguarde a sincronização completa antes de registrar um novo ponto.'
+   );
+  }
 
-  text.textContent=after.local
-   ?`${synced.length} enviado(s); ${after.local} ainda aguardam.`
-   :`${synced.length} registro(s) enviado(s) e aguardando aprovação administrativa.`;
+  try{
+   const synced=await window.PlenitudeOffline.syncAll(client,deviceToken);
+   const after=await window.PlenitudeOffline.counts();
 
-  setTimeout(()=>banner.hidden=true,5000);
-  await setContingencyUI(after.local>0&&!navigator.onLine);
+   if(after.local>0){
+    text.textContent=
+     `${synced.length} enviado(s); ${after.local} ainda aguardam sincronização.`;
+    return false;
+   }
+
+   text.textContent=
+    `${synced.length} registro(s) sincronizado(s). Atualizando a jornada...`;
+   return true;
+  }finally{
+   syncInProgress=false;
+  }
  }
 
  async function registerOfflinePunch(){
@@ -275,11 +296,39 @@
  }
 
  window.addEventListener('online',async()=>{
-  await syncOfflineQueue().catch(error=>console.warn('Sincronização offline falhou',error));
-  await setContingencyUI(false);
-  await Promise.allSettled([load(),loadAdjustments(),loadMovements()]);
+  const banner=document.getElementById('sync-restored-banner');
+  const text=document.getElementById('sync-restored-text');
+
+  try{
+   const completed=await syncOfflineQueue();
+
+   if(!completed){
+    await setContingencyUI(true);
+    text.textContent=
+     'A sincronização não foi concluída. O registro de ponto continuará bloqueado.';
+    return;
+   }
+
+   syncInProgress=true;
+   await Promise.all([load(),loadAdjustments(),loadMovements()]);
+   await setContingencyUI(false);
+   syncInProgress=false;
+
+   text.textContent='Sincronização concluída. Sistema atualizado.';
+   setTimeout(()=>banner.hidden=true,3500);
+  }catch(error){
+   syncInProgress=false;
+   console.warn('Sincronização offline falhou',error);
+   await setContingencyUI(true);
+   text.textContent=
+    'Não foi possível concluir a sincronização. O registro de ponto permanece bloqueado.';
+  }
  });
- window.addEventListener('offline',()=>setContingencyUI(true));
+
+ window.addEventListener('offline',()=>{
+  syncInProgress=false;
+  setContingencyUI(true);
+ });
 
  function clock(){const d=new Date();document.getElementById('clock-date').textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(d);document.getElementById('clock-time').textContent=d.toLocaleTimeString('pt-BR')}
  function successSound(){try{const C=window.AudioContext||window.webkitAudioContext,ctx=new C();[523.25,659.25,783.99].forEach((f,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(.0001,ctx.currentTime+i*.11);g.gain.exponentialRampToValueAtTime(.16,ctx.currentTime+i*.11+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+i*.11+.18);o.connect(g);g.connect(ctx.destination);o.start(ctx.currentTime+i*.11);o.stop(ctx.currentTime+i*.11+.2)});setTimeout(()=>ctx.close(),800)}catch{}}
@@ -414,11 +463,26 @@
    punchButton.disabled=
     marks.length>=4||
     punchInFlight||
+    syncInProgress||
     Date.now()<punchCooldownUntil||
     (contingencyMode&&!offlineDayStateReady);
   }
 
-  if(contingencyMode&&!offlineDayStateReady){
+  if(syncInProgress){
+   punchButton.disabled=true;
+   punchButton.classList.add('sync-lock');
+   punchButton.innerHTML='<span>⏳</span> Sincronizando registros...';
+   punchButton.setAttribute(
+    'aria-label',
+    'Aguarde a sincronização completa antes de registrar um novo ponto.'
+   );
+   document.getElementById('proxima').textContent=
+    'Aguarde a conclusão da sincronização';
+  }else{
+   punchButton.classList.remove('sync-lock');
+  }
+
+  if(contingencyMode&&!offlineDayStateReady&&!syncInProgress){
    punchButton.innerHTML='<span>⚠</span> Jornada não preparada para uso offline';
    punchButton.setAttribute(
     'aria-label',
@@ -531,6 +595,14 @@
 
 document.getElementById('registrar').onclick=async()=>{
   const b=document.getElementById('registrar');
+
+  if(syncInProgress){
+    toast(
+      'Aguarde a sincronização completa antes de registrar um novo ponto.',
+      'warn'
+    );
+    return;
+  }
 
   if(punchInFlight){
     toast('A marcação já está sendo processada. Aguarde.','warn');
