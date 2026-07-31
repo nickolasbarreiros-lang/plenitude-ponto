@@ -692,36 +692,66 @@ async function initConfiguracoes(){
       }catch(error){toast(errorText(error),'warn');console.error(error)}finally{if(button)button.disabled=false}
     };
     document.getElementById('politicas-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter;if(b)b.disabled=true;try{await window.PlenitudeDB.savePointPolicies({entrada:Number(document.getElementById('tol-entrada').value),saida:Number(document.getElementById('tol-saida').value),intervaloMinimo:Number(document.getElementById('int-min').value),intervaloMaximo:Number(document.getElementById('int-max').value),extrasAutomaticas:document.getElementById('extras-auto').checked,limiteBanco:Number(document.getElementById('limite-banco').value)*60});toast('Políticas de ponto salvas.');}catch(error){toast(errorText(error),'warn')}finally{if(b)b.disabled=false}};
-    const masterStatus=await window.PlenitudeDB.masterPinStatus();
-    const masterConfigured=Boolean(masterStatus?.configurado);
+    const masterForm=document.getElementById('master-pin-form');
     const masterBadge=document.getElementById('master-pin-badge');
-    masterBadge.textContent=masterConfigured?'Configurado':'Não configurado';
-    if(masterConfigured)masterBadge.classList.add('success');
-    document.getElementById('master-current-wrap').hidden=!masterConfigured;
-    document.getElementById('master-pin-form').onsubmit=async e=>{
-      e.preventDefault();const b=e.submitter;if(b)b.disabled=true;
-      const current=document.getElementById('master-pin-current').value.trim();
-      const next=document.getElementById('master-pin-new').value.trim();
-      const confirmPin=document.getElementById('master-pin-confirm').value.trim();
-      try{
-        if(!/^\d{6}$/.test(next))throw new Error('O PIN Mestre deve ter exatamente 6 números.');
-        if(next!==confirmPin)throw new Error('A confirmação do PIN Mestre não confere.');
-        if(masterConfigured&&!/^\d{6}$/.test(current))throw new Error('Informe o PIN Mestre atual.');
-        await window.PlenitudeDB.setMasterPin(next,current);
-        toast(masterConfigured?'PIN Mestre alterado.':'PIN Mestre configurado.');
-        document.getElementById('master-pin-form').reset();
-        masterBadge.textContent='Configurado';masterBadge.classList.add('success');document.getElementById('master-current-wrap').hidden=false;
-      }catch(error){toast(errorText(error),'warn')}finally{if(b)b.disabled=false}
-    };
-    document.getElementById('exportar-backup').onclick=async()=>{
-      const button=document.getElementById('exportar-backup');button.disabled=true;
-      try{
-        const data=await window.PlenitudeDB.backupData();
-        const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');
-        a.href=URL.createObjectURL(blob);a.download=`plenitude-ponto-backup-${localDateKey()}.json`;a.click();URL.revokeObjectURL(a.href);
-        toast('Backup do Supabase baixado.');
-      }catch(error){toast(errorText(error),'warn');console.error(error)}finally{button.disabled=false}
-    };
+    const masterCurrentWrap=document.getElementById('master-current-wrap');
+
+    if(masterForm&&masterBadge){
+      const masterStatus=await window.PlenitudeDB.masterPinStatus();
+      const masterConfigured=Boolean(masterStatus?.configurado);
+
+      masterBadge.textContent=masterConfigured?'Configurado':'Não configurado';
+      masterBadge.classList.toggle('success',masterConfigured);
+      if(masterCurrentWrap)masterCurrentWrap.hidden=!masterConfigured;
+
+      masterForm.onsubmit=async e=>{
+        e.preventDefault();
+        const b=e.submitter;
+        if(b)b.disabled=true;
+
+        const current=document.getElementById('master-pin-current')?.value.trim()||'';
+        const next=document.getElementById('master-pin-new')?.value.trim()||'';
+        const confirmPin=document.getElementById('master-pin-confirm')?.value.trim()||'';
+
+        try{
+          if(!/^\d{6}$/.test(next))throw new Error('O PIN Mestre deve ter exatamente 6 números.');
+          if(next!==confirmPin)throw new Error('A confirmação do PIN Mestre não confere.');
+          if(masterConfigured&&!/^\d{6}$/.test(current))throw new Error('Informe o PIN Mestre atual.');
+
+          await window.PlenitudeDB.setMasterPin(next,current);
+          toast(masterConfigured?'PIN Mestre alterado.':'PIN Mestre configurado.');
+          masterForm.reset();
+          masterBadge.textContent='Configurado';
+          masterBadge.classList.add('success');
+          if(masterCurrentWrap)masterCurrentWrap.hidden=false;
+        }catch(error){
+          toast(errorText(error),'warn');
+        }finally{
+          if(b)b.disabled=false;
+        }
+      };
+    }
+    const backupButton=document.getElementById('exportar-backup');
+    if(backupButton){
+      backupButton.onclick=async()=>{
+        backupButton.disabled=true;
+        try{
+          const data=await window.PlenitudeDB.backupData();
+          const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+          const a=document.createElement('a');
+          a.href=URL.createObjectURL(blob);
+          a.download=`plenitude-ponto-backup-${localDateKey()}.json`;
+          a.click();
+          URL.revokeObjectURL(a.href);
+          toast('Backup do Supabase baixado.');
+        }catch(error){
+          toast(errorText(error),'warn');
+          console.error(error);
+        }finally{
+          backupButton.disabled=false;
+        }
+      };
+    }
   }catch(error){toast(errorText(error),'warn');console.error(error)}
 }
 
