@@ -82,16 +82,77 @@
 
  async function setContingencyUI(active){
   contingencyMode=active;
-  const banner=document.getElementById('offline-contingency-banner');
+
   const foot=document.getElementById('clock-footnote');
+  const status=document.getElementById('offline-point-status');
+  const clock=document.getElementById('clock-time');
+  const movementPanel=document.querySelector('.movement-employee-panel');
+  const adjustmentPanel=document.getElementById('adjustment-panel');
+  const changePinPanel=document.getElementById('change-pin-panel');
+  const selfPinButton=document.getElementById('abrir-troca-pin');
+
   document.body.classList.toggle('offline-contingency',active);
-  banner.hidden=!active;
+  clock?.classList.toggle('offline-clock',active);
+
   foot.textContent=active
-   ?'Horário obtido do relógio deste computador. Os registros offline exigem sincronização e conferência.'
+   ?'Horário registrado localmente neste computador. A marcação será validada após a sincronização.'
    :'O horário oficial é gerado e gravado pelo servidor do Supabase.';
+
   const counts=await window.PlenitudeOffline.counts();
-  document.getElementById('offline-pending-count').textContent=
-   `${counts.local} aguardando sincronização`;
+
+  if(status){
+   status.hidden=!active;
+   status.querySelector('strong').textContent=
+    `${counts.local} aguardando sincronização`;
+  }
+
+  if(movementPanel){
+   movementPanel.classList.toggle('offline-disabled-panel',active);
+   movementPanel.setAttribute('aria-disabled',String(active));
+
+   movementPanel.querySelectorAll('button,input,textarea,select').forEach(element=>{
+    element.disabled=active;
+   });
+
+   let notice=movementPanel.querySelector('.offline-feature-notice');
+
+   if(active&&!notice){
+    notice=document.createElement('div');
+    notice.className='offline-feature-notice';
+    notice.textContent='Indisponível sem internet. No modo offline, utilize apenas a marcação do ponto.';
+    movementPanel.prepend(notice);
+   }
+
+   if(!active&&notice)notice.remove();
+  }
+
+  if(adjustmentPanel){
+   adjustmentPanel.classList.toggle('offline-disabled-panel',active);
+   adjustmentPanel.setAttribute('aria-disabled',String(active));
+
+   adjustmentPanel.querySelectorAll('button,input,textarea,select').forEach(element=>{
+    element.disabled=active;
+   });
+
+   let notice=adjustmentPanel.querySelector('.offline-feature-notice');
+
+   if(active&&!notice){
+    notice=document.createElement('div');
+    notice.className='offline-feature-notice';
+    notice.textContent='Solicitações ficam indisponíveis durante a contingência e poderão ser enviadas quando a conexão retornar.';
+    adjustmentPanel.prepend(notice);
+   }
+
+   if(!active&&notice)notice.remove();
+
+   if(active){
+    adjustmentForm.hidden=true;
+    adjustmentHelp.hidden=false;
+   }
+  }
+
+  if(selfPinButton)selfPinButton.disabled=active;
+  if(active&&changePinPanel)changePinPanel.hidden=true;
  }
 
  async function syncOfflineQueue(){
@@ -148,7 +209,8 @@
 
  window.addEventListener('online',async()=>{
   await syncOfflineQueue().catch(error=>console.warn('Sincronização offline falhou',error));
-  load().catch(()=>{});
+  await setContingencyUI(false);
+  await Promise.allSettled([load(),loadAdjustments(),loadMovements()]);
  });
  window.addEventListener('offline',()=>setContingencyUI(true));
 
@@ -230,8 +292,15 @@
   const nextLabel=marks.length<4?labels[marks.length]:null;
   document.getElementById('proxima').textContent=nextLabel?`Próxima marcação: ${nextLabel}`:'Jornada de hoje concluída';
   const punchButton=document.getElementById('registrar');
-  punchButton.innerHTML=marks.length<4?`<span>◷</span> ${actionLabels[marks.length]}`:'<span>✓</span> Jornada concluída';
-  punchButton.setAttribute('aria-label',marks.length<4?actionLabels[marks.length]:'Jornada concluída');
+  const actionText=marks.length<4
+   ?`${actionLabels[marks.length]}${contingencyMode?' — gravação local':''}`
+   :'Jornada concluída';
+
+  punchButton.innerHTML=marks.length<4
+   ?`<span>◷</span> ${actionText}`
+   :'<span>✓</span> Jornada concluída';
+
+  punchButton.setAttribute('aria-label',actionText);
   document.getElementById('punch-progress').innerHTML=labels.map((_,i)=>`<span class="progress-step ${i<marks.length?'done':''}"></span>`).join('');
   document.getElementById('punch-steps').innerHTML=labels.map((n,i)=>`<div class="punch-step ${i<marks.length?'done':''} ${i===marks.length?'current':''}"><span class="step-icon">${i<marks.length?'✓':i+1}</span><strong>${n}</strong><small>${marks[i]?fmt(marks[i].registrado_em):'Aguardando'}</small></div>`).join('');
   const progressPercent=Math.min(100,marks.length*25);
@@ -303,8 +372,24 @@
    renderEmployeeAvatar(employee);
    const self=document.getElementById('employee-self-service');self.hidden=false;document.getElementById('self-profile-name').textContent=employee.nome;document.getElementById('self-profile-role').textContent=employee.cargo||'Funcionário';document.getElementById('self-profile-code').textContent=employee.matricula;
    document.getElementById('change-pin-panel').hidden=!employee.exigir_troca_pin;
-   const results=await Promise.allSettled([load(),loadAdjustments(),loadMovements()]);
-   results.forEach((result,index)=>{if(result.status==='rejected'){console.warn(['Resumo de ponto indisponível','Ajustes indisponíveis','Movimentações indisponíveis'][index],result.reason)}});
+   const pointResult=await Promise.allSettled([load()]);
+   if(pointResult[0].status==='rejected'){
+    console.warn('Resumo de ponto indisponível',pointResult[0].reason);
+   }
+
+   if(navigator.onLine&&!contingencyMode){
+    const tools=await Promise.allSettled([loadAdjustments(),loadMovements()]);
+    tools.forEach((result,index)=>{
+     if(result.status==='rejected'){
+      console.warn(
+       ['Ajustes indisponíveis','Movimentações indisponíveis'][index],
+       result.reason
+      );
+     }
+    });
+   }else{
+    await setContingencyUI(true);
+   }
    if('serviceWorker' in navigator){
     navigator.serviceWorker.register('./sw.js').catch(error=>console.warn('Service Worker indisponível',error));
    }
@@ -545,6 +630,10 @@ document.getElementById('registrar').onclick=async()=>{
  }
 
  async function registerMovement(action){
+  if(contingencyMode||!navigator.onLine){
+   return toast('Movimentações temporárias ficam indisponíveis no modo offline.','warn');
+  }
+
   const deviceToken=localStorage.getItem('plenitude-device-token')||'';
   if(!deviceToken)return toast('Registro bloqueado: computador não autorizado.','warn');
 
@@ -633,9 +722,21 @@ document.getElementById('registrar').onclick=async()=>{
   }
  }
 
- adjustmentToggle.onclick=()=>setAdjustmentEditing(adjustmentForm.hidden);
+ adjustmentToggle.onclick=()=>{
+  if(contingencyMode||!navigator.onLine){
+   return toast('Solicitações de ajuste ficam indisponíveis no modo offline.','warn');
+  }
+
+  setAdjustmentEditing(adjustmentForm.hidden);
+ };
+
  adjustmentForm.onsubmit=async e=>{
   e.preventDefault();
+
+  if(contingencyMode||!navigator.onLine){
+   return toast('A solicitação será liberada quando a conexão retornar.','warn');
+  }
+
   const b=e.submitter;
   if(b.disabled)return;
 
@@ -662,6 +763,11 @@ document.getElementById('registrar').onclick=async()=>{
   }
  };
 
- document.getElementById('alterar-meu-pin').onclick=async()=>{const a=document.getElementById('pin-atual').value,n=document.getElementById('pin-novo').value,c=document.getElementById('pin-confirmar').value;if(!/^\d{4}$/.test(n)||n!==c)return toast('O novo PIN deve ter 4 números e coincidir com a confirmação.','warn');try{await rpc('alterar_proprio_pin',{p_token:token,p_pin_atual:a,p_novo_pin:n});toast('PIN alterado com sucesso.');document.getElementById('change-pin-panel').hidden=true}catch(e){toast(e.message,'warn')}};
+ document.getElementById('alterar-meu-pin').onclick=async()=>{
+  if(contingencyMode||!navigator.onLine){
+   return toast('A alteração de PIN exige conexão com o servidor.','warn');
+  }
+
+  const a=document.getElementById('pin-atual').value,n=document.getElementById('pin-novo').value,c=document.getElementById('pin-confirmar').value;if(!/^\d{4}$/.test(n)||n!==c)return toast('O novo PIN deve ter 4 números e coincidir com a confirmação.','warn');try{await rpc('alterar_proprio_pin',{p_token:token,p_pin_atual:a,p_novo_pin:n});toast('PIN alterado com sucesso.');document.getElementById('change-pin-panel').hidden=true}catch(e){toast(e.message,'warn')}};
  init();
 })();

@@ -6,13 +6,9 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="#ff6500" name="theme-color"/>
 <title>Registrar ponto | Plenitude</title>
-<link href="assets/css/estilos.css?v=1.0.0-rc5.4" rel="stylesheet"/>
+<link href="assets/css/estilos.css?v=1.0.0-rc5.5" rel="stylesheet"/>
 </head>
 <body>
-<div class="offline-contingency-banner" id="offline-contingency-banner" hidden>
-  <div><strong>⚠ MODO DE CONTINGÊNCIA ATIVO</strong><span>Sem comunicação com o servidor. As marcações serão gravadas neste computador e exigirão conferência administrativa.</span></div>
-  <b id="offline-pending-count">0 aguardando sincronização</b>
-</div>
 <div class="sync-restored-banner" id="sync-restored-banner" hidden>
   <strong>Conexão restabelecida</strong><span id="sync-restored-text">Sincronizando registros offline...</span>
 </div>
@@ -21,7 +17,12 @@
 <div class="clock-avatar" id="clock-avatar"><span>P</span></div>
 <div class="clock-employee-data"><small>Funcionário</small><strong id="clock-employee">Funcionário da loja</strong><em id="clock-status">Ativo</em></div>
 <select aria-label="Selecionar funcionário" class="employee-select" hidden="" id="ponto-funcionario-select"></select>
-</div><button class="punch-button" id="registrar"><span>◷</span> Registrar ponto</button><p class="next-mark" id="proxima"></p><div class="punch-steps" id="punch-steps"></div><div class="journey-progress-wrap"><div class="journey-progress-head"><strong id="journey-progress-label">0% da jornada</strong><span id="journey-progress-stage">Aguardando entrada</span></div><div class="journey-progress-track"><span id="journey-progress-fill"></span></div></div><div class="punch-progress" id="punch-progress"></div><div class="punch-list punch-list-premium" id="lista-pontos"></div><section class="journey-complete-card" id="journey-complete-card" hidden><div class="journey-complete-icon">✓</div><div><small>JORNADA ENCERRADA</small><h3>Até amanhã!</h3><p id="journey-complete-summary"></p></div></section></section><section class="employee-self-service" hidden="" id="employee-self-service">
+</div><button class="punch-button" id="registrar"><span>◷</span> Registrar ponto</button>
+<div class="offline-point-status" id="offline-point-status" hidden>
+  <span>Gravação local</span>
+  <strong id="offline-pending-count">0 aguardando sincronização</strong>
+</div>
+<p class="next-mark" id="proxima"></p><div class="punch-steps" id="punch-steps"></div><div class="journey-progress-wrap"><div class="journey-progress-head"><strong id="journey-progress-label">0% da jornada</strong><span id="journey-progress-stage">Aguardando entrada</span></div><div class="journey-progress-track"><span id="journey-progress-fill"></span></div></div><div class="punch-progress" id="punch-progress"></div><div class="punch-list punch-list-premium" id="lista-pontos"></div><section class="journey-complete-card" id="journey-complete-card" hidden><div class="journey-complete-icon">✓</div><div><small>JORNADA ENCERRADA</small><h3>Até amanhã!</h3><p id="journey-complete-summary"></p></div></section></section><section class="employee-self-service" hidden="" id="employee-self-service">
 <div class="homologation-note" hidden id="homologation-note">🧪 Ambiente de homologação: os saldos semanal e mensal começam no dia atual para facilitar os testes.</div><div class="self-balance-grid">
 <article><span>Saldo de hoje</span><strong id="self-today-balance">—</strong></article>
 <article><span>Saldo da semana</span><strong id="self-week-balance">00:00</strong></article>
@@ -63,8 +64,8 @@
 <div class="my-adjustments" id="my-adjustments"></div>
 </section><section class="change-pin-panel" hidden="" id="change-pin-panel"><h3>Alterar meu PIN</h3><div class="pin-change-grid"><input id="pin-atual" inputmode="numeric" maxlength="4" placeholder="PIN atual" type="password"/><input id="pin-novo" inputmode="numeric" maxlength="4" placeholder="Novo PIN" type="password"/><input id="pin-confirmar" inputmode="numeric" maxlength="4" placeholder="Confirmar novo PIN" type="password"/><button class="btn secondary" id="alterar-meu-pin" type="button">Salvar novo PIN</button></div></section></aside></div><p class="clock-footnote" id="clock-footnote">O horário oficial é gerado e gravado pelo servidor do Supabase.</p></section>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc5.4"></script><script src="assets/js/auth.js?v=1.0.0-rc5.4"></script>
-<script src="assets/js/database.js?v=1.0.0-rc5.4"></script><script src="assets/js/app.js?v=1.0.0-rc5.4"></script><script src="assets/js/offline-contingencia.js?v=1.0.0-rc5.4"></script>
-<script src="assets/js/ponto-pin.js?v=1.0.0-rc5.4"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc5.5"></script><script src="assets/js/auth.js?v=1.0.0-rc5.5"></script>
+<script src="assets/js/database.js?v=1.0.0-rc5.5"></script><script src="assets/js/app.js?v=1.0.0-rc5.5"></script><script src="assets/js/offline-contingencia.js?v=1.0.0-rc5.5"></script>
+<script src="assets/js/ponto-pin.js?v=1.0.0-rc5.5"></script>
 </body>
 </html>
