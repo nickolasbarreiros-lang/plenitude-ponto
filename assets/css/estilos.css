@@ -741,3 +741,92 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
   font-size:30px;
   font-weight:900;
 }
+
+
+/* RC4 — funcionário em análise global */
+.employee-analysis-bar{
+  display:grid;
+  grid-template-columns:minmax(260px,.7fr) minmax(560px,1.3fr);
+  gap:24px;
+  align-items:center;
+  margin:14px 0;
+  padding:17px 20px;
+  border:1px solid #eadbd4;
+  border-radius:16px;
+  background:linear-gradient(135deg,#fffdfc,#fff5ef);
+  box-shadow:0 8px 22px rgba(69,35,25,.05);
+}
+.employee-analysis-heading{
+  display:flex;
+  align-items:center;
+  gap:13px;
+}
+.employee-analysis-heading h2{
+  margin:2px 0 0;
+  font-size:20px;
+}
+.employee-analysis-icon{
+  display:grid;
+  width:48px;
+  height:48px;
+  place-items:center;
+  border-radius:14px;
+  background:#fff0e7;
+  font-size:24px;
+}
+.employee-analysis-controls{
+  display:grid;
+  grid-template-columns:minmax(260px,1fr) minmax(340px,1.2fr);
+  gap:18px;
+  align-items:end;
+}
+.employee-analysis-controls label{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.employee-analysis-controls label>span{
+  color:#756963;
+  font-size:12px;
+  font-weight:800;
+}
+.employee-analysis-controls select{
+  width:100%;
+  min-height:46px;
+  font-weight:800;
+}
+.employee-analysis-meta{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.employee-analysis-meta>span{
+  display:flex;
+  min-height:46px;
+  flex-direction:column;
+  justify-content:center;
+  padding:7px 10px;
+  border:1px solid #eadbd4;
+  border-radius:11px;
+  background:#fff;
+}
+.employee-analysis-meta small{
+  color:#81736d;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+.employee-analysis-meta strong{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:13px;
+}
+@media(max-width:1150px){
+  .employee-analysis-bar{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .employee-analysis-controls{grid-template-columns:1fr}
+  .employee-analysis-meta{grid-template-columns:1fr 1fr}
+  .employee-analysis-meta>span:last-child{grid-column:1/-1}
+}

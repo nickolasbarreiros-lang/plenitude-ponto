@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#2c2324">
   <title>Painel administrativo | Plenitude Ponto</title>
-  <link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc3.4">
+  <link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc4">
 </head>
 <body>
 <div class="app-shell">
@@ -53,6 +53,28 @@
       <article class="metric-card dashboard-shortcut" data-href="relatorios.html?visao=saldo-mes" role="link" tabindex="0" aria-label="Abrir saldo do mês"><i>±</i><span>Saldo do mês</span><strong id="saldo-mes">00:00</strong><small>Funcionário selecionado</small></article>
     </section>
 
+
+    <section class="employee-analysis-bar" aria-labelledby="employee-analysis-title">
+      <div class="employee-analysis-heading">
+        <span class="employee-analysis-icon">👤</span>
+        <div>
+          <p class="panel-kicker">FUNCIONÁRIO EM ANÁLISE</p>
+          <h2 id="employee-analysis-title">Visão individual sincronizada</h2>
+        </div>
+      </div>
+      <div class="employee-analysis-controls">
+        <label>
+          <span>Selecionar funcionário</span>
+          <select id="dashboard-employee-global" class="compact-select" aria-label="Funcionário em análise"></select>
+        </label>
+        <div class="employee-analysis-meta">
+          <span><small>Matrícula</small><strong id="analysis-matricula">—</strong></span>
+          <span><small>Cargo</small><strong id="analysis-cargo">—</strong></span>
+          <span><small>Status</small><strong id="analysis-status">—</strong></span>
+        </div>
+      </div>
+    </section>
+
     <section id="daily-indicators" class="daily-indicators"></section>
 
     <section class="panel-grid dashboard-main-grid">
@@ -67,7 +89,7 @@
       <article class="panel schedule-card">
         <div class="panel-head">
           <div><p class="panel-kicker">ESCALA</p><h2>Jornada semanal</h2></div>
-          <a class="btn small outline" href="jornada.html">Editar</a>
+          <a id="schedule-edit-link" class="btn small outline" href="jornada.html">Editar</a>
         </div>
         <div id="resumo-jornada" class="schedule-visual"></div>
       </article>
@@ -77,7 +99,7 @@
       <article class="panel dashboard-chart">
         <div class="panel-head">
           <div><p class="panel-kicker">SEMANA ATUAL</p><h2>Horas registradas por dia</h2></div>
-          <a class="btn small outline" href="relatorios.html">Ver relatório</a>
+          <a id="week-report-link" class="btn small outline" href="relatorios.html">Ver relatório</a>
         </div>
         <div id="grafico-semana" class="week-chart"></div>
       </article>
@@ -94,15 +116,15 @@
     <section class="panel dashboard-chart monthly-overview">
       <div class="panel-head">
         <div><p class="panel-kicker">ÚLTIMOS 30 DIAS</p><h2>Presença e jornada</h2></div>
-        <select id="dashboard-employee" class="compact-select" aria-label="Funcionário"></select>
+        <a id="month-report-link" class="btn small outline" href="relatorios.html">Abrir relatório individual</a>
       </div>
       <div id="grafico-mensal" class="month-chart"></div>
       <div class="chart-legend"><span><i class="legend-worked"></i> Trabalhado</span><span><i class="legend-expected"></i> Previsto</span></div>
     </section>
   </main>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc3.4"></script><script src="assets/js/auth.js?v=1.0.0-rc3.4"></script>
-  <script src="assets/js/database.js?v=1.0.0-rc3.4"></script><script src="assets/js/app.js?v=1.0.0-rc3.4"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc4"></script><script src="assets/js/auth.js?v=1.0.0-rc4"></script>
+  <script src="assets/js/database.js?v=1.0.0-rc4"></script><script src="assets/js/app.js?v=1.0.0-rc4"></script>
 <script>initAdmin()</script>
 </body>
 </html>
