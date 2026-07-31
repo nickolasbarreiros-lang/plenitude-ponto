@@ -1,9 +1,9 @@
 (function(){'use strict';
  const client=window.PlenitudeAuth.client;
- function stored(){try{return JSON.parse(sessionStorage.getItem('plenitude-employee-session')||'null')}catch{return null}}
+ function stored(){try{return JSON.parse(sessionStorage.getItem('plenitude-employee-session')||localStorage.getItem('plenitude-offline-employee-session')||'null')}catch{return null}}
  const sess=stored();
  if(!sess){ window.PlenitudeAuth.getSession().then(s=>s?initPonto():location.replace('index.html')); return; }
- const token=sess.token;let employee=null;let punchInFlight=false;let punchCooldownUntil=0;let punchCooldownTimer=null;let lunchMinimumTimer=null;
+ const token=sess.token;let employee=null;let onlineMarks=[];let contingencyMode=false;let punchInFlight=false;let punchCooldownUntil=0;let punchCooldownTimer=null;let lunchMinimumTimer=null;
  const dateKey=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
  const label=t=>({entrada:'Entrada',inicio_intervalo:'Início do almoço',fim_intervalo:'Retorno do almoço',saida:'Saída'})[t]||'Marcação';
  const fmt=v=>new Date(v).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -56,6 +56,102 @@
   avatar.appendChild(image);
  }
  async function rpc(name,args={}){const {data,error}=await client.rpc(name,args);if(error)throw error;return data}
+ function isNetworkFailure(error){
+  const message=String(error?.message||error||'');
+  return !navigator.onLine||/Failed to fetch|NetworkError|Load failed|fetch|timeout|connection|ERR_INTERNET/i.test(message);
+ }
+
+ function nextType(count){
+  return ['entrada','inicio_intervalo','fim_intervalo','saida'][count]||null;
+ }
+
+ async function localTodayMarks(){
+  if(!employee||!window.PlenitudeOffline)return [];
+  const today=dateKey(new Date());
+  return (await window.PlenitudeOffline.all())
+   .filter(r=>r.funcionario_id===employee.id&&r.data_local===today)
+   .sort((a,b)=>new Date(a.ocorrido_em_dispositivo)-new Date(b.ocorrido_em_dispositivo))
+   .map(r=>({
+    id:r.evento_offline_id,
+    tipo:r.tipo,
+    registrado_em:r.ocorrido_em_dispositivo,
+    offline:true,
+    status_offline:r.status
+   }));
+ }
+
+ async function setContingencyUI(active){
+  contingencyMode=active;
+  const banner=document.getElementById('offline-contingency-banner');
+  const foot=document.getElementById('clock-footnote');
+  document.body.classList.toggle('offline-contingency',active);
+  banner.hidden=!active;
+  foot.textContent=active
+   ?'Horário obtido do relógio deste computador. Os registros offline exigem sincronização e conferência.'
+   :'O horário oficial é gerado e gravado pelo servidor do Supabase.';
+  const counts=await window.PlenitudeOffline.counts();
+  document.getElementById('offline-pending-count').textContent=
+   `${counts.local} aguardando sincronização`;
+ }
+
+ async function syncOfflineQueue(){
+  if(!navigator.onLine||!window.PlenitudeOffline)return;
+  const deviceToken=localStorage.getItem('plenitude-device-token')||'';
+  if(!deviceToken)return;
+
+  const before=await window.PlenitudeOffline.counts();
+  if(!before.local)return;
+
+  const banner=document.getElementById('sync-restored-banner');
+  const text=document.getElementById('sync-restored-text');
+  banner.hidden=false;
+  text.textContent=`Enviando ${before.local} registro(s) para conferência...`;
+
+  const synced=await window.PlenitudeOffline.syncAll(client,deviceToken);
+  const after=await window.PlenitudeOffline.counts();
+
+  text.textContent=after.local
+   ?`${synced.length} enviado(s); ${after.local} ainda aguardam.`
+   :`${synced.length} registro(s) enviado(s) e aguardando aprovação administrativa.`;
+
+  setTimeout(()=>banner.hidden=true,5000);
+  await setContingencyUI(after.local>0&&!navigator.onLine);
+ }
+
+ async function registerOfflinePunch(){
+  const deviceToken=localStorage.getItem('plenitude-device-token')||'';
+  if(!deviceToken)throw new Error('Computador não autorizado para contingência.');
+
+  const localMarks=await localTodayMarks();
+  const combined=[...onlineMarks,...localMarks].sort(
+   (a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em)
+  );
+  const tipo=nextType(combined.length);
+  if(!tipo)throw new Error('As quatro marcações do dia já foram realizadas.');
+
+  if(tipo==='fim_intervalo'){
+   const lunch=combined.find(m=>m.tipo==='inicio_intervalo');
+   const elapsed=Date.now()-new Date(lunch.registrado_em).getTime();
+   if(elapsed<30*60*1000){
+    const remaining=Math.ceil((30*60*1000-elapsed)/60000);
+    throw new Error(`O retorno do almoço só pode ser registrado após 30 minutos. Aguarde mais ${remaining} minuto(s).`);
+   }
+  }
+
+  const record=await window.PlenitudeOffline.createRecord({
+   employee,tipo,deviceToken,existing:combined
+  });
+
+  await setContingencyUI(true);
+  return {tipo:record.tipo,registrado_em:record.ocorrido_em_dispositivo,offline:true};
+ }
+
+ window.addEventListener('online',async()=>{
+  await syncOfflineQueue().catch(error=>console.warn('Sincronização offline falhou',error));
+  load().catch(()=>{});
+ });
+ window.addEventListener('offline',()=>setContingencyUI(true));
+
  function clock(){const d=new Date();document.getElementById('clock-date').textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(d);document.getElementById('clock-time').textContent=d.toLocaleTimeString('pt-BR')}
  function successSound(){try{const C=window.AudioContext||window.webkitAudioContext,ctx=new C();[523.25,659.25,783.99].forEach((f,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(.0001,ctx.currentTime+i*.11);g.gain.exponentialRampToValueAtTime(.16,ctx.currentTime+i*.11+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+i*.11+.18);o.connect(g);g.connect(ctx.destination);o.start(ctx.currentTime+i*.11);o.stop(ctx.currentTime+i*.11+.2)});setTimeout(()=>ctx.close(),800)}catch{}}
  function showSuccess(message){const b=document.getElementById('success-banner');b.querySelector('strong').textContent=message;b.hidden=false;b.classList.remove('show');void b.offsetWidth;b.classList.add('show');successSound();setTimeout(()=>{b.classList.remove('show');setTimeout(()=>b.hidden=true,250)},3200)}
@@ -111,13 +207,24 @@
   const isHomologation=String(employee?.matricula||'').replace(/^0+/,'')==='999';
   const weekStart=isHomologation?today:dateKey(monday);
   const monthStart=isHomologation?today:dateKey(firstMonth);
-  const [data,todayBank,weekBank,monthBank]=await Promise.all([
+  let data=[],todayBank=null,weekBank=null,monthBank=null;
+  try{
+   [data,todayBank,weekBank,monthBank]=await Promise.all([
     rpc('marcacoes_funcionario_token',{p_token:token,p_inicio:today,p_fim:today}),
     rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:today,p_fim:today}),
     rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:weekStart,p_fim:today}),
     rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:monthStart,p_fim:today})
-  ]),marks=data||[];
-  document.getElementById('lista-pontos').innerHTML=marks.length?marks.map(m=>`<div class="punch-item"><span>${label(m.tipo)}</span><strong>${fmt(m.registrado_em)}</strong></div>`).join(''):'<div class="mini-empty">Nenhuma marcação feita hoje.</div>';
+   ]);
+   onlineMarks=data||[];
+   await setContingencyUI(false);
+  }catch(error){
+   if(!isNetworkFailure(error))throw error;
+   await setContingencyUI(true);
+   data=onlineMarks;
+  }
+  const localMarks=await localTodayMarks();
+  const marks=[...(data||[]),...localMarks].sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em));
+  document.getElementById('lista-pontos').innerHTML=marks.length?marks.map(m=>`<div class="punch-item ${m.offline?'offline-mark':''}"><span>${label(m.tipo)}${m.offline?' <em>OFFLINE</em>':''}</span><strong>${fmt(m.registrado_em)}</strong></div>`).join(''):'<div class="mini-empty">Nenhuma marcação feita hoje.</div>';
   const labels=['Entrada','Almoço','Retorno','Saída'];
   const actionLabels=['Registrar entrada','Registrar saída para almoço','Registrar retorno do almoço','Registrar saída final'];
   const nextLabel=marks.length<4?labels[marks.length]:null;
@@ -152,7 +259,22 @@
   const note=document.getElementById('homologation-note');if(note)note.hidden=!isHomologation;
  }
  async function init(){document.body.classList.add('employee-mode','kiosk-point-mode');document.getElementById('ponto-funcionario-select').hidden=true;clock();setInterval(clock,1000);
-  try{const d=await rpc('dados_funcionario_token',{p_token:token});employee=Array.isArray(d)?d[0]:d;if(!employee)throw new Error('Sessão inválida.');
+  try{
+   let d;
+   try{
+    d=await rpc('dados_funcionario_token',{p_token:token});
+    employee=Array.isArray(d)?d[0]:d;
+    if(employee){
+     localStorage.setItem('plenitude-offline-employee-session',JSON.stringify(sess));
+     localStorage.setItem('plenitude-offline-employee-profile',JSON.stringify(employee));
+    }
+   }catch(error){
+    if(!isNetworkFailure(error))throw error;
+    employee=JSON.parse(localStorage.getItem('plenitude-offline-employee-profile')||'null');
+    if(!employee)throw new Error('Sem internet e sem sessão de contingência preparada neste computador.');
+    await setContingencyUI(true);
+   }
+   if(!employee)throw new Error('Sessão inválida.');
    document.getElementById('clock-employee').textContent=employee.nome;
    document.getElementById('clock-status').textContent='Pronto para registrar';
    renderEmployeeAvatar(employee);
@@ -160,6 +282,10 @@
    document.getElementById('change-pin-panel').hidden=!employee.exigir_troca_pin;
    const results=await Promise.allSettled([load(),loadAdjustments(),loadMovements()]);
    results.forEach((result,index)=>{if(result.status==='rejected'){console.warn(['Resumo de ponto indisponível','Ajustes indisponíveis','Movimentações indisponíveis'][index],result.reason)}});
+   if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('./sw.js').catch(error=>console.warn('Service Worker indisponível',error));
+   }
+   syncOfflineQueue().catch(error=>console.warn('Fila offline não sincronizada',error));
   }catch(e){
    console.error('Falha ao iniciar área do funcionário',e);
    toast(e.message||'Não foi possível abrir a área do funcionário.','warn');
@@ -230,9 +356,23 @@ document.getElementById('registrar').onclick=async()=>{
     // Mantém a interface protegida mesmo depois da resposta do servidor.
     startPunchCooldown(b,5);
   }catch(e){
-    toast(e.message,'warn');
-    b.disabled=false;
-    b.innerHTML=previous;
+    if(isNetworkFailure(e)){
+     try{
+      const m=await registerOfflinePunch();
+      showSuccess(`${label(m.tipo)} gravada em contingência às ${fmt(m.registrado_em)}`);
+      toast(`${label(m.tipo)} salva localmente. Necessita sincronização e conferência.`,'warn');
+      await load();
+      startPunchCooldown(b,5);
+     }catch(offlineError){
+      toast(offlineError.message,'warn');
+      b.disabled=false;
+      b.innerHTML=previous;
+     }
+    }else{
+     toast(e.message,'warn');
+     b.disabled=false;
+     b.innerHTML=previous;
+    }
   }finally{
     punchInFlight=false;
     b.classList.remove('loading');
