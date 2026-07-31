@@ -420,9 +420,30 @@
   const reachable=await probeServer(3000);
 
   if(!reachable){
+   syncInProgress=false;
+   serverReachable=false;
+
+   if(banner)banner.hidden=true;
+
    await setContingencyUI(true);
-   setPointLoading('A rede foi detectada, mas o servidor ainda não está acessível.',20);
-   setTimeout(()=>revealPoint(),900);
+   setPointLoading(
+    'Sem acesso ao servidor. Recuperando a jornada armazenada neste computador...',
+    55
+   );
+
+   try{
+    await load();
+    document.getElementById('clock-status').textContent='Pronto para registrar';
+    setPointLoading('Jornada local carregada.',100);
+    setTimeout(revealPoint,180);
+   }catch(error){
+    console.warn('Não foi possível restaurar a jornada local.',error);
+    blockPoint(
+     error.message||
+     'Não foi possível recuperar o estado local da jornada.'
+    );
+   }
+
    return;
   }
 
@@ -459,9 +480,27 @@
   }
  });
 
- window.addEventListener('offline',()=>{
+ window.addEventListener('offline',async()=>{
   syncInProgress=false;
-  setContingencyUI(true);
+  serverReachable=false;
+
+  const banner=document.getElementById('sync-restored-banner');
+  if(banner)banner.hidden=true;
+
+  await setContingencyUI(true);
+
+  try{
+   setPointLoading('Conexão interrompida. Recuperando a jornada local...',55);
+   await load();
+   document.getElementById('clock-status').textContent='Pronto para registrar';
+   setPointLoading('Jornada local carregada.',100);
+   setTimeout(revealPoint,180);
+  }catch(error){
+   blockPoint(
+    error.message||
+    'Não foi possível recuperar a jornada para uso offline.'
+   );
+  }
  });
 
  function clock(){const d=new Date();document.getElementById('clock-date').textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(d);document.getElementById('clock-time').textContent=d.toLocaleTimeString('pt-BR')}
@@ -625,6 +664,17 @@
    document.getElementById('proxima').textContent=
     'Reconecte o sistema para atualizar as marcações de hoje';
   }
+  if(
+   contingencyMode&&
+   offlineDayStateReady&&
+   !syncInProgress&&
+   marks.length<4&&
+   Date.now()>=punchCooldownUntil
+  ){
+   punchButton.disabled=false;
+   punchButton.classList.remove('sync-lock','loading','cooldown');
+  }
+
   if(Date.now()>=punchCooldownUntil)punchButton.classList.remove('cooldown');
   document.body.classList.toggle('homologation-employee',isHomologation);
   const note=document.getElementById('homologation-note');if(note)note.hidden=!isHomologation;
