@@ -1706,3 +1706,26 @@ body:has(.device-grid) .topbar{
 @keyframes point-spin{
   to{transform:rotate(360deg)}
 }
+
+
+/* RC5.12 — progresso visível e detecção rápida de offline */
+.point-loading-progress{
+  width:100%;
+  height:9px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#f1e5df;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.08);
+}
+.point-loading-progress span{
+  display:block;
+  width:0;
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,#ff5a18,#ff285d);
+  transition:width .28s ease;
+}
+#point-loading-progress-label{
+  color:#a14a22;
+  font-weight:900;
+}
