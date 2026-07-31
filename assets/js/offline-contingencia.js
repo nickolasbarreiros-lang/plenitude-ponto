@@ -165,7 +165,40 @@ async function syncAll(client,deviceToken){
  return results;
 }
 
+async function selfTest(){
+ const testId=`diagnostico-${uuid()}`;
+ const now=new Date().toISOString();
+ const record={
+  evento_offline_id:testId,
+  funcionario_id:'diagnostico-local',
+  funcionario_nome:'DIAGNÓSTICO LOCAL',
+  matricula:'TESTE',
+  tipo:'entrada',
+  ocorrido_em_dispositivo:now,
+  data_local:now.slice(0,10),
+  fuso_horario:Intl.DateTimeFormat().resolvedOptions().timeZone||'America/Sao_Paulo',
+  offset_minutos:new Date().getTimezoneOffset(),
+  criado_local_em:now,
+  hash_anterior:'',
+  hash_evento:await sha256(testId),
+  user_agent:navigator.userAgent,
+  status:'diagnostico'
+ };
+
+ await put(record);
+ const rows=await all();
+ const readBack=rows.find(item=>item.evento_offline_id===testId);
+ await remove(testId);
+ const after=await all();
+
+ return {
+  write:Boolean(readBack),
+  read:Boolean(readBack&&readBack.hash_evento===record.hash_evento),
+  cleanup:!after.some(item=>item.evento_offline_id===testId)
+ };
+}
+
 window.PlenitudeOffline=Object.freeze({
- openDB,all,pending,put,remove,createRecord,counts,syncAll,setMeta,getMeta
+ openDB,all,pending,put,remove,createRecord,counts,syncAll,setMeta,getMeta,selfTest
 });
 })();

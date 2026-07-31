@@ -133,6 +133,220 @@
   });
  }
 
+
+ function getPreparedEmployees(){
+  let logins={};
+  let profiles={};
+
+  try{
+   logins=JSON.parse(localStorage.getItem('plenitude-offline-login-v1')||'{}');
+  }catch{}
+
+  try{
+   profiles=JSON.parse(localStorage.getItem('plenitude-offline-employee-profiles')||'{}');
+  }catch{}
+
+  return Object.values(logins).map(item=>{
+   const registration=String(item.registration||'');
+   const profile=profiles[registration]||{};
+   const session=item.session||{};
+
+   return {
+    registration,
+    name:
+     profile.nome||
+     item.employeeName||
+     session.nome||
+     session.funcionario_nome||
+     'Funcionário',
+    verifier:Boolean(item.verifier&&item.salt),
+    profile:Boolean(Object.keys(profile).length),
+    session:Boolean(item.session?.token),
+    cachedAt:item.cachedAt||null,
+    deviceBound:Boolean(item.deviceTokenSuffix)
+   };
+  }).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+ }
+
+ function renderPreparedEmployees(){
+  const employees=getPreparedEmployees();
+  const box=document.getElementById('offline-employees-list');
+  const badge=document.getElementById('offline-employees-count');
+
+  badge.textContent=`${employees.length} preparado${employees.length===1?'':'s'}`;
+  badge.className=`badge ${employees.length?'success':'warn'}`;
+
+  box.innerHTML=employees.length
+   ?employees.map(employee=>`
+    <article class="offline-employee-card">
+     <div class="offline-employee-main">
+      <span class="offline-employee-avatar">${employee.name.trim().split(/\s+/).slice(0,2).map(part=>part[0]||'').join('').toUpperCase()}</span>
+      <div>
+       <strong>${employee.name}</strong>
+       <small>Matrícula ${employee.registration}</small>
+       <small>Preparado em ${employee.cachedAt?new Date(employee.cachedAt).toLocaleString('pt-BR'):'data não disponível'}</small>
+      </div>
+     </div>
+     <div class="offline-employee-flags">
+      <span class="${employee.verifier?'ok':'fail'}">PIN protegido</span>
+      <span class="${employee.profile?'ok':'fail'}">Perfil</span>
+      <span class="${employee.session?'ok':'fail'}">Sessão</span>
+      <span class="${employee.deviceBound?'ok':'fail'}">Dispositivo</span>
+     </div>
+    </article>
+   `).join('')
+   :'<div class="mini-empty">Nenhum funcionário preparado. Faça um login com internet neste computador.</div>';
+
+  return employees;
+ }
+
+ async function testOfflineLoginStructure(employee){
+  if(!employee)return {ok:false,detail:'Nenhum funcionário preparado.'};
+
+  let logins={};
+  try{
+   logins=JSON.parse(localStorage.getItem('plenitude-offline-login-v1')||'{}');
+  }catch{}
+
+  const item=logins[employee.registration];
+
+  return {
+   ok:Boolean(
+    item?.verifier&&
+    item?.salt&&
+    item?.session?.token&&
+    item?.deviceTokenSuffix
+   ),
+   detail:item
+    ?'Verificador criptográfico, sessão e vínculo com o dispositivo encontrados.'
+    :'Dados de login offline não encontrados.'
+  };
+ }
+
+ async function runControlledContingencyTest(){
+  const button=document.getElementById('test-offline-device');
+  const section=document.getElementById('offline-test-result');
+  const checks=document.getElementById('offline-test-checks');
+  const badge=document.getElementById('offline-test-badge');
+  const summary=document.getElementById('offline-test-summary');
+  const started=performance.now();
+
+  button.disabled=true;
+  section.hidden=false;
+  badge.textContent='Executando';
+  badge.className='badge warn';
+  checks.innerHTML=offlineCheckRow(
+   'Iniciando teste controlado',
+   null,
+   'Nenhuma marcação oficial será criada.'
+  );
+  summary.textContent='';
+
+  try{
+   const diagnostic=await getOfflineDiagnostic();
+   const employees=renderPreparedEmployees();
+   const employee=employees[0]||null;
+   const loginCheck=await testOfflineLoginStructure(employee);
+
+   let storageTest={write:false,read:false,cleanup:false};
+
+   if(window.PlenitudeOffline?.selfTest){
+    storageTest=await window.PlenitudeOffline.selfTest();
+   }
+
+   const serviceWorkerCheck=
+    diagnostic.serviceWorkerActive&&
+    diagnostic.allCached;
+
+   const steps=[
+    {
+     label:'Login offline preparado',
+     ok:loginCheck.ok,
+     detail:employee
+      ?`${employee.name} — ${loginCheck.detail}`
+      :loginCheck.detail
+    },
+    {
+     label:'Service Worker e cache',
+     ok:serviceWorkerCheck,
+     detail:`${diagnostic.cacheCount} de ${diagnostic.cacheTotal} arquivos essenciais disponíveis.`
+    },
+    {
+     label:'Gravação local de teste',
+     ok:storageTest.write,
+     detail:storageTest.write
+      ?'Registro fictício gravado no IndexedDB.'
+      :'Não foi possível gravar o registro fictício.'
+    },
+    {
+     label:'Leitura e integridade local',
+     ok:storageTest.read,
+     detail:storageTest.read
+      ?'Registro lido novamente com o mesmo identificador e hash.'
+      :'A leitura local não confirmou a integridade.'
+    },
+    {
+     label:'Limpeza do teste',
+     ok:storageTest.cleanup,
+     detail:storageTest.cleanup
+      ?'O registro fictício foi removido sem entrar na fila real.'
+      :'O registro de teste não foi removido corretamente.'
+    },
+    {
+     label:'Sincronização preparada',
+     ok:Boolean(
+      diagnostic.authorized&&
+      diagnostic.deviceToken&&
+      window.PlenitudeOffline?.syncAll
+     ),
+     detail:'Token autorizado e módulo de sincronização disponíveis.'
+    }
+   ];
+
+   checks.innerHTML=steps.map(step=>
+    offlineCheckRow(step.label,step.ok,step.detail)
+   ).join('');
+
+   const approved=steps.every(step=>step.ok);
+   const elapsed=((performance.now()-started)/1000).toFixed(1);
+
+   badge.textContent=approved?'Computador aprovado':'Teste incompleto';
+   badge.className=`badge ${approved?'success':'warn'}`;
+   summary.innerHTML=approved
+    ?`<strong>Computador aprovado para contingência.</strong> Teste concluído em ${elapsed}s. Nenhum ponto oficial ou registro pendente foi criado.`
+    :`O teste terminou em ${elapsed}s, mas existem itens que precisam ser corrigidos antes do uso offline.`;
+
+   localStorage.setItem(
+    'plenitude-offline-controlled-test',
+    JSON.stringify({
+     approved,
+     testedAt:new Date().toISOString(),
+     elapsedSeconds:Number(elapsed),
+     steps
+    })
+   );
+
+   toast(
+    approved
+     ?'Teste de contingência aprovado.'
+     :'O teste encontrou pendências.',
+    approved?'success':'warn'
+   );
+  }catch(error){
+   badge.textContent='Falha';
+   badge.className='badge warn';
+   checks.innerHTML=offlineCheckRow(
+    'Falha no teste',
+    false,
+    error.message
+   );
+   summary.textContent='O teste foi interrompido antes da conclusão.';
+   toast(error.message,'warn');
+  }finally{
+   button.disabled=false;
+  }
+ }
+
  async function getOfflineDiagnostic(){
   const deviceResult=await currentStatus();
   const serviceWorkerSupported='serviceWorker' in navigator;
@@ -165,6 +379,11 @@
   const employeeSession=Object.keys(offlineLogins).length>0||
    Boolean(localStorage.getItem('plenitude-offline-employee-session'));
   const preparedEmployees=Object.keys(offlineLogins).length;
+  const preparedEmployeeDetails=getPreparedEmployees();
+  const verifierCount=preparedEmployeeDetails.filter(item=>item.verifier).length;
+  const completeEmployeeCount=preparedEmployeeDetails.filter(
+   item=>item.verifier&&item.profile&&item.session&&item.deviceBound
+  ).length;
   const allCached=cacheResults.length>=OFFLINE_CORE.length&&cacheResults.every(item=>item.ok);
   const secureContext=window.isSecureContext;
   const storageEstimate=navigator.storage?.estimate
@@ -185,6 +404,9 @@
    employeeProfile,
    employeeSession,
    preparedEmployees,
+   preparedEmployeeDetails,
+   verifierCount,
+   completeEmployeeCount,
    secureContext,
    storageEstimate
   };
@@ -225,11 +447,32 @@
     result.indexedDBReady?'IndexedDB pronto para receber registros.':'IndexedDB indisponível.'
    ),
    offlineCheckRow(
-    'Funcionário preparado',
+    'Sessão offline preparada',
     result.employeeProfile&&result.employeeSession,
     result.employeeProfile&&result.employeeSession
-     ?`${result.preparedEmployees||1} funcionário(s) preparado(s) para login offline.`
+     ?'Perfil e sessão local disponíveis.'
      :'Abra o ponto e faça login com matrícula e PIN ao menos uma vez com internet.'
+   ),
+   offlineCheckRow(
+    'Login offline preparado',
+    result.completeEmployeeCount>0,
+    result.completeEmployeeCount>0
+     ?`${result.completeEmployeeCount} funcionário(s) com preparação completa.`
+     :'Nenhum funcionário possui todos os dados necessários para login offline.'
+   ),
+   offlineCheckRow(
+    'Verificador criptográfico do PIN',
+    result.verifierCount>0,
+    result.verifierCount>0
+     ?`${result.verifierCount} verificador(es) protegido(s) armazenado(s).`
+     :'Faça um login online com cada funcionário que usará a contingência.'
+   ),
+   offlineCheckRow(
+    'Token do dispositivo válido',
+    result.authorized&&result.deviceToken,
+    result.authorized&&result.deviceToken
+     ?'Login offline vinculado a este computador autorizado.'
+     :'Autorize novamente este computador.'
    )
   ];
 
@@ -255,10 +498,14 @@
    result.allCached&&
    result.indexedDBReady&&
    result.employeeProfile&&
-   result.employeeSession;
+   result.employeeSession&&
+   result.completeEmployeeCount>0&&
+   result.verifierCount>0;
 
   badge.textContent=ready?'Pronto para contingência':'Preparação incompleta';
   badge.className=`badge ${ready?'success':'warn'}`;
+
+  renderPreparedEmployees();
 
   localStorage.setItem(
    'plenitude-offline-preparation-status',
@@ -515,6 +762,7 @@
 
  document.getElementById('prepare-offline-device').onclick=prepareOfflineDevice;
  document.getElementById('verify-offline-device').onclick=runOfflineDiagnostic;
+ document.getElementById('test-offline-device').onclick=runControlledContingencyTest;
 
  (async()=>{
   try{
