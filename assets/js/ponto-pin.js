@@ -210,14 +210,35 @@ document.getElementById('registrar').onclick=async()=>{
   if(returnButton)returnButton.hidden=!open;
 
   if(open){
-   if(exitForm)exitForm.hidden=true;
+   if(exitForm){
+    exitForm.hidden=true;
+    exitForm.setAttribute('hidden','');
+   }
    if(exitReason){
     exitReason.disabled=true;
     exitReason.value='';
    }
-   if(exitTrigger)exitTrigger.setAttribute('aria-expanded','false');
-  }else if(exitForm?.hidden && exitReason){
-   exitReason.disabled=true;
+   if(exitTrigger){
+    exitTrigger.hidden=true;
+    exitTrigger.setAttribute('hidden','');
+    exitTrigger.setAttribute('aria-expanded','false');
+   }
+   if(returnButton){
+    returnButton.hidden=false;
+    returnButton.removeAttribute('hidden');
+   }
+  }else{
+   if(exitTrigger){
+    exitTrigger.hidden=false;
+    exitTrigger.removeAttribute('hidden');
+   }
+   if(returnButton){
+    returnButton.hidden=true;
+    returnButton.setAttribute('hidden','');
+   }
+   if(exitForm?.hidden && exitReason){
+    exitReason.disabled=true;
+   }
   }
 
   const todayRows=Array.isArray(rows)?[...rows]:[];
