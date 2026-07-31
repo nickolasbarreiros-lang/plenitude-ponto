@@ -3,7 +3,7 @@
  function stored(){try{return JSON.parse(sessionStorage.getItem('plenitude-employee-session')||localStorage.getItem('plenitude-offline-employee-session')||'null')}catch{return null}}
  const sess=stored();
  if(!sess){ window.PlenitudeAuth.getSession().then(s=>s?initPonto():location.replace('index.html')); return; }
- const token=sess.token;let employee=null;let onlineMarks=[];let offlineDayStateReady=false;let contingencyMode=false;let syncInProgress=false;let punchInFlight=false;let punchCooldownUntil=0;let punchCooldownTimer=null;let lunchMinimumTimer=null;
+ const token=sess.token;let employee=null;let onlineMarks=[];let offlineDayStateReady=false;let contingencyMode=false;let syncInProgress=false;let pointReady=false;let punchInFlight=false;let punchCooldownUntil=0;let punchCooldownTimer=null;let lunchMinimumTimer=null;
  const dateKey=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
  const label=t=>({entrada:'Entrada',inicio_intervalo:'Início do almoço',fim_intervalo:'Retorno do almoço',saida:'Saída'})[t]||'Marcação';
  const fmt=v=>new Date(v).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -56,6 +56,54 @@
   avatar.appendChild(image);
  }
  async function rpc(name,args={}){const {data,error}=await client.rpc(name,args);if(error)throw error;return data}
+ function setPointLoading(message){
+  const overlay=document.getElementById('point-loading-overlay');
+  const text=document.getElementById('point-loading-message');
+  const page=document.getElementById('point-page');
+  const button=document.getElementById('registrar');
+  const card=overlay?.querySelector('.point-loading-card');
+
+  card?.classList.remove('error');
+  if(text&&message)text.textContent=message;
+  overlay?.removeAttribute('hidden');
+  page?.classList.add('point-booting');
+  pointReady=false;
+
+  if(button){
+   button.hidden=true;
+   button.disabled=true;
+  }
+ }
+
+ function revealPoint(){
+  const overlay=document.getElementById('point-loading-overlay');
+  const page=document.getElementById('point-page');
+  const button=document.getElementById('registrar');
+
+  pointReady=true;
+  overlay?.setAttribute('hidden','');
+  page?.classList.remove('point-booting');
+
+  if(button)button.hidden=false;
+ }
+
+ function blockPoint(message){
+  const overlay=document.getElementById('point-loading-overlay');
+  const text=document.getElementById('point-loading-message');
+  const card=overlay?.querySelector('.point-loading-card');
+  const button=document.getElementById('registrar');
+
+  pointReady=false;
+  card?.classList.add('error');
+  if(text)text.textContent=message||'Não foi possível carregar a jornada.';
+  overlay?.removeAttribute('hidden');
+
+  if(button){
+   button.hidden=true;
+   button.disabled=true;
+  }
+ }
+
  function isNetworkFailure(error){
   const message=String(error?.message||error||'');
   return !navigator.onLine||/Failed to fetch|NetworkError|Load failed|fetch|timeout|connection|ERR_INTERNET/i.test(message);
@@ -299,6 +347,8 @@
   const banner=document.getElementById('sync-restored-banner');
   const text=document.getElementById('sync-restored-text');
 
+  setPointLoading('Conexão restabelecida. Sincronizando registros offline...');
+
   try{
    const completed=await syncOfflineQueue();
 
@@ -306,15 +356,19 @@
     await setContingencyUI(true);
     text.textContent=
      'A sincronização não foi concluída. O registro de ponto continuará bloqueado.';
+    blockPoint('A sincronização ainda não foi concluída. Verifique a conexão.');
     return;
    }
 
    syncInProgress=true;
-   await Promise.all([load(),loadAdjustments(),loadMovements()]);
+   setPointLoading('Atualizando a jornada oficial...');
+   await load();
+   await Promise.allSettled([loadAdjustments(),loadMovements()]);
    await setContingencyUI(false);
    syncInProgress=false;
 
    text.textContent='Sincronização concluída. Sistema atualizado.';
+   revealPoint();
    setTimeout(()=>banner.hidden=true,3500);
   }catch(error){
    syncInProgress=false;
@@ -322,6 +376,7 @@
    await setContingencyUI(true);
    text.textContent=
     'Não foi possível concluir a sincronização. O registro de ponto permanece bloqueado.';
+   blockPoint('Não foi possível concluir a sincronização dos dados.');
   }
  });
 
@@ -495,15 +550,29 @@
   document.body.classList.toggle('homologation-employee',isHomologation);
   const note=document.getElementById('homologation-note');if(note)note.hidden=!isHomologation;
  }
- async function init(){document.body.classList.add('employee-mode','kiosk-point-mode');document.getElementById('ponto-funcionario-select').hidden=true;clock();setInterval(clock,1000);
+ async function init(){
+  document.body.classList.add('employee-mode','kiosk-point-mode');
+  document.getElementById('ponto-funcionario-select').hidden=true;
+  clock();
+  setInterval(clock,1000);
+  setPointLoading('Validando funcionário e preparando a jornada...');
+
   try{
    let d;
+
    try{
     d=await rpc('dados_funcionario_token',{p_token:token});
     employee=Array.isArray(d)?d[0]:d;
+
     if(employee){
-     localStorage.setItem('plenitude-offline-employee-session',JSON.stringify(sess));
-     localStorage.setItem('plenitude-offline-employee-profile',JSON.stringify(employee));
+     localStorage.setItem(
+      'plenitude-offline-employee-session',
+      JSON.stringify(sess)
+     );
+     localStorage.setItem(
+      'plenitude-offline-employee-profile',
+      JSON.stringify(employee)
+     );
 
      const profiles=JSON.parse(
       localStorage.getItem('plenitude-offline-employee-profiles')||'{}'
@@ -516,6 +585,7 @@
     }
    }catch(error){
     if(!isNetworkFailure(error))throw error;
+
     const profiles=JSON.parse(
      localStorage.getItem('plenitude-offline-employee-profiles')||'{}'
     );
@@ -525,28 +595,61 @@
 
     employee=
      profiles[sessionRegistration]||
-     JSON.parse(localStorage.getItem('plenitude-offline-employee-profile')||'null');
+     JSON.parse(
+      localStorage.getItem('plenitude-offline-employee-profile')||'null'
+     );
 
     if(!employee){
      throw new Error(
       'Sem internet e sem perfil de contingência preparado para este funcionário.'
      );
     }
+
     await setContingencyUI(true);
    }
+
    if(!employee)throw new Error('Sessão inválida.');
+
    document.getElementById('clock-employee').textContent=employee.nome;
-   document.getElementById('clock-status').textContent='Pronto para registrar';
+   document.getElementById('clock-status').textContent='Carregando jornada';
    renderEmployeeAvatar(employee);
-   const self=document.getElementById('employee-self-service');self.hidden=false;document.getElementById('self-profile-name').textContent=employee.nome;document.getElementById('self-profile-role').textContent=employee.cargo||'Funcionário';document.getElementById('self-profile-code').textContent=employee.matricula;
+
+   const self=document.getElementById('employee-self-service');
+   self.hidden=false;
+   document.getElementById('self-profile-name').textContent=employee.nome;
+   document.getElementById('self-profile-role').textContent=
+    employee.cargo||'Funcionário';
+   document.getElementById('self-profile-code').textContent=employee.matricula;
    document.getElementById('change-pin-panel').hidden=!employee.exigir_troca_pin;
-   const pointResult=await Promise.allSettled([load()]);
-   if(pointResult[0].status==='rejected'){
-    console.warn('Resumo de ponto indisponível',pointResult[0].reason);
+
+   if(navigator.onLine){
+    setPointLoading('Verificando registros locais pendentes...');
+
+    const synced=await syncOfflineQueue();
+
+    if(!synced){
+     throw new Error(
+      'Existem registros locais que ainda não foram completamente sincronizados.'
+     );
+    }
    }
 
+   setPointLoading(
+    navigator.onLine
+     ?'Carregando marcações oficiais...'
+     :'Carregando o estado local da jornada...'
+   );
+
+   await load();
+
    if(navigator.onLine&&!contingencyMode){
-    const tools=await Promise.allSettled([loadAdjustments(),loadMovements()]);
+    setPointLoading('Carregando recursos complementares...');
+
+    const tools=await Promise.allSettled([
+     loadAdjustments(),
+     loadMovements()
+    ]);
+
     tools.forEach((result,index)=>{
      if(result.status==='rejected'){
       console.warn(
@@ -558,14 +661,30 @@
    }else{
     await setContingencyUI(true);
    }
+
+   document.getElementById('clock-status').textContent='Pronto para registrar';
+
    if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('./sw.js').catch(error=>console.warn('Service Worker indisponível',error));
+    navigator.serviceWorker.register('./sw.js').catch(error=>
+     console.warn('Service Worker indisponível',error)
+    );
    }
-   syncOfflineQueue().catch(error=>console.warn('Fila offline não sincronizada',error));
+
+   revealPoint();
   }catch(e){
    console.error('Falha ao iniciar área do funcionário',e);
-   toast(e.message||'Não foi possível abrir a área do funcionário.','warn');
-   if(/sessão|token|inválid/i.test(String(e.message||''))){sessionStorage.removeItem('plenitude-employee-session');setTimeout(()=>location.replace('index.html'),1200)}
+   toast(
+    e.message||'Não foi possível abrir a área do funcionário.',
+    'warn'
+   );
+   blockPoint(
+    e.message||'Não foi possível carregar completamente a jornada.'
+   );
+
+   if(/sessão|token|inválid/i.test(String(e.message||''))){
+    sessionStorage.removeItem('plenitude-employee-session');
+    setTimeout(()=>location.replace('index.html'),1400);
+   }
   }
  }
  function startPunchCooldown(button, seconds=5){
@@ -595,6 +714,11 @@
 
 document.getElementById('registrar').onclick=async()=>{
   const b=document.getElementById('registrar');
+
+  if(!pointReady){
+    toast('Aguarde o carregamento completo da jornada.','warn');
+    return;
+  }
 
   if(syncInProgress){
     toast(

@@ -6,18 +6,25 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="#ff6500" name="theme-color"/>
 <title>Registrar ponto | Plenitude</title>
-<link href="assets/css/estilos.css?v=1.0.0-rc5.8" rel="stylesheet"/>
+<link href="assets/css/estilos.css?v=1.0.0-rc5.9" rel="stylesheet"/>
 </head>
 <body>
 <div class="sync-restored-banner" id="sync-restored-banner" hidden>
   <strong>Conexão restabelecida</strong><span id="sync-restored-text">Sincronizando registros offline...</span>
 </div>
-<main class="clock-page">
+<main class="clock-page point-booting" id="point-page">
+<div class="point-loading-overlay" id="point-loading-overlay">
+  <div class="point-loading-card">
+    <div class="point-loading-spinner" aria-hidden="true"></div>
+    <strong>Carregando jornada...</strong>
+    <span id="point-loading-message">Validando funcionário e sincronizando dados.</span>
+  </div>
+</div>
 <section class="clock-card premium-clock-card"><button class="clock-kiosk" id="fullscreen-toggle" type="button">⛶ Tela cheia</button><button class="clock-logout" id="sair" type="button">Sair</button><header class="clock-dashboard-header"><div class="clock-brand-block"><img alt="Plenitude" class="logo clock-logo" src="assets/img/logo-plenitude.png"/><p class="eyebrow">REGISTRO DE JORNADA</p></div><div class="clock-main-time"><p class="clock-date" id="clock-date"></p><div class="clock-time" id="clock-time">00:00:00</div></div></header><div class="success-banner" hidden="" id="success-banner"><span>✓</span><strong>Ponto registrado com sucesso</strong></div><div class="clock-workspace"><div class="clock-primary-column"><section class="clock-action-card"><div class="employee-box clock-employee-box">
 <div class="clock-avatar" id="clock-avatar"><span>P</span></div>
 <div class="clock-employee-data"><small>Funcionário</small><strong id="clock-employee">Funcionário da loja</strong><em id="clock-status">Ativo</em></div>
 <select aria-label="Selecionar funcionário" class="employee-select" hidden="" id="ponto-funcionario-select"></select>
-</div><button class="punch-button" id="registrar"><span>◷</span> Registrar ponto</button>
+</div><button class="punch-button" id="registrar" hidden disabled><span>◷</span> Registrar ponto</button>
 <div class="offline-point-status" id="offline-point-status" hidden>
   <span>Gravação local</span>
   <strong id="offline-pending-count">0 aguardando sincronização</strong>
@@ -64,8 +71,8 @@
 <div class="my-adjustments" id="my-adjustments"></div>
 </section><section class="change-pin-panel" hidden="" id="change-pin-panel"><h3>Alterar meu PIN</h3><div class="pin-change-grid"><input id="pin-atual" inputmode="numeric" maxlength="4" placeholder="PIN atual" type="password"/><input id="pin-novo" inputmode="numeric" maxlength="4" placeholder="Novo PIN" type="password"/><input id="pin-confirmar" inputmode="numeric" maxlength="4" placeholder="Confirmar novo PIN" type="password"/><button class="btn secondary" id="alterar-meu-pin" type="button">Salvar novo PIN</button></div></section></aside></div><p class="clock-footnote" id="clock-footnote">O horário oficial é gerado e gravado pelo servidor do Supabase.</p></section>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc5.8"></script><script src="assets/js/auth.js?v=1.0.0-rc5.8"></script>
-<script src="assets/js/database.js?v=1.0.0-rc5.8"></script><script src="assets/js/app.js?v=1.0.0-rc5.8"></script><script src="assets/js/offline-contingencia.js?v=1.0.0-rc5.8"></script>
-<script src="assets/js/ponto-pin.js?v=1.0.0-rc5.8"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc5.9"></script><script src="assets/js/auth.js?v=1.0.0-rc5.9"></script>
+<script src="assets/js/database.js?v=1.0.0-rc5.9"></script><script src="assets/js/app.js?v=1.0.0-rc5.9"></script><script src="assets/js/offline-contingencia.js?v=1.0.0-rc5.9"></script>
+<script src="assets/js/ponto-pin.js?v=1.0.0-rc5.9"></script>
 </body>
 </html>

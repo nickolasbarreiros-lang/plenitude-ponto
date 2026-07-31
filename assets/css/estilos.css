@@ -1652,3 +1652,57 @@ body:has(.device-grid) .topbar{
   opacity:.72;
   filter:saturate(.65);
 }
+
+
+/* RC5.9 — carregamento atômico da tela de ponto */
+.point-loading-overlay{
+  position:fixed;
+  inset:0;
+  z-index:3500;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  background:rgba(255,250,247,.97);
+  backdrop-filter:blur(4px);
+}
+.point-loading-overlay[hidden]{
+  display:none !important;
+}
+.point-loading-card{
+  display:grid;
+  justify-items:center;
+  gap:10px;
+  width:min(420px,calc(100% - 30px));
+  padding:26px 24px;
+  border:1px solid #eadbd4;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 20px 60px rgba(55,35,35,.16);
+  text-align:center;
+}
+.point-loading-card strong{
+  font-size:20px;
+}
+.point-loading-card span{
+  color:#786a64;
+  line-height:1.45;
+}
+.point-loading-card.error{
+  border-color:#e4a29a;
+  background:#fff5f3;
+}
+.point-loading-spinner{
+  width:42px;
+  height:42px;
+  border:4px solid #f0ded6;
+  border-top-color:#ff4d2d;
+  border-radius:50%;
+  animation:point-spin .8s linear infinite;
+}
+.point-loading-card.error .point-loading-spinner{
+  border-color:#efc6c0;
+  border-top-color:#b4362a;
+}
+@keyframes point-spin{
+  to{transform:rotate(360deg)}
+}
