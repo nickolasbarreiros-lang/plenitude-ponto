@@ -1539,3 +1539,108 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
   color:#9a4c00;
   font-size:12px;
 }
+
+
+/* RC5.7 — reorganização da página Dispositivos */
+body:has(.device-grid) .content{
+  width:100%;
+  max-width:1560px;
+  margin:0 auto;
+  padding-left:clamp(20px,2vw,34px);
+  padding-right:clamp(20px,2vw,34px);
+}
+body:has(.device-grid) .topbar{
+  margin-bottom:18px;
+}
+.device-grid{
+  display:grid;
+  grid-template-columns:minmax(360px,.82fr) minmax(560px,1.18fr);
+  grid-template-areas:
+    "authorize offline"
+    "devices offline"
+    "info info";
+  gap:18px;
+  align-items:start;
+}
+.device-authorize-card{
+  grid-area:authorize;
+}
+.device-offline-card{
+  grid-area:offline;
+}
+.device-list-card{
+  grid-area:devices;
+}
+.device-info-card{
+  grid-area:info;
+}
+.device-grid>.panel{
+  min-width:0;
+}
+.device-authorize-card .form-grid{
+  grid-template-columns:minmax(0,1fr) minmax(180px,.55fr);
+}
+.device-authorize-card .actions{
+  justify-content:flex-end;
+}
+.device-offline-card{
+  max-height:none;
+}
+.device-offline-card .offline-preparation-status{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+.device-offline-card .offline-check{
+  min-height:66px;
+}
+.device-offline-card .offline-preparation-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+.device-offline-card .offline-preparation-actions .btn{
+  justify-content:center;
+  width:100%;
+}
+.device-list-card .device-list{
+  display:grid;
+  gap:9px;
+}
+.device-list-card .device-row{
+  padding:12px 14px;
+}
+.device-info-card{
+  padding-top:18px;
+  padding-bottom:18px;
+}
+.device-info-card .panel-head{
+  margin-bottom:6px;
+}
+@media(max-width:1180px){
+  .device-grid{
+    grid-template-columns:1fr;
+    grid-template-areas:
+      "authorize"
+      "offline"
+      "devices"
+      "info";
+  }
+  .device-offline-card .offline-preparation-status{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:720px){
+  body:has(.device-grid) .content{
+    padding-left:14px;
+    padding-right:14px;
+  }
+  .device-authorize-card .form-grid,
+  .device-offline-card .offline-preparation-status,
+  .device-offline-card .offline-preparation-actions{
+    grid-template-columns:1fr;
+  }
+  .device-grid{
+    gap:13px;
+  }
+  .device-grid .panel{
+    padding:16px;
+  }
+}
