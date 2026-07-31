@@ -1235,3 +1235,16 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
   background:#e6f8ec;
   color:#168346;
 }
+
+
+/* RC4.17 — foto do funcionário no ponto */
+.clock-avatar.has-photo{
+  background:#f5efec;
+}
+.clock-avatar img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+}

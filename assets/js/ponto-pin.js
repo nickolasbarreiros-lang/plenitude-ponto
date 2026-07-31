@@ -7,6 +7,54 @@
  const dateKey=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
  const label=t=>({entrada:'Entrada',inicio_intervalo:'Início do almoço',fim_intervalo:'Retorno do almoço',saida:'Saída'})[t]||'Marcação';
  const fmt=v=>new Date(v).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+ function employeeInitials(name){
+  return String(name||'P')
+   .trim()
+   .split(/\s+/)
+   .slice(0,2)
+   .map(part=>part[0]||'')
+   .join('')
+   .toUpperCase();
+ }
+
+ function employeePhotoUrl(path){
+  if(!path)return null;
+  if(/^https?:\/\//i.test(path)||path.startsWith('data:'))return path;
+
+  const {data}=client.storage.from('funcionarios').getPublicUrl(path);
+  return data?.publicUrl||null;
+ }
+
+ function renderEmployeeAvatar(employee){
+  const avatar=document.getElementById('clock-avatar');
+  const initials=employeeInitials(employee?.nome);
+  const photo=employeePhotoUrl(employee?.foto_url);
+
+  avatar.innerHTML='';
+
+  if(!photo){
+   avatar.innerHTML=`<span>${initials}</span>`;
+   return;
+  }
+
+  const image=document.createElement('img');
+  image.alt=`Foto de ${employee.nome}`;
+  image.loading='eager';
+  image.referrerPolicy='no-referrer';
+
+  image.onload=()=>{
+   avatar.classList.add('has-photo');
+  };
+
+  image.onerror=()=>{
+   avatar.classList.remove('has-photo');
+   avatar.innerHTML=`<span>${initials}</span>`;
+   console.warn('Não foi possível carregar a foto do funcionário.');
+  };
+
+  image.src=photo;
+  avatar.appendChild(image);
+ }
  async function rpc(name,args={}){const {data,error}=await client.rpc(name,args);if(error)throw error;return data}
  function clock(){const d=new Date();document.getElementById('clock-date').textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(d);document.getElementById('clock-time').textContent=d.toLocaleTimeString('pt-BR')}
  function successSound(){try{const C=window.AudioContext||window.webkitAudioContext,ctx=new C();[523.25,659.25,783.99].forEach((f,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(.0001,ctx.currentTime+i*.11);g.gain.exponentialRampToValueAtTime(.16,ctx.currentTime+i*.11+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+i*.11+.18);o.connect(g);g.connect(ctx.destination);o.start(ctx.currentTime+i*.11);o.stop(ctx.currentTime+i*.11+.2)});setTimeout(()=>ctx.close(),800)}catch{}}
@@ -55,7 +103,9 @@
  }
  async function init(){document.body.classList.add('employee-mode','kiosk-point-mode');document.getElementById('ponto-funcionario-select').hidden=true;clock();setInterval(clock,1000);
   try{const d=await rpc('dados_funcionario_token',{p_token:token});employee=Array.isArray(d)?d[0]:d;if(!employee)throw new Error('Sessão inválida.');
-   document.getElementById('clock-employee').textContent=employee.nome;document.getElementById('clock-status').textContent='Pronto para registrar';document.getElementById('clock-avatar').innerHTML=`<span>${employee.nome.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase()}</span>`;
+   document.getElementById('clock-employee').textContent=employee.nome;
+   document.getElementById('clock-status').textContent='Pronto para registrar';
+   renderEmployeeAvatar(employee);
    const self=document.getElementById('employee-self-service');self.hidden=false;document.getElementById('self-profile-name').textContent=employee.nome;document.getElementById('self-profile-role').textContent=employee.cargo||'Funcionário';document.getElementById('self-profile-code').textContent=employee.matricula;
    document.getElementById('change-pin-panel').hidden=!employee.exigir_troca_pin;
    const results=await Promise.allSettled([load(),loadAdjustments(),loadMovements()]);
