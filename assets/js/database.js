@@ -274,6 +274,10 @@
     const {data,error}=await client.rpc('listar_movimentacoes_admin',{p_inicio:start,p_fim:end,p_funcionario_id:employeeId||null,p_pendentes:pendingOnly});
     if(error) throw error; return data||[];
   }
+  async function historicalReturnPendencies(){
+    const {data,error}=await client.rpc('listar_pendencias_retorno_admin');
+    if(error) throw error; return data||[];
+  }
   async function createAdminMovement(employeeId,start,end,classification,effect,note=''){
     const {data,error}=await client.rpc('criar_movimentacao_admin',{p_funcionario_id:employeeId,p_inicio:start,p_fim:end,p_classificacao:classification,p_efeito:effect,p_observacao:note||null});
     if(error) throw error; return Array.isArray(data)?data[0]:data;
@@ -310,5 +314,5 @@
     if(error) throw error;
   }
 
-  window.PlenitudeDB=Object.freeze({employeeMovements,registerEmployeeMovement,adminMovements,createAdminMovement,analyzeMovement,masterPinStatus,setMasterPin,monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks});
+  window.PlenitudeDB=Object.freeze({employeeMovements,registerEmployeeMovement,adminMovements,historicalReturnPendencies,createAdminMovement,analyzeMovement,masterPinStatus,setMasterPin,monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks});
 })();

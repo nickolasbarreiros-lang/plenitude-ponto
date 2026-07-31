@@ -146,8 +146,22 @@ document.getElementById('registrar').onclick=async()=>{
 
 
  async function loadMovements(){
-  const today=dateKey(new Date()),rows=await rpc('listar_minhas_movimentacoes',{p_token:token,p_inicio:today,p_fim:today});
+  const today=dateKey(new Date());
+  const [rows,pendingHistory]=await Promise.all([
+   rpc('listar_minhas_movimentacoes',{p_token:token,p_inicio:today,p_fim:today}),
+   rpc('listar_pendencias_retorno_funcionario',{p_token:token})
+  ]);
   const open=(rows||[]).find(r=>r.status==='aberta');
+  const pendingAlert=document.getElementById('movement-pending-alert');
+  const oldPendencies=pendingHistory||[];
+  if(oldPendencies.length){
+   const first=oldPendencies[0];
+   pendingAlert.hidden=false;
+   pendingAlert.innerHTML=`<strong>⚠ ${oldPendencies.length} retorno${oldPendencies.length===1?'':'s'} não registrado${oldPendencies.length===1?'':'s'}</strong><span>A pendência mais antiga é de ${new Date(first.data_local+'T12:00:00').toLocaleDateString('pt-BR')}. Ela não bloqueia uma nova saída hoje, mas deve ser regularizada pelo administrador.</span>`;
+  }else{
+   pendingAlert.hidden=true;
+   pendingAlert.innerHTML='';
+  }
   document.getElementById('movement-state').textContent=open?'Fora da loja':'Dentro da loja';
   document.getElementById('movement-state').className=`badge ${open?'warn':''}`;
   const exitTrigger=document.getElementById('temporary-exit');

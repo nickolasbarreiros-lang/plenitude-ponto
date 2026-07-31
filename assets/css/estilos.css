@@ -961,3 +961,7 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
     grid-template-columns:1fr;
   }
 }
+
+.movement-pending-alert{display:flex;flex-direction:column;gap:5px;margin:0 0 14px;padding:12px 13px;border:1px solid #efc36c;border-radius:12px;background:#fff7dd;color:#785600;line-height:1.4}
+.movement-pending-alert strong{font-size:13px}
+.movement-pending-alert span{font-size:12px}

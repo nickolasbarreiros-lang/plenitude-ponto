@@ -237,6 +237,12 @@ async function renderSmartDashboard(activeEmployees,lateCount,tolerance){
   const pendingCount=pending.length;
   const pendingEl=document.getElementById('ajustes-pendentes');if(pendingEl)pendingEl.textContent=String(pendingCount);
   const notes=[];
+  let returnPendencies=[];
+  try{returnPendencies=await window.PlenitudeDB.historicalReturnPendencies()}catch(error){console.warn('Pendências de retorno indisponíveis',error)}
+  if(returnPendencies.length){
+    const oldest=returnPendencies[0];
+    notes.push({type:'danger',icon:'↩',title:`${returnPendencies.length} retorno${returnPendencies.length===1?'':'s'} temporário${returnPendencies.length===1?'':'s'} pendente${returnPendencies.length===1?'':'s'}`,text:`Pendência mais antiga: ${oldest.funcionario_nome}, ${new Date(oldest.data_local+'T12:00:00').toLocaleDateString('pt-BR')}.`,href:'movimentacoes.html?pendentes=1',label:'Regularizar'});
+  }
   if(pendingCount)notes.push({type:'warn',icon:'✓',title:`${pendingCount} ajuste${pendingCount===1?'':'s'} pendente${pendingCount===1?'':'s'}`,text:'Solicitações aguardando aprovação ou rejeição.',href:'ajustes.html?status=pendente&fila=1',label:'Analisar'});
   if(lateCount)notes.push({type:'danger',icon:'⏱',title:`${lateCount} atraso${lateCount===1?'':'s'} hoje`,text:`Entrada após a tolerância configurada de ${tolerance} minutos.`,href:'relatorios.html',label:'Detalhes'});
   const absent=activeEmployees.filter(e=>{const n=document.getElementById('ausentes-hoje');return Number(n?.textContent||0)>0}).length?Number(document.getElementById('ausentes-hoje')?.textContent||0):0;
