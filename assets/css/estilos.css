@@ -919,3 +919,45 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
     grid-template-columns:repeat(2,minmax(0,1fr));
   }
 }
+
+
+/* RC4.3 — saída temporária em duas etapas */
+.movement-actions{
+  display:block;
+}
+.movement-actions>#temporary-exit,
+.movement-actions>#temporary-return{
+  width:100%;
+}
+.movement-exit-form{
+  display:grid;
+  gap:10px;
+  padding:14px;
+  border:1px solid #eadbd4;
+  border-radius:14px;
+  background:#fff;
+  animation:movementExitOpen .18s ease-out;
+}
+.movement-exit-form label{
+  font-size:12px;
+  font-weight:800;
+  color:#584b46;
+}
+.movement-exit-form input{
+  width:100%;
+  min-height:46px;
+}
+.movement-exit-buttons{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:10px;
+}
+@keyframes movementExitOpen{
+  from{opacity:0;transform:translateY(-4px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@media(max-width:620px){
+  .movement-exit-buttons{
+    grid-template-columns:1fr;
+  }
+}

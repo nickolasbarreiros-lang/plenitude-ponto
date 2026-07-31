@@ -150,21 +150,89 @@ document.getElementById('registrar').onclick=async()=>{
   const open=(rows||[]).find(r=>r.status==='aberta');
   document.getElementById('movement-state').textContent=open?'Fora da loja':'Dentro da loja';
   document.getElementById('movement-state').className=`badge ${open?'warn':''}`;
-  document.getElementById('temporary-exit').hidden=!!open;
-  document.getElementById('temporary-return').hidden=!open;
-  document.getElementById('movement-reason').disabled=!!open;
+  const exitTrigger=document.getElementById('temporary-exit');
+  const exitForm=document.getElementById('movement-exit-form');
+  const exitReason=document.getElementById('movement-reason');
+  const returnButton=document.getElementById('temporary-return');
+
+  exitTrigger.hidden=!!open;
+  returnButton.hidden=!open;
+
+  if(open){
+   exitForm.hidden=true;
+   exitReason.disabled=true;
+   exitReason.value='';
+   exitTrigger.setAttribute('aria-expanded','false');
+  }else if(exitForm.hidden){
+   exitReason.disabled=true;
+  }
   const box=document.getElementById('my-movements');
   box.innerHTML=(rows||[]).length?(rows||[]).map(r=>`<div class="movement-item"><div><strong>${r.status==='aberta'?'Saída temporária em andamento':'Saída temporária'}</strong><small>${fmt(r.inicio_em)}${r.fim_em?` → ${fmt(r.fim_em)}`:' → aguardando retorno'}${r.motivo_informado?` · ${r.motivo_informado}`:''}</small></div><span class="request-status ${r.aprovado?'aprovada':'pendente'}">${r.aprovado?(r.classificacao||'analisada'):'aguardando análise'}</span></div>`).join(''):'<div class="mini-empty">Nenhuma saída temporária hoje.</div>';
  }
+ function setTemporaryExitEditing(open){
+  const trigger=document.getElementById('temporary-exit');
+  const form=document.getElementById('movement-exit-form');
+  const reason=document.getElementById('movement-reason');
+
+  form.hidden=!open;
+  reason.disabled=!open;
+  trigger.hidden=open;
+  trigger.setAttribute('aria-expanded',String(open));
+
+  if(open){
+   requestAnimationFrame(()=>reason.focus());
+  }else{
+   reason.value='';
+  }
+ }
+
  async function registerMovement(action){
   const deviceToken=localStorage.getItem('plenitude-device-token')||'';
   if(!deviceToken)return toast('Registro bloqueado: computador não autorizado.','warn');
+
   const reason=document.getElementById('movement-reason').value.trim();
-  if(action==='saida'&&reason.length<3)return toast('Informe resumidamente o motivo da saída.','warn');
-  const btn=action==='saida'?document.getElementById('temporary-exit'):document.getElementById('temporary-return');btn.disabled=true;
-  try{const r=await rpc('registrar_movimentacao_dispositivo',{p_token:token,p_dispositivo_token:deviceToken,p_acao:action,p_motivo:reason||null,p_user_agent:navigator.userAgent});showSuccess(action==='saida'?`Saída temporária registrada às ${fmt(r.inicio_em)}`:`Retorno registrado às ${fmt(r.fim_em)}`);document.getElementById('movement-reason').value='';await Promise.all([loadMovements(),load()])}catch(e){toast(e.message,'warn')}finally{btn.disabled=false}
+  if(action==='saida'&&reason.length<3){
+   document.getElementById('movement-reason').focus();
+   return toast('Informe resumidamente o motivo da saída.','warn');
+  }
+
+  const btn=action==='saida'
+   ?document.getElementById('temporary-exit-send')
+   :document.getElementById('temporary-return');
+
+  const previous=btn.textContent;
+  btn.disabled=true;
+  btn.textContent=action==='saida'?'Enviando...':'Registrando retorno...';
+
+  try{
+   const r=await rpc('registrar_movimentacao_dispositivo',{
+    p_token:token,
+    p_dispositivo_token:deviceToken,
+    p_acao:action,
+    p_motivo:reason||null,
+    p_user_agent:navigator.userAgent
+   });
+
+   showSuccess(
+    action==='saida'
+     ?`Saída temporária registrada às ${fmt(r.inicio_em)}`
+     :`Retorno registrado às ${fmt(r.fim_em)}`
+   );
+
+   document.getElementById('movement-reason').value='';
+   setTemporaryExitEditing(false);
+   await Promise.all([loadMovements(),load()]);
+  }catch(e){
+   toast(e.message,'warn');
+  }finally{
+   btn.disabled=false;
+   btn.textContent=previous;
+  }
  }
- document.getElementById('temporary-exit').onclick=()=>registerMovement('saida');
+
+ document.getElementById('temporary-exit').onclick=()=>setTemporaryExitEditing(true);
+ document.getElementById('temporary-exit-cancel').onclick=()=>setTemporaryExitEditing(false);
+ document.getElementById('temporary-exit-send').onclick=()=>registerMovement('saida');
  document.getElementById('temporary-return').onclick=()=>registerMovement('retorno');
 
  async function loadAdjustments(){
