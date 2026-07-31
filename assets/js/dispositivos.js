@@ -42,6 +42,8 @@
   './assets/js/app.js',
   './assets/js/offline-contingencia.js',
   './assets/js/ponto-pin.js',
+  './assets/js/employee-login.js',
+  './assets/js/access-status.js',
   './assets/img/logo-plenitude.png',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
  ];
@@ -152,8 +154,17 @@
 
   const indexedDBReady=await checkIndexedDB();
   const deviceToken=Boolean(token());
-  const employeeProfile=Boolean(localStorage.getItem('plenitude-offline-employee-profile'));
-  const employeeSession=Boolean(localStorage.getItem('plenitude-offline-employee-session'));
+  const employeeProfiles=JSON.parse(
+   localStorage.getItem('plenitude-offline-employee-profiles')||'{}'
+  );
+  const offlineLogins=JSON.parse(
+   localStorage.getItem('plenitude-offline-login-v1')||'{}'
+  );
+  const employeeProfile=Object.keys(employeeProfiles).length>0||
+   Boolean(localStorage.getItem('plenitude-offline-employee-profile'));
+  const employeeSession=Object.keys(offlineLogins).length>0||
+   Boolean(localStorage.getItem('plenitude-offline-employee-session'));
+  const preparedEmployees=Object.keys(offlineLogins).length;
   const allCached=cacheResults.length>=OFFLINE_CORE.length&&cacheResults.every(item=>item.ok);
   const secureContext=window.isSecureContext;
   const storageEstimate=navigator.storage?.estimate
@@ -173,6 +184,7 @@
    indexedDBReady,
    employeeProfile,
    employeeSession,
+   preparedEmployees,
    secureContext,
    storageEstimate
   };
@@ -216,8 +228,8 @@
     'Funcionário preparado',
     result.employeeProfile&&result.employeeSession,
     result.employeeProfile&&result.employeeSession
-     ?'Perfil e sessão offline armazenados.'
-     :'Abra o ponto e faça login com matrícula e PIN ao menos uma vez.'
+     ?`${result.preparedEmployees||1} funcionário(s) preparado(s) para login offline.`
+     :'Abra o ponto e faça login com matrícula e PIN ao menos uma vez com internet.'
    )
   ];
 

@@ -267,11 +267,34 @@
     if(employee){
      localStorage.setItem('plenitude-offline-employee-session',JSON.stringify(sess));
      localStorage.setItem('plenitude-offline-employee-profile',JSON.stringify(employee));
+
+     const profiles=JSON.parse(
+      localStorage.getItem('plenitude-offline-employee-profiles')||'{}'
+     );
+     profiles[String(employee.matricula||'')]=employee;
+     localStorage.setItem(
+      'plenitude-offline-employee-profiles',
+      JSON.stringify(profiles)
+     );
     }
    }catch(error){
     if(!isNetworkFailure(error))throw error;
-    employee=JSON.parse(localStorage.getItem('plenitude-offline-employee-profile')||'null');
-    if(!employee)throw new Error('Sem internet e sem sessão de contingência preparada neste computador.');
+    const profiles=JSON.parse(
+     localStorage.getItem('plenitude-offline-employee-profiles')||'{}'
+    );
+    const sessionRegistration=String(
+     sess.matricula||sess.funcionario_matricula||''
+    );
+
+    employee=
+     profiles[sessionRegistration]||
+     JSON.parse(localStorage.getItem('plenitude-offline-employee-profile')||'null');
+
+    if(!employee){
+     throw new Error(
+      'Sem internet e sem perfil de contingência preparado para este funcionário.'
+     );
+    }
     await setContingencyUI(true);
    }
    if(!employee)throw new Error('Sessão inválida.');
