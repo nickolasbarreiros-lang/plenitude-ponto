@@ -286,6 +286,23 @@
     const {data,error}=await client.rpc('analisar_movimentacao_admin',{p_id:id,p_classificacao:classification,p_efeito:effect,p_observacao:note||null});
     if(error) throw error; return Array.isArray(data)?data[0]:data;
   }
+  async function regularizeMovementReturn(id,endAt,note=''){
+    const {data,error}=await client.rpc('regularizar_retorno_movimentacao_admin',{
+      p_id:id,
+      p_fim_em:endAt,
+      p_observacao:note||null
+    });
+    if(error) throw error;
+    return Array.isArray(data)?data[0]:data;
+  }
+  async function archiveMovement(id,reason){
+    const {data,error}=await client.rpc('arquivar_movimentacao_admin',{
+      p_id:id,
+      p_motivo:reason
+    });
+    if(error) throw error;
+    return Array.isArray(data)?data[0]:data;
+  }
 
   async function masterPinStatus(){
     const {data,error}=await client.rpc('status_pin_mestre_admin');
@@ -314,5 +331,5 @@
     if(error) throw error;
   }
 
-  window.PlenitudeDB=Object.freeze({employeeMovements,registerEmployeeMovement,adminMovements,historicalReturnPendencies,createAdminMovement,analyzeMovement,masterPinStatus,setMasterPin,monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks});
+  window.PlenitudeDB=Object.freeze({employeeMovements,registerEmployeeMovement,adminMovements,historicalReturnPendencies,createAdminMovement,analyzeMovement,regularizeMovementReturn,archiveMovement,masterPinStatus,setMasterPin,monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks});
 })();

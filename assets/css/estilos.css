@@ -987,3 +987,43 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
 #temporary-return[hidden]{
   display:none !important;
 }
+
+
+/* RC4.13 — regularização administrativa de retornos */
+.movement-resolution{
+  display:grid;
+  gap:14px;
+  margin-top:14px;
+}
+.movement-resolution-grid{
+  display:grid;
+  grid-template-columns:minmax(220px,.7fr) minmax(320px,1.3fr);
+  gap:12px;
+}
+.movement-resolution-grid label{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  font-size:12px;
+  font-weight:800;
+}
+.movement-resolution-grid .wide{
+  grid-column:auto;
+}
+.movement-resolution-grid input,
+.movement-resolution-grid textarea{
+  width:100%;
+}
+.movement-resolution-grid textarea{
+  min-height:82px;
+}
+.movement-resolution-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+@media(max-width:760px){
+  .movement-resolution-grid{
+    grid-template-columns:1fr;
+  }
+}
