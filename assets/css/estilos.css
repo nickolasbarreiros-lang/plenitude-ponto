@@ -1027,3 +1027,60 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
     grid-template-columns:1fr;
   }
 }
+
+
+/* RC4.14 — lançamentos excepcionais sem sobreposição */
+.movement-exception-head{
+  align-items:flex-start;
+}
+.movement-exception-head .muted{
+  max-width:760px;
+  margin-top:5px;
+}
+.exception-guidance{
+  display:grid;
+  gap:5px;
+  margin:14px 0 0;
+  padding:13px 15px;
+  border:1px solid #e8d6cc;
+  border-radius:13px;
+  background:#fff9f5;
+  color:#63544e;
+}
+.exception-guidance strong{
+  color:#c44916;
+  font-size:13px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.exception-guidance span{
+  font-size:14px;
+  font-weight:700;
+}
+.exception-guidance small{
+  line-height:1.45;
+}
+.exception-form{
+  margin-top:16px;
+  padding-top:16px;
+  border-top:1px solid #eadbd4;
+}
+.exception-form[hidden]{
+  display:none !important;
+}
+.exception-form-actions{
+  justify-content:flex-end;
+}
+@media(max-width:760px){
+  .movement-exception-head{
+    display:grid;
+    gap:12px;
+  }
+  .movement-exception-head .btn{
+    width:100%;
+  }
+  .exception-form-actions{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+}

@@ -1,16 +1,55 @@
 (async function(){'use strict';
  const C={
-  consulta_medica:'Consulta médica',atestado:'Atestado/declaração',servico_externo:'Serviço externo',curso:'Curso/treinamento',banco:'Banco/atividade pessoal',particular:'Saída particular',saida_autorizada:'Saída autorizada',compensacao:'Compensação',hora_extra_autorizada:'Hora extra autorizada',home_office:'Home office',outro:'Outro'
- }, E={pendente:'Pendente',descontar:'Descontar',abonar:'Abonar',trabalhado:'Conta como trabalho',credito:'Crédito autorizado'};
+  consulta_medica:'Consulta médica',
+  atestado:'Atestado/declaração',
+  servico_externo:'Serviço externo',
+  curso:'Curso/treinamento',
+  banco:'Banco/atividade pessoal',
+  particular:'Saída particular',
+  saida_autorizada:'Saída autorizada',
+  compensacao:'Compensação',
+  hora_extra_autorizada:'Hora extra autorizada',
+  home_office:'Home office',
+  outro:'Outro'
+ };
+ const EXCEPTION_C={
+  atestado:'Atestado ou declaração',
+  curso:'Curso ou treinamento',
+  home_office:'Home office autorizado',
+  compensacao:'Compensação de jornada',
+  hora_extra_autorizada:'Hora extra autorizada',
+  outro:'Outra ocorrência administrativa'
+ };
+ const E={pendente:'Pendente',descontar:'Descontar',abonar:'Abonar',trabalhado:'Conta como trabalho',credito:'Crédito autorizado'};
  const fmt=v=>v?new Date(v).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'Aguardando retorno';
  const context=await initCommon(['administrador']);if(!context)return;
  const employees=await PlenitudeDB.employees();
  const opts=employees.map(f=>`<option value="${f.id}">${f.nome} — ${f.matricula||'sem matrícula'}</option>`).join('');
  document.getElementById('mov-funcionario').innerHTML=opts;document.getElementById('mov-filter-employee').insertAdjacentHTML('beforeend',opts);
- document.getElementById('mov-classificacao').innerHTML=Object.entries(C).map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+ document.getElementById('mov-classificacao').innerHTML=Object.entries(EXCEPTION_C).map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
  const now=new Date(),start=new Date(now.getFullYear(),now.getMonth(),1);const key=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
  document.getElementById('mov-filter-start').value=key(start);document.getElementById('mov-filter-end').value=key(now);
  const dt=d=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,16)};document.getElementById('mov-inicio').value=dt(now);document.getElementById('mov-fim').value=dt(new Date(now.getTime()+60*60000));
+ const exceptionForm=document.getElementById('movement-create-form');
+ const toggleException=document.getElementById('toggle-exception-form');
+ const cancelException=document.getElementById('cancel-exception-form');
+
+ function setExceptionFormOpen(open){
+  exceptionForm.hidden=!open;
+  toggleException.setAttribute('aria-expanded',String(open));
+  toggleException.textContent=open?'Fechar lançamento':'Abrir lançamento excepcional';
+
+  if(open){
+   requestAnimationFrame(()=>document.getElementById('mov-funcionario').focus());
+  }else{
+   exceptionForm.reset();
+   document.getElementById('mov-inicio').value=dt(new Date());
+   document.getElementById('mov-fim').value=dt(new Date(Date.now()+60*60000));
+  }
+ }
+
+ toggleException.onclick=()=>setExceptionFormOpen(exceptionForm.hidden);
+ cancelException.onclick=()=>setExceptionFormOpen(false);
  function localInputValue(value){
   const d=new Date(value);
   const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);
@@ -182,6 +221,49 @@
   }
  }
  document.getElementById('mov-refresh').onclick=load;
- document.getElementById('movement-create-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;try{const start=new Date(document.getElementById('mov-inicio').value),end=new Date(document.getElementById('mov-fim').value);await PlenitudeDB.createAdminMovement(document.getElementById('mov-funcionario').value,start.toISOString(),end.toISOString(),document.getElementById('mov-classificacao').value,document.getElementById('mov-efeito').value,document.getElementById('mov-observacao').value);toast('Lançamento criado com sucesso.');await load()}catch(err){toast(errorText(err),'warn')}finally{b.disabled=false}};
+ document.getElementById('movement-create-form').onsubmit=async e=>{
+  e.preventDefault();
+  const b=e.submitter;
+  const start=new Date(document.getElementById('mov-inicio').value);
+  const end=new Date(document.getElementById('mov-fim').value);
+  const classification=document.getElementById('mov-classificacao').value;
+  const effect=document.getElementById('mov-efeito').value;
+  const note=document.getElementById('mov-observacao').value.trim();
+
+  if(!EXCEPTION_C[classification]){
+   return toast('Selecione uma ocorrência administrativa válida.','warn');
+  }
+  if(Number.isNaN(start.getTime())||Number.isNaN(end.getTime())){
+   return toast('Informe o início e o fim do período.','warn');
+  }
+  if(end<=start){
+   return toast('O horário final deve ser posterior ao horário inicial.','warn');
+  }
+  if(note.length<5){
+   document.getElementById('mov-observacao').focus();
+   return toast('Informe a justificativa administrativa.','warn');
+  }
+
+  if(!confirm('Confirmar este lançamento excepcional? Use esta opção somente quando não existir marcação ou movimentação relacionada.'))return;
+
+  b.disabled=true;
+  try{
+   await PlenitudeDB.createAdminMovement(
+    document.getElementById('mov-funcionario').value,
+    start.toISOString(),
+    end.toISOString(),
+    classification,
+    effect,
+    note
+   );
+   toast('Lançamento excepcional criado com sucesso.');
+   setExceptionFormOpen(false);
+   await load();
+  }catch(err){
+   toast(errorText(err),'warn');
+  }finally{
+   b.disabled=false;
+  }
+ };
  await load();
 })();
