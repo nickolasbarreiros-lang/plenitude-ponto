@@ -63,8 +63,87 @@
   return localInputValue(suggested>now?now:suggested);
  }
 
+ function movementSummary(r){
+  const start=new Date(r.inicio_em);
+  const end=r.fim_em?new Date(r.fim_em):null;
+  const date=start.toLocaleDateString('pt-BR');
+  const period=end
+   ?`${start.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}–${end.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`
+   :`${start.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}–aguardando retorno`;
+
+  return {date,period};
+ }
+
+ function localInputValue(value){
+  const d=new Date(value);
+  const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);
+  return local.toISOString().slice(0,16);
+ }
+
+ function suggestedReturn(r){
+  const start=new Date(r.inicio_em);
+  const suggested=new Date(start.getTime()+60*60000);
+  const now=new Date();
+  return localInputValue(suggested>now?now:suggested);
+ }
+
  function editor(r){
   const isOpen=r.status==='aberta';
+  const isArchived=r.status==='cancelada';
+  const isAnalyzed=!isOpen&&!isArchived&&r.aprovado;
+  const summary=movementSummary(r);
+  const classification=C[r.classificacao]||'Sem classificação';
+  const effect=E[r.efeito_calculo]||'Sem efeito definido';
+
+  if(isAnalyzed){
+   return `<article class="movement-admin-card movement-card-collapsed" data-movement-id="${r.id}">
+    <button class="movement-card-summary" type="button" data-expand-movement aria-expanded="false">
+     <div class="movement-summary-main">
+      <small>${r.funcionario_nome} · ${r.matricula||'sem matrícula'}</small>
+      <strong>${summary.date}</strong>
+      <span>${classification}</span>
+     </div>
+     <div class="movement-summary-meta">
+      <span>${summary.period}</span>
+      <span class="request-status aprovada">analisada</span>
+      <i aria-hidden="true">⌄</i>
+     </div>
+    </button>
+
+    <div class="movement-card-details" hidden>
+     <div class="movement-card-head">
+      <div>
+       <small>${r.funcionario_nome} · ${r.matricula||'sem matrícula'}</small>
+       <h3>${fmt(r.inicio_em)} → ${fmt(r.fim_em)}</h3>
+       <p>${r.motivo_informado||'Sem motivo informado'}</p>
+      </div>
+      <span class="request-status aprovada">analisada</span>
+     </div>
+
+     <div class="movement-review-grid">
+      <label>Classificação
+       <select data-class>
+        ${Object.entries(C).map(([v,l])=>`<option value="${v}" ${r.classificacao===v?'selected':''}>${l}</option>`).join('')}
+       </select>
+      </label>
+      <label>Efeito
+       <select data-effect>
+        ${Object.entries(E).filter(([v])=>v!=='pendente').map(([v,l])=>`<option value="${v}" ${r.efeito_calculo===v?'selected':''}>${l}</option>`).join('')}
+       </select>
+      </label>
+      <label class="wide">Observação
+       <textarea data-note>${r.observacao_admin||''}</textarea>
+      </label>
+      <button class="btn primary" data-save="${r.id}">Salvar análise</button>
+     </div>
+
+     <div class="movement-details-footer">
+      <span><b>Classificação:</b> ${classification}</span>
+      <span><b>Efeito:</b> ${effect}</span>
+     </div>
+    </div>
+   </article>`;
+  }
 
   return `<article class="movement-admin-card" data-movement-id="${r.id}">
    <div class="movement-card-head">
@@ -73,8 +152,8 @@
      <h3>${fmt(r.inicio_em)} → ${fmt(r.fim_em)}</h3>
      <p>${r.motivo_informado||'Sem motivo informado'}</p>
     </div>
-    <span class="request-status ${isOpen?'pendente':r.status==='cancelada'?'rejeitada':r.aprovado?'aprovada':'pendente'}">
-     ${isOpen?'aguardando retorno':r.status==='cancelada'?'arquivada':r.aprovado?'analisada':'aguardando análise'}
+    <span class="request-status ${isOpen?'pendente':isArchived?'rejeitada':'pendente'}">
+     ${isOpen?'aguardando retorno':isArchived?'arquivada':'aguardando análise'}
     </span>
    </div>
 
@@ -101,7 +180,7 @@
       <button class="btn outline danger" data-archive="${r.id}">Arquivar ocorrência</button>
      </div>
     </div>`
-    :r.status==='cancelada'
+    :isArchived
       ?`<div class="admin-response"><b>Arquivada:</b> ${r.observacao_admin||'Sem observação.'}</div>`
       :`<div class="movement-review-grid">
        <label>Classificação
@@ -138,6 +217,18 @@
 
    box.innerHTML=rows.map(editor).join('');
    document.getElementById('movement-admin-empty').hidden=rows.length>0;
+
+   box.querySelectorAll('[data-expand-movement]').forEach(button=>{
+    button.onclick=()=>{
+     const card=button.closest('.movement-admin-card');
+     const details=card.querySelector('.movement-card-details');
+     const open=button.getAttribute('aria-expanded')==='true';
+
+     button.setAttribute('aria-expanded',String(!open));
+     details.hidden=open;
+     card.classList.toggle('is-expanded',!open);
+    };
+   });
 
    box.querySelectorAll('[data-save]').forEach(button=>{
     button.onclick=async()=>{

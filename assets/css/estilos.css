@@ -1084,3 +1084,113 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
     grid-template-columns:1fr;
   }
 }
+
+
+/* RC4.15 — cartões compactos para movimentações analisadas */
+.movement-card-collapsed{
+  padding:0;
+  overflow:hidden;
+}
+.movement-card-summary{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:18px;
+  align-items:center;
+  width:100%;
+  padding:15px 18px;
+  border:0;
+  background:#fff;
+  color:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+.movement-card-summary:hover{
+  background:#fff9f5;
+}
+.movement-card-summary:focus-visible{
+  outline:3px solid rgba(255,95,31,.22);
+  outline-offset:-3px;
+}
+.movement-summary-main{
+  display:grid;
+  grid-template-columns:minmax(190px,1.2fr) minmax(110px,.55fr) minmax(180px,1fr);
+  gap:14px;
+  align-items:center;
+}
+.movement-summary-main small{
+  color:#6d605a;
+  font-weight:700;
+}
+.movement-summary-main strong{
+  font-size:16px;
+}
+.movement-summary-main span{
+  overflow:hidden;
+  color:#3f3531;
+  font-weight:800;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.movement-summary-meta{
+  display:flex;
+  align-items:center;
+  gap:13px;
+  white-space:nowrap;
+}
+.movement-summary-meta>span:first-child{
+  color:#786b65;
+  font-size:13px;
+}
+.movement-summary-meta i{
+  display:inline-block;
+  font-style:normal;
+  font-size:20px;
+  transition:transform .18s ease;
+}
+.movement-card-summary[aria-expanded="true"] .movement-summary-meta i{
+  transform:rotate(180deg);
+}
+.movement-card-details{
+  padding:0 18px 18px;
+  border-top:1px solid #eee0d8;
+  background:#fffdfb;
+}
+.movement-card-details[hidden]{
+  display:none !important;
+}
+.movement-card-details .movement-card-head{
+  padding-top:16px;
+}
+.movement-details-footer{
+  display:flex;
+  flex-wrap:wrap;
+  gap:14px;
+  margin-top:12px;
+  padding:10px 12px;
+  border-radius:10px;
+  background:#f7f4f2;
+  color:#6a5d57;
+  font-size:12px;
+}
+@media(max-width:920px){
+  .movement-summary-main{
+    grid-template-columns:1fr 110px;
+  }
+  .movement-summary-main span{
+    grid-column:1/-1;
+  }
+}
+@media(max-width:680px){
+  .movement-card-summary{
+    grid-template-columns:1fr;
+  }
+  .movement-summary-main{
+    grid-template-columns:1fr;
+  }
+  .movement-summary-main span{
+    grid-column:auto;
+  }
+  .movement-summary-meta{
+    justify-content:space-between;
+  }
+}
