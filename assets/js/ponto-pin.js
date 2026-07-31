@@ -3,7 +3,7 @@
  function stored(){try{return JSON.parse(sessionStorage.getItem('plenitude-employee-session')||'null')}catch{return null}}
  const sess=stored();
  if(!sess){ window.PlenitudeAuth.getSession().then(s=>s?initPonto():location.replace('index.html')); return; }
- const token=sess.token;let employee=null;let punchInFlight=false;let punchCooldownUntil=0;let punchCooldownTimer=null;
+ const token=sess.token;let employee=null;let punchInFlight=false;let punchCooldownUntil=0;let punchCooldownTimer=null;let lunchMinimumTimer=null;
  const dateKey=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
  const label=t=>({entrada:'Entrada',inicio_intervalo:'Início do almoço',fim_intervalo:'Retorno do almoço',saida:'Saída'})[t]||'Marcação';
  const fmt=v=>new Date(v).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -59,6 +59,53 @@
  function clock(){const d=new Date();document.getElementById('clock-date').textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(d);document.getElementById('clock-time').textContent=d.toLocaleTimeString('pt-BR')}
  function successSound(){try{const C=window.AudioContext||window.webkitAudioContext,ctx=new C();[523.25,659.25,783.99].forEach((f,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(.0001,ctx.currentTime+i*.11);g.gain.exponentialRampToValueAtTime(.16,ctx.currentTime+i*.11+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+i*.11+.18);o.connect(g);g.connect(ctx.destination);o.start(ctx.currentTime+i*.11);o.stop(ctx.currentTime+i*.11+.2)});setTimeout(()=>ctx.close(),800)}catch{}}
  function showSuccess(message){const b=document.getElementById('success-banner');b.querySelector('strong').textContent=message;b.hidden=false;b.classList.remove('show');void b.offsetWidth;b.classList.add('show');successSound();setTimeout(()=>{b.classList.remove('show');setTimeout(()=>b.hidden=true,250)},3200)}
+ function applyLunchMinimumRule(marks,button,actionLabels){
+  clearInterval(lunchMinimumTimer);
+  lunchMinimumTimer=null;
+
+  if(marks.length!==2){
+   return false;
+  }
+
+  const lunchStart=new Date(marks[1].registrado_em).getTime();
+  const unlockAt=lunchStart+(30*60*1000);
+
+  const update=()=>{
+   const remainingMs=unlockAt-Date.now();
+
+   if(remainingMs<=0){
+    clearInterval(lunchMinimumTimer);
+    lunchMinimumTimer=null;
+    button.disabled=punchInFlight||Date.now()<punchCooldownUntil;
+    button.classList.remove('lunch-wait');
+    button.innerHTML=`<span>◷</span> ${actionLabels[2]}`;
+    button.setAttribute('aria-label',actionLabels[2]);
+    document.getElementById('proxima').textContent='Próxima marcação: Retorno';
+    return;
+   }
+
+   const remainingMinutes=Math.ceil(remainingMs/60000);
+   const totalSeconds=Math.ceil(remainingMs/1000);
+   const minutes=Math.floor(totalSeconds/60);
+   const seconds=String(totalSeconds%60).padStart(2,'0');
+
+   button.disabled=true;
+   button.classList.add('lunch-wait');
+   button.innerHTML=`<span>⏳</span> Retorno em ${minutes}:${seconds}`;
+   button.setAttribute(
+    'aria-label',
+    `Retorno do almoço disponível em ${remainingMinutes} minuto(s)`
+   );
+
+   document.getElementById('proxima').textContent=
+    `Intervalo mínimo: aguarde ${remainingMinutes} minuto(s) para registrar o retorno`;
+  };
+
+  update();
+  lunchMinimumTimer=setInterval(update,1000);
+  return true;
+ }
+
  async function load(){
   const now=new Date(),today=dateKey(now),monday=new Date(now);monday.setDate(now.getDate()-((now.getDay()+6)%7));const firstMonth=new Date(now.getFullYear(),now.getMonth(),1);
   const isHomologation=String(employee?.matricula||'').replace(/^0+/,'')==='999';
@@ -96,7 +143,10 @@
   document.getElementById('self-today-balance').textContent=todayDay?.saldo_minutos==null?(marks.length?'Em andamento':'Aguardando'):signed(todayDay.saldo_minutos);
   document.getElementById('self-week-balance').textContent=signed(weekBank?.resumo?.saldo_minutos||0);
   document.getElementById('self-month-balance').textContent=signed(monthBank?.resumo?.saldo_minutos||0);
-  punchButton.disabled=marks.length>=4 || punchInFlight || Date.now()<punchCooldownUntil;
+  const lunchLocked=applyLunchMinimumRule(marks,punchButton,actionLabels);
+  if(!lunchLocked){
+   punchButton.disabled=marks.length>=4 || punchInFlight || Date.now()<punchCooldownUntil;
+  }
   if(Date.now()>=punchCooldownUntil)punchButton.classList.remove('cooldown');
   document.body.classList.toggle('homologation-employee',isHomologation);
   const note=document.getElementById('homologation-note');if(note)note.hidden=!isHomologation;

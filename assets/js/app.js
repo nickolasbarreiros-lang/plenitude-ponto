@@ -678,7 +678,7 @@ async function initConfiguracoes(){
     document.getElementById('admin-nome').value=profile.nome||'Administrador';
     document.getElementById('admin-email').value=profile.email||session.user.email||'';
     document.getElementById('admin-email').readOnly=true;
-    document.getElementById('tol-entrada').value=company.tolerancia_entrada_minutos??15;document.getElementById('tol-saida').value=company.tolerancia_saida_minutos??10;document.getElementById('int-min').value=company.intervalo_minimo_minutos??60;document.getElementById('int-max').value=company.intervalo_maximo_minutos??120;document.getElementById('extras-auto').checked=company.horas_extras_automaticas!==false;document.getElementById('limite-banco').value=Math.round((company.limite_banco_horas_minutos??2400)/60);
+    document.getElementById('tol-entrada').value=company.tolerancia_entrada_minutos??15;document.getElementById('tol-saida').value=company.tolerancia_saida_minutos??10;document.getElementById('int-min').value=Math.max(30,company.intervalo_minimo_minutos??30);document.getElementById('int-max').value=company.intervalo_maximo_minutos??120;document.getElementById('extras-auto').checked=company.horas_extras_automaticas!==false;document.getElementById('limite-banco').value=Math.round((company.limite_banco_horas_minutos??2400)/60);
     document.getElementById('config-form').onsubmit=async e=>{
       e.preventDefault();
       const button=e.submitter; if(button)button.disabled=true;
