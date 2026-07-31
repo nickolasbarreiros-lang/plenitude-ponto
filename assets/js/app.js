@@ -106,18 +106,18 @@ async function initAdmin(){
     select.onchange=async()=>{
       DB_STATE.employee=activeEmployees.find(employee=>employee.id===select.value)||null;
       if(DB_STATE.employee)localStorage.setItem('plenitude-dashboard-employee',DB_STATE.employee.id);
-      await refreshSelectedEmployeeDashboard(allTodayMarks);
+      await refreshSelectedEmployeeDashboard();
     };
 
     await renderSmartDashboard(activeEmployees,lateCount,tolerance);
-    await refreshSelectedEmployeeDashboard(allTodayMarks);
+    await refreshSelectedEmployeeDashboard();
   }catch(error){
     toast(errorText(error),'warn');
     console.error(error);
   }
 }
 
-async function refreshSelectedEmployeeDashboard(preloadedTodayMarks=null){
+async function refreshSelectedEmployeeDashboard(){
   const employee=DB_STATE.employee;
   const today=localDateKey();
   const timeline=document.getElementById('marcacoes-hoje');
@@ -137,11 +137,12 @@ async function refreshSelectedEmployeeDashboard(preloadedTodayMarks=null){
     return;
   }
 
+  const selectedId=employee.id;
   document.getElementById('analysis-matricula').textContent=employee.matricula||'—';
   document.getElementById('analysis-cargo').textContent=employee.cargo||'Não informado';
   document.getElementById('analysis-status').textContent=employee.ativo===false?'Inativo':'Ativo';
 
-  const reportQuery=`?funcionario=${encodeURIComponent(employee.id)}`;
+  const reportQuery=`?funcionario=${encodeURIComponent(selectedId)}`;
   const weekLink=document.getElementById('week-report-link');
   const monthLink=document.getElementById('month-report-link');
   const scheduleLink=document.getElementById('schedule-edit-link');
@@ -149,15 +150,21 @@ async function refreshSelectedEmployeeDashboard(preloadedTodayMarks=null){
   if(monthLink)monthLink.href=`relatorios.html${reportQuery}`;
   if(scheduleLink)scheduleLink.href=`jornada.html${reportQuery}`;
 
-  const scheduleRows=await window.PlenitudeDB.schedules(employee.id);
-  DB_STATE.schedule=dbScheduleToUi(scheduleRows);
+  const scheduleRows=await window.PlenitudeDB.schedules(selectedId);
+  if(DB_STATE.employee?.id!==selectedId)return;
+  const selectedSchedule=dbScheduleToUi(scheduleRows);
+  DB_STATE.schedule=selectedSchedule;
 
-  const allMarks=preloadedTodayMarks||await window.PlenitudeDB.marksForRange(today,today);
-  const employeeMarks=allMarks
-    .filter(mark=>mark.funcionario_id===employee.id)
+  // A consulta é refeita em cada troca para não reutilizar dados antigos do painel.
+  const todayMarks=(await window.PlenitudeDB.marksForRange(today,today))
+    .filter(mark=>mark.funcionario_id===selectedId)
     .sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em));
 
-  const times=employeeMarks.map(mark=>new Date(mark.registrado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
+  if(DB_STATE.employee?.id!==selectedId)return;
+
+  const times=todayMarks.map(mark=>
+    new Date(mark.registrado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+  );
 
   if(times.length){
     timeline.classList.remove('empty');
@@ -168,11 +175,11 @@ async function refreshSelectedEmployeeDashboard(preloadedTodayMarks=null){
       </div>`).join('');
   }else{
     timeline.classList.add('empty');
-    timeline.innerHTML='<div class="empty-state"><div class="icon">🕘</div><strong>Nenhuma marcação registrada hoje</strong><span>Aguardando a primeira marcação do dia.</span></div>';
+    timeline.innerHTML='<div class="empty-state"><div class="icon">🕘</div><strong>Nenhuma marcação registrada hoje</strong><span>Existem dados históricos nos gráficos abaixo quando houver registros em outras datas.</span></div>';
   }
 
-  const max=Math.max(...DB_STATE.schedule.map(totalDay),1);
-  document.getElementById('resumo-jornada').innerHTML=DB_STATE.schedule.map(item=>`
+  const max=Math.max(...selectedSchedule.map(totalDay),1);
+  document.getElementById('resumo-jornada').innerHTML=selectedSchedule.map(item=>`
     <div class="schedule-row-v4">
       <span class="schedule-day">${item.dia.slice(0,3)}</span>
       <div class="schedule-line"><span style="width:${Math.max(34,Math.round(totalDay(item)/max*100))}%"></span></div>
@@ -180,28 +187,40 @@ async function refreshSelectedEmployeeDashboard(preloadedTodayMarks=null){
       <small class="schedule-break">Intervalo ${item.almoco}–${item.retorno}</small>
     </div>`).join('');
 
-  const plannedToday=scheduleForDateFrom(DB_STATE.schedule,new Date());
+  const plannedToday=scheduleForDateFrom(selectedSchedule,new Date());
   const next=times.length<4?punchLabels[times.length]:'Concluído';
 
+  // Busca o registro histórico mais recente para diferenciar "hoje vazio" de "sem dados".
+  const lookbackStart=new Date();
+  lookbackStart.setDate(lookbackStart.getDate()-30);
+  const recentMarks=(await window.PlenitudeDB.marksForRange(localDateKey(lookbackStart),today))
+    .filter(mark=>mark.funcionario_id===selectedId)
+    .sort((a,b)=>new Date(b.registrado_em)-new Date(a.registrado_em));
+  const latestHistorical=recentMarks[0]||null;
+  const latestHistoricalText=latestHistorical
+    ? `${new Date(latestHistorical.registrado_em).toLocaleDateString('pt-BR')} ${new Date(latestHistorical.registrado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`
+    : '—';
+
   if(indicators)indicators.innerHTML=`
-    <article><span>Entrada prevista</span><strong>${plannedToday?.entrada||'—'}</strong></article>
-    <article><span>Última marcação</span><strong>${times.at(-1)||'—'}</strong></article>
-    <article><span>Próxima etapa</span><strong>${next}</strong></article>
-    <article><span>Funcionário</span><strong>${employee.nome}</strong></article>`;
+    <article><span>Entrada prevista hoje</span><strong>${plannedToday?.entrada||'Sem jornada'}</strong></article>
+    <article><span>Última marcação hoje</span><strong>${times.at(-1)||'—'}</strong></article>
+    <article><span>Próxima etapa hoje</span><strong>${times.length?next:'Entrada'}</strong></article>
+    <article><span>Último registro em 30 dias</span><strong>${latestHistoricalText}</strong></article>`;
 
   const monthStart=`${today.slice(0,7)}-01`;
   const monthEnd=new Date(new Date().getFullYear(),new Date().getMonth()+1,0);
   let monthBalance=0;
   try{
-    const bank=await window.PlenitudeDB.bankHours(employee.id,monthStart,localDateKey(monthEnd));
+    const bank=await window.PlenitudeDB.bankHours(selectedId,monthStart,localDateKey(monthEnd));
     monthBalance=Number(bank?.resumo?.saldo_minutos||0);
   }catch(error){
     console.warn('Saldo mensal indisponível',error);
   }
+  if(DB_STATE.employee?.id!==selectedId)return;
   document.getElementById('saldo-mes').textContent=signedMinutes(monthBalance);
 
   await Promise.all([
-    renderWeekChartDB(),
+    renderWeekChartDB(selectedId,selectedSchedule),
     renderMonthOverview(employee)
   ]);
 }
@@ -225,26 +244,134 @@ async function renderSmartDashboard(activeEmployees,lateCount,tolerance){
 
 async function renderMonthOverview(employee){
   const el=document.getElementById('grafico-mensal');if(!el)return;
-  if(!employee){el.innerHTML='<div class="dashboard-empty-note">Cadastre um funcionário para visualizar o gráfico.</div>';return}
-  const end=new Date(),start=new Date(end);start.setDate(end.getDate()-29);
-  const [marks,scheduleRows]=await Promise.all([window.PlenitudeDB.marksForRange(localDateKey(start),localDateKey(end)),window.PlenitudeDB.schedules(employee.id)]);
-  const schedule=dbScheduleToUi(scheduleRows),days=[];let max=1;
-  for(let i=0;i<30;i++){
-    const d=new Date(start);d.setDate(start.getDate()+i);const key=localDateKey(d),sched=scheduleForDateFrom(schedule,d);
-    const p=marks.filter(m=>m.funcionario_id===employee.id&&m.data_local===key).map(m=>new Date(m.registrado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
-    const calc=calcPunchDay(p,sched),worked=calc?.worked||0,expected=sched?totalDay(sched):0;max=Math.max(max,worked,expected);days.push({d,worked,expected,absence:!!sched&&!p.length});
+  if(!employee){
+    el.innerHTML='<div class="dashboard-empty-note">Cadastre um funcionário para visualizar o gráfico.</div>';
+    return;
   }
-  el.innerHTML=days.map(x=>`<div class="month-day ${x.d.getDay()===0||x.d.getDay()===6?'is-weekend':''} ${x.absence?'is-absence':''}" title="${x.d.toLocaleDateString('pt-BR')}: ${fmtMinutes(x.worked)} trabalhadas / ${fmtMinutes(x.expected)} previstas"><div class="month-bars"><b style="height:${Math.max(2,Math.round(x.expected/max*100))}%"></b><i style="height:${Math.max(2,Math.round(x.worked/max*100))}%"></i></div><small>${String(x.d.getDate()).padStart(2,'0')}</small></div>`).join('');
+
+  const employeeId=employee.id;
+  const end=new Date(),start=new Date(end);
+  start.setDate(end.getDate()-29);
+
+  const [marks,scheduleRows]=await Promise.all([
+    window.PlenitudeDB.marksForRange(localDateKey(start),localDateKey(end)),
+    window.PlenitudeDB.schedules(employeeId)
+  ]);
+  const employeeMarks=marks.filter(mark=>mark.funcionario_id===employeeId);
+  const schedule=dbScheduleToUi(scheduleRows);
+  const days=[];
+  let max=1;
+
+  for(let i=0;i<30;i++){
+    const date=new Date(start);
+    date.setDate(start.getDate()+i);
+    const key=localDateKey(date);
+    const planned=scheduleForDateFrom(schedule,date);
+    const dayMarks=employeeMarks
+      .filter(mark=>mark.data_local===key)
+      .sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em));
+    const punchTimes=dayMarks.map(mark=>
+      new Date(mark.registrado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+    );
+    const calculation=calcPunchDay(punchTimes,planned);
+    const worked=calculation?.worked||0;
+    const expected=planned?totalDay(planned):0;
+    max=Math.max(max,worked,expected);
+    days.push({
+      date,worked,expected,
+      count:punchTimes.length,
+      absence:!!planned&&!punchTimes.length&&key<localDateKey(),
+      partial:punchTimes.length>0&&punchTimes.length<4
+    });
+  }
+
+  el.innerHTML=days.map(day=>{
+    const title=day.partial
+      ? `${day.date.toLocaleDateString('pt-BR')}: ${day.count} de 4 marcações — jornada incompleta`
+      : `${day.date.toLocaleDateString('pt-BR')}: ${fmtMinutes(day.worked)} trabalhadas / ${fmtMinutes(day.expected)} previstas`;
+
+    return `<div class="month-day ${day.date.getDay()===0||day.date.getDay()===6?'is-weekend':''} ${day.absence?'is-absence':''} ${day.partial?'is-partial':''}" title="${title}">
+      <div class="month-bars">
+        <b style="height:${Math.max(2,Math.round(day.expected/max*100))}%"></b>
+        <i style="height:${day.partial?Math.max(12,day.count*18):Math.max(2,Math.round(day.worked/max*100))}%"></i>
+      </div>
+      <small>${String(day.date.getDate()).padStart(2,'0')}</small>
+    </div>`;
+  }).join('');
 }
 function scheduleForDateFrom(schedule,d){const map={1:0,2:1,3:2,4:3,5:4};const i=map[d.getDay()];return i===undefined?null:schedule[i]}
-async function renderWeekChartDB(){
+async function renderWeekChartDB(employeeId=DB_STATE.employee?.id,schedule=DB_STATE.schedule){
   const el=document.getElementById('grafico-semana');if(!el)return;
-  const now=new Date(),monday=new Date(now),delta=(now.getDay()+6)%7;monday.setDate(now.getDate()-delta);
+  if(!employeeId){
+    el.innerHTML='<div class="dashboard-empty-note">Selecione um funcionário.</div>';
+    return;
+  }
+
+  const now=new Date(),monday=new Date(now),delta=(now.getDay()+6)%7;
+  monday.setDate(now.getDate()-delta);
   const friday=new Date(monday);friday.setDate(monday.getDate()+4);
-  const marks=await window.PlenitudeDB.marksForRange(localDateKey(monday),localDateKey(friday));
-  const names=['Seg','Ter','Qua','Qui','Sex'],vals=[],expected=[];
-  for(let i=0;i<5;i++){const d=new Date(monday);d.setDate(monday.getDate()+i);const s=scheduleForDateFrom(DB_STATE.schedule,d);const p=marks.filter(m=>(!DB_STATE.employee||m.funcionario_id===DB_STATE.employee.id)&&m.data_local===localDateKey(d)).map(m=>new Date(m.registrado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));const c=calcPunchDay(p,s);vals.push(c?c.worked:0);expected.push(s?totalDay(s):0)}
-  const max=Math.max(...vals,...expected,1);el.innerHTML=vals.map((v,i)=>`<div class="chart-column ${v?'':'is-empty'}"><div class="chart-value">${v?fmtMinutes(v):'—'}</div><div class="chart-track"><div class="chart-target" style="height:${Math.round(expected[i]/max*100)}%"></div><div class="chart-bar" style="height:${v?Math.max(8,Math.round(v/max*100)):6}%"></div></div><strong>${names[i]}</strong><small>${v?'Registrado':`Previsto ${fmtMinutes(expected[i])}`}</small></div>`).join('')
+
+  const marks=(await window.PlenitudeDB.marksForRange(localDateKey(monday),localDateKey(friday)))
+    .filter(mark=>mark.funcionario_id===employeeId);
+  const names=['Seg','Ter','Qua','Qui','Sex'];
+  const days=[];
+  let max=1;
+
+  for(let i=0;i<5;i++){
+    const date=new Date(monday);
+    date.setDate(monday.getDate()+i);
+    const planned=scheduleForDateFrom(schedule,date);
+    const dayMarks=marks
+      .filter(mark=>mark.data_local===localDateKey(date))
+      .sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em));
+    const punchTimes=dayMarks.map(mark=>
+      new Date(mark.registrado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+    );
+
+    const calculation=calcPunchDay(punchTimes,planned);
+    const worked=calculation?.worked||0;
+    const expected=planned?totalDay(planned):0;
+    max=Math.max(max,worked,expected);
+
+    days.push({
+      date,
+      worked,
+      expected,
+      count:punchTimes.length,
+      first:punchTimes[0]||null,
+      complete:punchTimes.length>=4,
+      isToday:localDateKey(date)===localDateKey()
+    });
+  }
+
+  el.innerHTML=days.map((day,index)=>{
+    let value='—';
+    let subtitle=`Previsto ${fmtMinutes(day.expected)}`;
+    let state='is-empty';
+
+    if(day.complete){
+      value=fmtMinutes(day.worked);
+      subtitle='Jornada concluída';
+      state='is-complete';
+    }else if(day.count){
+      value=`${day.count}/4`;
+      subtitle=`Em andamento · entrada ${day.first}`;
+      state='is-partial';
+    }else if(day.isToday){
+      subtitle='Aguardando marcação hoje';
+      state='is-today-empty';
+    }
+
+    return `<div class="chart-column ${state}" title="${day.date.toLocaleDateString('pt-BR')}">
+      <div class="chart-value">${value}</div>
+      <div class="chart-track">
+        <div class="chart-target" style="height:${Math.round(day.expected/max*100)}%"></div>
+        <div class="chart-bar" style="height:${day.complete?Math.max(8,Math.round(day.worked/max*100)):day.count?Math.max(12,day.count*18):6}%"></div>
+      </div>
+      <strong>${names[index]}</strong>
+      <small>${subtitle}</small>
+    </div>`;
+  }).join('');
 }
 
 function setupEmployeePinEditor(){

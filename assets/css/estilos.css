@@ -830,3 +830,50 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
   .employee-analysis-meta{grid-template-columns:1fr 1fr}
   .employee-analysis-meta>span:last-child{grid-column:1/-1}
 }
+
+
+/* RC4.1 — dados parciais e histórico sincronizado */
+.chart-column.is-partial .chart-value{
+  color:#b86600;
+}
+.chart-column.is-partial .chart-bar{
+  background:repeating-linear-gradient(
+    135deg,
+    #f2a124 0,
+    #f2a124 7px,
+    #ffd58f 7px,
+    #ffd58f 14px
+  );
+}
+.chart-column.is-partial small{
+  color:#9a650d;
+  font-weight:700;
+}
+.chart-column.is-complete .chart-value{
+  color:#168649;
+}
+.chart-column.is-today-empty .chart-track{
+  box-shadow:inset 0 0 0 2px rgba(255,119,54,.16);
+}
+.month-day.is-partial .month-bars i{
+  background:repeating-linear-gradient(
+    135deg,
+    #f2a124 0,
+    #f2a124 4px,
+    #ffd58f 4px,
+    #ffd58f 8px
+  );
+}
+.month-day.is-partial::before{
+  content:'!';
+  position:absolute;
+  top:-4px;
+  left:50%;
+  transform:translateX(-50%);
+  color:#d87900;
+  font-size:10px;
+  font-weight:900;
+}
+.month-day{
+  position:relative;
+}
