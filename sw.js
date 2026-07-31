@@ -1,4 +1,4 @@
-const CACHE='plenitude-ponto-rc5-9';
+const CACHE='plenitude-ponto-rc5-10';
 const CORE=[
  './',
  './index.html',
@@ -86,25 +86,51 @@ self.addEventListener('fetch',event=>{
  const url=new URL(event.request.url);
  if(url.hostname.includes('supabase.co'))return;
 
- event.respondWith(
-  fetch(event.request).then(response=>{
+ event.respondWith((async()=>{
+  try{
+   const response=await fetch(event.request);
+
    if(response.ok){
-    const copy=response.clone();
-    caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{});
+    const cache=await caches.open(CACHE);
+
+    // Guarda a URL real e também uma cópia sem o parâmetro de versão.
+    await cache.put(event.request,response.clone());
+
+    if(url.origin===self.location.origin){
+     const cleanUrl=url.origin+url.pathname;
+     await cache.put(cleanUrl,response.clone());
+    }
    }
+
    return response;
-  }).catch(async()=>{
-   const cached=await caches.match(event.request);
+  }catch(error){
+   // Primeiro tenta a requisição exata.
+   let cached=await caches.match(event.request);
+
+   // Depois ignora parâmetros como ?v=1.0.0-rc5.10.
+   if(!cached){
+    cached=await caches.match(event.request,{ignoreSearch:true});
+   }
+
+   // Por último tenta explicitamente a URL sem query string.
+   if(!cached&&url.origin===self.location.origin){
+    cached=await caches.match(url.origin+url.pathname);
+   }
+
    if(cached)return cached;
 
    if(event.request.mode==='navigate'){
-    return caches.match('./ponto.html');
+    const pointPage=
+     await caches.match('./ponto.html',{ignoreSearch:true})||
+     await caches.match('./index.html',{ignoreSearch:true});
+
+    if(pointPage)return pointPage;
    }
 
    return new Response('Recurso indisponível offline.',{
     status:503,
     headers:{'Content-Type':'text/plain; charset=utf-8'}
    });
-  })
- );
+  }
+ })());
 });

@@ -551,6 +551,7 @@
   const note=document.getElementById('homologation-note');if(note)note.hidden=!isHomologation;
  }
  async function init(){
+  clearTimeout(window.__plenitudePointBootTimeout);
   document.body.classList.add('employee-mode','kiosk-point-mode');
   document.getElementById('ponto-funcionario-select').hidden=true;
   clock();

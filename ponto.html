@@ -6,7 +6,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="#ff6500" name="theme-color"/>
 <title>Registrar ponto | Plenitude</title>
-<link href="assets/css/estilos.css?v=1.0.0-rc5.9" rel="stylesheet"/>
+<link href="assets/css/estilos.css?v=1.0.0-rc5.10" rel="stylesheet"/>
 </head>
 <body>
 <div class="sync-restored-banner" id="sync-restored-banner" hidden>
@@ -71,8 +71,26 @@
 <div class="my-adjustments" id="my-adjustments"></div>
 </section><section class="change-pin-panel" hidden="" id="change-pin-panel"><h3>Alterar meu PIN</h3><div class="pin-change-grid"><input id="pin-atual" inputmode="numeric" maxlength="4" placeholder="PIN atual" type="password"/><input id="pin-novo" inputmode="numeric" maxlength="4" placeholder="Novo PIN" type="password"/><input id="pin-confirmar" inputmode="numeric" maxlength="4" placeholder="Confirmar novo PIN" type="password"/><button class="btn secondary" id="alterar-meu-pin" type="button">Salvar novo PIN</button></div></section></aside></div><p class="clock-footnote" id="clock-footnote">O horário oficial é gerado e gravado pelo servidor do Supabase.</p></section>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc5.9"></script><script src="assets/js/auth.js?v=1.0.0-rc5.9"></script>
-<script src="assets/js/database.js?v=1.0.0-rc5.9"></script><script src="assets/js/app.js?v=1.0.0-rc5.9"></script><script src="assets/js/offline-contingencia.js?v=1.0.0-rc5.9"></script>
-<script src="assets/js/ponto-pin.js?v=1.0.0-rc5.9"></script>
+
+<script>
+(function(){
+  window.__plenitudePointBootTimeout=setTimeout(function(){
+    var overlay=document.getElementById('point-loading-overlay');
+    var message=document.getElementById('point-loading-message');
+    var card=overlay&&overlay.querySelector('.point-loading-card');
+
+    if(overlay && !overlay.hidden){
+      if(card)card.classList.add('error');
+      if(message){
+        message.textContent=
+          'Não foi possível carregar os arquivos do ponto. Reconecte a internet, atualize a página e prepare novamente este computador para uso offline.';
+      }
+    }
+  },20000);
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc5.10"></script><script src="assets/js/auth.js?v=1.0.0-rc5.10"></script>
+<script src="assets/js/database.js?v=1.0.0-rc5.10"></script><script src="assets/js/app.js?v=1.0.0-rc5.10"></script><script src="assets/js/offline-contingencia.js?v=1.0.0-rc5.10"></script>
+<script src="assets/js/ponto-pin.js?v=1.0.0-rc5.10"></script>
 </body>
 </html>
