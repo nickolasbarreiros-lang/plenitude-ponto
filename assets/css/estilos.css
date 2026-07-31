@@ -1266,3 +1266,88 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
 .contingency-admin-list{display:grid;gap:12px}.contingency-card-head{display:flex;justify-content:space-between;gap:20px}.contingency-card-head h3{margin:4px 0}.contingency-card-head p{margin:0;color:#766862;font-size:12px}
 .contingency-actions{display:grid;grid-template-columns:minmax(220px,.6fr) minmax(320px,1.4fr) auto auto;gap:10px;align-items:end;margin-top:14px}.contingency-actions label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:800}.contingency-actions textarea{min-height:70px}
 @media(max-width:900px){.contingency-actions{grid-template-columns:1fr}.offline-contingency-banner,.sync-restored-banner{align-items:flex-start;flex-direction:column}}
+
+
+/* RC5.1 — preparação guiada para contingência */
+.offline-preparation-panel{
+  align-self:start;
+}
+.offline-preparation-status{
+  display:grid;
+  gap:8px;
+  margin:16px 0;
+}
+.offline-check{
+  display:grid;
+  grid-template-columns:32px 1fr;
+  gap:10px;
+  align-items:center;
+  padding:10px 12px;
+  border:1px solid #eadbd4;
+  border-radius:11px;
+  background:#fffaf7;
+}
+.offline-check-icon{
+  display:grid;
+  place-items:center;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  font-weight:900;
+}
+.offline-check div{
+  display:grid;
+  gap:2px;
+}
+.offline-check small{
+  color:#786a64;
+  line-height:1.35;
+}
+.offline-check.approved{
+  border-color:#afe0bf;
+  background:#f1fbf4;
+}
+.offline-check.approved .offline-check-icon{
+  background:#21a859;
+  color:#fff;
+}
+.offline-check.failed{
+  border-color:#efb0a8;
+  background:#fff3f1;
+}
+.offline-check.failed .offline-check-icon{
+  background:#cc3d2e;
+  color:#fff;
+}
+.offline-check.pending .offline-check-icon{
+  background:#fff0cd;
+  color:#9a6700;
+}
+.offline-preparation-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.offline-preparation-warning{
+  margin:14px 0 0;
+  padding:10px 12px;
+  border-left:4px solid #e2a32e;
+  background:#fff7dd;
+  color:#785b13;
+  font-size:12px;
+  line-height:1.45;
+}
+.badge.warn{
+  background:#fff0c9;
+  border-color:#e7c56c;
+  color:#835900;
+}
+@media(max-width:680px){
+  .offline-preparation-actions{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+  .offline-preparation-actions .btn{
+    width:100%;
+  }
+}
