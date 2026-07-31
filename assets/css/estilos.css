@@ -877,3 +877,45 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
 .month-day{
   position:relative;
 }
+
+
+/* RC4.2 — jornada prevista é referência; marcação real prevalece */
+#grafico-semana{
+  grid-template-columns:repeat(7,minmax(0,1fr));
+}
+.chart-column.is-extra-day .chart-value{
+  color:#0b7f45;
+}
+.chart-column.is-extra-day .chart-bar{
+  background:linear-gradient(180deg,#2bc76f,#16894a);
+}
+.chart-column.is-extra-day small{
+  color:#137a45;
+  font-weight:800;
+}
+.month-day.is-extra-day .month-bars i{
+  background:linear-gradient(180deg,#2bc76f,#16894a);
+}
+.month-day.is-extra-day::before{
+  content:'+';
+  position:absolute;
+  top:-5px;
+  left:50%;
+  transform:translateX(-50%);
+  color:#16894a;
+  font-size:12px;
+  font-weight:900;
+}
+.month-day.is-weekend:not(.is-extra-day) .month-bars{
+  opacity:.74;
+}
+@media(max-width:1100px){
+  #grafico-semana{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+  }
+}
+@media(max-width:680px){
+  #grafico-semana{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}

@@ -20,7 +20,12 @@ function totalDay(s){return s?minutes(s.entrada,s.almoco)+minutes(s.retorno,s.sa
 function fmtMinutes(value){const n=Math.max(0,Math.round(value||0)),h=Math.floor(n/60),m=n%60;return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`}
 function signedMinutes(value){return`${value>=0?'+':'−'}${fmtMinutes(Math.abs(value))}`}
 function dateFromKey(k){const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)}
-function calcPunchDay(p,s){if(!p||p.length<4||!s)return null;const worked=minutes(p[0],p[1])+minutes(p[2],p[3]);return{worked,expected:totalDay(s),diff:worked-totalDay(s)}}
+function calcPunchDay(p,s){
+  if(!p||p.length<4)return null;
+  const worked=minutes(p[0],p[1])+minutes(p[2],p[3]);
+  const expected=s?totalDay(s):0;
+  return{worked,expected,diff:worked-expected,scheduled:!!s};
+}
 function toast(message,type='ok'){let box=document.querySelector('.toast');if(!box){box=document.createElement('div');box.className='toast';document.body.appendChild(box)}box.className=`toast show ${type}`;box.textContent=message;clearTimeout(box._timer);box._timer=setTimeout(()=>box.classList.remove('show'),2600)}
 function applyTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem(STORAGE.theme,theme);const btn=document.getElementById('theme-toggle');if(btn)btn.textContent=theme==='dark'?'☀':'◐'}
 async function initCommon(roles=null){const context=await requireAuth(roles);if(!context)return null;const session=context.session;const theme=localStorage.getItem(STORAGE.theme)||'light';applyTheme(theme);const logout=document.getElementById('sair');if(logout)logout.onclick=async()=>{logout.disabled=true;try{await window.PlenitudeAuth.signOut()}catch(error){logout.disabled=false;toast('Não foi possível sair do sistema.','warn')}};if(!document.getElementById('theme-toggle')){const b=document.createElement('button');b.id='theme-toggle';b.className='theme-toggle';b.type='button';b.title='Alternar tema';b.onclick=()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');document.body.appendChild(b)} return context; }
@@ -257,6 +262,7 @@ async function renderMonthOverview(employee){
     window.PlenitudeDB.marksForRange(localDateKey(start),localDateKey(end)),
     window.PlenitudeDB.schedules(employeeId)
   ]);
+
   const employeeMarks=marks.filter(mark=>mark.funcionario_id===employeeId);
   const schedule=dbScheduleToUi(scheduleRows);
   const days=[];
@@ -267,33 +273,63 @@ async function renderMonthOverview(employee){
     date.setDate(start.getDate()+i);
     const key=localDateKey(date);
     const planned=scheduleForDateFrom(schedule,date);
+
     const dayMarks=employeeMarks
       .filter(mark=>mark.data_local===key)
       .sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em));
+
     const punchTimes=dayMarks.map(mark=>
       new Date(mark.registrado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
     );
+
     const calculation=calcPunchDay(punchTimes,planned);
     const worked=calculation?.worked||0;
     const expected=planned?totalDay(planned):0;
+
     max=Math.max(max,worked,expected);
+
     days.push({
-      date,worked,expected,
+      date,
+      worked,
+      expected,
+      scheduled:!!planned,
       count:punchTimes.length,
       absence:!!planned&&!punchTimes.length&&key<localDateKey(),
-      partial:punchTimes.length>0&&punchTimes.length<4
+      partial:punchTimes.length>0&&punchTimes.length<4,
+      extraDay:!planned&&punchTimes.length>=4
     });
   }
 
   el.innerHTML=days.map(day=>{
-    const title=day.partial
-      ? `${day.date.toLocaleDateString('pt-BR')}: ${day.count} de 4 marcações — jornada incompleta`
-      : `${day.date.toLocaleDateString('pt-BR')}: ${fmtMinutes(day.worked)} trabalhadas / ${fmtMinutes(day.expected)} previstas`;
+    let title;
 
-    return `<div class="month-day ${day.date.getDay()===0||day.date.getDay()===6?'is-weekend':''} ${day.absence?'is-absence':''} ${day.partial?'is-partial':''}" title="${title}">
+    if(day.partial){
+      title=`${day.date.toLocaleDateString('pt-BR')}: ${day.count} de 4 marcações — jornada incompleta`;
+    }else if(day.extraDay){
+      title=`${day.date.toLocaleDateString('pt-BR')}: ${fmtMinutes(day.worked)} trabalhadas em dia sem jornada prevista`;
+    }else{
+      title=`${day.date.toLocaleDateString('pt-BR')}: ${fmtMinutes(day.worked)} trabalhadas / ${fmtMinutes(day.expected)} previstas`;
+    }
+
+    const workedHeight=day.partial
+      ? Math.max(12,day.count*18)
+      : day.worked>0
+        ? Math.max(8,Math.round(day.worked/max*100))
+        : 2;
+
+    const expectedHeight=day.expected>0
+      ? Math.max(2,Math.round(day.expected/max*100))
+      : 0;
+
+    return `<div class="month-day
+      ${day.date.getDay()===0||day.date.getDay()===6?'is-weekend':''}
+      ${day.absence?'is-absence':''}
+      ${day.partial?'is-partial':''}
+      ${day.extraDay?'is-extra-day':''}"
+      title="${title}">
       <div class="month-bars">
-        <b style="height:${Math.max(2,Math.round(day.expected/max*100))}%"></b>
-        <i style="height:${day.partial?Math.max(12,day.count*18):Math.max(2,Math.round(day.worked/max*100))}%"></i>
+        <b style="height:${expectedHeight}%"></b>
+        <i style="height:${workedHeight}%"></i>
       </div>
       <small>${String(day.date.getDate()).padStart(2,'0')}</small>
     </div>`;
@@ -309,21 +345,25 @@ async function renderWeekChartDB(employeeId=DB_STATE.employee?.id,schedule=DB_ST
 
   const now=new Date(),monday=new Date(now),delta=(now.getDay()+6)%7;
   monday.setDate(now.getDate()-delta);
-  const friday=new Date(monday);friday.setDate(monday.getDate()+4);
+  const sunday=new Date(monday);
+  sunday.setDate(monday.getDate()+6);
 
-  const marks=(await window.PlenitudeDB.marksForRange(localDateKey(monday),localDateKey(friday)))
+  const marks=(await window.PlenitudeDB.marksForRange(localDateKey(monday),localDateKey(sunday)))
     .filter(mark=>mark.funcionario_id===employeeId);
-  const names=['Seg','Ter','Qua','Qui','Sex'];
+
+  const names=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
   const days=[];
   let max=1;
 
-  for(let i=0;i<5;i++){
+  for(let i=0;i<7;i++){
     const date=new Date(monday);
     date.setDate(monday.getDate()+i);
     const planned=scheduleForDateFrom(schedule,date);
+
     const dayMarks=marks
       .filter(mark=>mark.data_local===localDateKey(date))
       .sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em));
+
     const punchTimes=dayMarks.map(mark=>
       new Date(mark.registrado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
     );
@@ -337,36 +377,48 @@ async function renderWeekChartDB(employeeId=DB_STATE.employee?.id,schedule=DB_ST
       date,
       worked,
       expected,
+      scheduled:!!planned,
       count:punchTimes.length,
       first:punchTimes[0]||null,
       complete:punchTimes.length>=4,
+      extraDay:!planned&&punchTimes.length>=4,
       isToday:localDateKey(date)===localDateKey()
     });
   }
 
   el.innerHTML=days.map((day,index)=>{
     let value='—';
-    let subtitle=`Previsto ${fmtMinutes(day.expected)}`;
+    let subtitle=day.scheduled?`Previsto ${fmtMinutes(day.expected)}`:'Sem jornada prevista';
     let state='is-empty';
 
     if(day.complete){
       value=fmtMinutes(day.worked);
-      subtitle='Jornada concluída';
-      state='is-complete';
+      subtitle=day.extraDay?'Trabalho extra no dia':'Jornada concluída';
+      state=day.extraDay?'is-extra-day':'is-complete';
     }else if(day.count){
       value=`${day.count}/4`;
       subtitle=`Em andamento · entrada ${day.first}`;
       state='is-partial';
     }else if(day.isToday){
-      subtitle='Aguardando marcação hoje';
+      subtitle=day.scheduled?'Aguardando marcação hoje':'Hoje sem jornada prevista';
       state='is-today-empty';
     }
+
+    const expectedHeight=day.expected>0
+      ? Math.round(day.expected/max*100)
+      : 0;
+
+    const workedHeight=day.complete
+      ? Math.max(8,Math.round(day.worked/max*100))
+      : day.count
+        ? Math.max(12,day.count*18)
+        : 4;
 
     return `<div class="chart-column ${state}" title="${day.date.toLocaleDateString('pt-BR')}">
       <div class="chart-value">${value}</div>
       <div class="chart-track">
-        <div class="chart-target" style="height:${Math.round(day.expected/max*100)}%"></div>
-        <div class="chart-bar" style="height:${day.complete?Math.max(8,Math.round(day.worked/max*100)):day.count?Math.max(12,day.count*18):6}%"></div>
+        <div class="chart-target" style="height:${expectedHeight}%"></div>
+        <div class="chart-bar" style="height:${workedHeight}%"></div>
       </div>
       <strong>${names[index]}</strong>
       <small>${subtitle}</small>
