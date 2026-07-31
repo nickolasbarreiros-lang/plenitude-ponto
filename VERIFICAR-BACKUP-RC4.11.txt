@@ -1,0 +1,14 @@
+Após publicar:
+
+1. Abra Backup.
+2. No Console deve aparecer:
+   [Plenitude Ponto] Backup RC4.11 carregado — somente RPC exportar_backup_admin.
+
+3. Na aba Network, a carga correta deve chamar:
+   /rest/v1/rpc/exportar_backup_admin
+
+4. Não deve existir chamada GET para:
+   /rest/v1/solicitacoes_ajuste
+
+Se ainda existir esse GET, o GitHub Pages está servindo um arquivo antigo
+ou os arquivos da RC4.11 não foram enviados para a raiz publicada.
