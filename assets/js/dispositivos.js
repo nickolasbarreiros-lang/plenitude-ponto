@@ -6,6 +6,36 @@
 
  const token=()=>localStorage.getItem(KEY)||'';
 
+ function bindDevicePageLogout(){
+  const logout=document.getElementById('sair');
+  if(!logout)return;
+
+  logout.onclick=async event=>{
+   event.preventDefault();
+   if(logout.disabled)return;
+
+   logout.disabled=true;
+   const original=logout.innerHTML;
+   logout.innerHTML='Saindo...';
+
+   try{
+    sessionStorage.removeItem('plenitude-employee-session');
+    await window.PlenitudeAuth.signOut();
+
+    // Garantia adicional caso a função de autenticação não redirecione.
+    setTimeout(()=>{
+     if(!/index\.html(?:$|[?#])/.test(location.href)){
+      location.replace('index.html');
+     }
+    },250);
+   }catch(error){
+    logout.disabled=false;
+    logout.innerHTML=original;
+    toast(error?.message||'Não foi possível sair do sistema.','warn');
+   }
+  };
+ }
+
  function randomToken(){
   const bytes=new Uint8Array(32);
   crypto.getRandomValues(bytes);
@@ -767,6 +797,7 @@
  (async()=>{
   try{
    await window.PlenitudeAuth.requireAccess({roles:['administrador']});
+   bindDevicePageLogout();
    await currentStatus();
    await list();
    await runOfflineDiagnostic();
