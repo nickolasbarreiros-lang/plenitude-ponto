@@ -672,3 +672,72 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
   from{opacity:0;transform:translateY(-4px)}
   to{opacity:1;transform:translateY(0)}
 }
+
+
+/* RC3.4 — dashboard interativo e fila de ajustes */
+.dashboard-shortcut{
+  position:relative;
+  cursor:pointer;
+  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease;
+  outline:none;
+}
+.dashboard-shortcut::after{
+  content:'›';
+  position:absolute;
+  right:13px;
+  bottom:10px;
+  font-size:22px;
+  font-weight:900;
+  color:rgba(222,75,27,.5);
+  transition:transform .16s ease,color .16s ease;
+}
+.dashboard-shortcut:hover,
+.dashboard-shortcut:focus-visible{
+  transform:translateY(-3px);
+  box-shadow:0 13px 30px rgba(83,43,29,.12);
+  border-color:#f0b6a0;
+}
+.dashboard-shortcut:hover::after,
+.dashboard-shortcut:focus-visible::after{
+  transform:translateX(3px);
+  color:#e34718;
+}
+.dashboard-shortcut.is-opening{transform:scale(.985);opacity:.78}
+.dashboard-shortcut-priority{border-color:#efc1ae}
+.adjustment-admin-card.queue-current{
+  border-color:#ff6a28;
+  box-shadow:0 0 0 3px rgba(255,94,26,.12),0 14px 28px rgba(62,31,21,.10);
+}
+.queue-position{
+  display:inline-flex;
+  margin:6px 0 10px;
+  padding:5px 9px;
+  border-radius:999px;
+  background:#fff1e9;
+  color:#bb4817;
+  font-size:12px;
+  font-weight:800;
+}
+.queue-complete{
+  display:flex;
+  min-height:320px;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  text-align:center;
+  border:1px dashed #b8ddc4;
+  border-radius:16px;
+  background:#effaf3;
+}
+.queue-complete .icon{
+  display:grid;
+  width:58px;
+  height:58px;
+  place-items:center;
+  border-radius:50%;
+  background:#22a858;
+  color:#fff;
+  font-size:30px;
+  font-weight:900;
+}

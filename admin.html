@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#2c2324">
   <title>Painel administrativo | Plenitude Ponto</title>
-  <link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc3.3">
+  <link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc3.4">
 </head>
 <body>
 <div class="app-shell">
@@ -44,13 +44,13 @@
     <section class="notice"><strong>Sistema online:</strong> funcionários, jornadas e marcações de ponto são gravados com horário oficial no Supabase.</section>
 
     <section class="cards operational-cards">
-      <article class="metric-card"><i>♙</i><span>Funcionários</span><strong id="total-func">0</strong><small>Cadastros ativos</small></article>
-      <article class="metric-card"><i>●</i><span>Presentes</span><strong id="presentes-hoje">0</strong><small>Com entrada registrada</small></article>
-      <article class="metric-card"><i>◷</i><span>Em almoço</span><strong id="em-almoco">0</strong><small>Intervalo em andamento</small></article>
-      <article class="metric-card"><i>○</i><span>Ausentes</span><strong id="ausentes-hoje">0</strong><small>Sem entrada hoje</small></article>
-      <article class="metric-card"><i>⏱</i><span>Atrasos hoje</span><strong id="atrasos-hoje">0</strong><small>Fora da tolerância</small></article>
-      <article class="metric-card"><i>✓</i><span>Ajustes pendentes</span><strong id="ajustes-pendentes">0</strong><small>Aguardando análise</small></article>
-      <article class="metric-card"><i>±</i><span>Saldo do mês</span><strong id="saldo-mes">00:00</strong><small>Funcionário selecionado</small></article>
+      <article class="metric-card dashboard-shortcut" data-href="funcionarios.html" role="link" tabindex="0" aria-label="Abrir funcionários"><i>♙</i><span>Funcionários</span><strong id="total-func">0</strong><small>Cadastros ativos</small></article>
+      <article class="metric-card dashboard-shortcut" data-href="relatorios.html?visao=presentes" role="link" tabindex="0" aria-label="Abrir relatório de presentes"><i>●</i><span>Presentes</span><strong id="presentes-hoje">0</strong><small>Com entrada registrada</small></article>
+      <article class="metric-card dashboard-shortcut" data-href="relatorios.html?visao=almoco" role="link" tabindex="0" aria-label="Abrir relatório de funcionários em almoço"><i>◷</i><span>Em almoço</span><strong id="em-almoco">0</strong><small>Intervalo em andamento</small></article>
+      <article class="metric-card dashboard-shortcut" data-href="relatorios.html?visao=ausentes" role="link" tabindex="0" aria-label="Abrir relatório de ausentes"><i>○</i><span>Ausentes</span><strong id="ausentes-hoje">0</strong><small>Sem entrada hoje</small></article>
+      <article class="metric-card dashboard-shortcut" data-href="relatorios.html?visao=atrasos" role="link" tabindex="0" aria-label="Abrir relatório de atrasos"><i>⏱</i><span>Atrasos hoje</span><strong id="atrasos-hoje">0</strong><small>Fora da tolerância</small></article>
+      <article class="metric-card dashboard-shortcut dashboard-shortcut-priority" data-href="ajustes.html?status=pendente&fila=1" role="link" tabindex="0" aria-label="Analisar ajustes pendentes"><i>✓</i><span>Ajustes pendentes</span><strong id="ajustes-pendentes">0</strong><small>Aguardando análise</small></article>
+      <article class="metric-card dashboard-shortcut" data-href="relatorios.html?visao=saldo-mes" role="link" tabindex="0" aria-label="Abrir saldo do mês"><i>±</i><span>Saldo do mês</span><strong id="saldo-mes">00:00</strong><small>Funcionário selecionado</small></article>
     </section>
 
     <section id="daily-indicators" class="daily-indicators"></section>
@@ -101,8 +101,8 @@
     </section>
   </main>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc3.3"></script><script src="assets/js/auth.js?v=1.0.0-rc3.3"></script>
-  <script src="assets/js/database.js?v=1.0.0-rc3.3"></script><script src="assets/js/app.js?v=1.0.0-rc3.3"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc3.4"></script><script src="assets/js/auth.js?v=1.0.0-rc3.4"></script>
+  <script src="assets/js/database.js?v=1.0.0-rc3.4"></script><script src="assets/js/app.js?v=1.0.0-rc3.4"></script>
 <script>initAdmin()</script>
 </body>
 </html>

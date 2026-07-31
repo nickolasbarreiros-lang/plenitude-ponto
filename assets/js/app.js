@@ -25,8 +25,25 @@ function toast(message,type='ok'){let box=document.querySelector('.toast');if(!b
 function applyTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem(STORAGE.theme,theme);const btn=document.getElementById('theme-toggle');if(btn)btn.textContent=theme==='dark'?'☀':'◐'}
 async function initCommon(roles=null){const context=await requireAuth(roles);if(!context)return null;const session=context.session;const theme=localStorage.getItem(STORAGE.theme)||'light';applyTheme(theme);const logout=document.getElementById('sair');if(logout)logout.onclick=async()=>{logout.disabled=true;try{await window.PlenitudeAuth.signOut()}catch(error){logout.disabled=false;toast('Não foi possível sair do sistema.','warn')}};if(!document.getElementById('theme-toggle')){const b=document.createElement('button');b.id='theme-toggle';b.className='theme-toggle';b.type='button';b.title='Alternar tema';b.onclick=()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');document.body.appendChild(b)} return context; }
 
+function initDashboardShortcuts(){
+  document.querySelectorAll('.dashboard-shortcut[data-href]').forEach(card=>{
+    const open=()=>{
+      if(card.classList.contains('is-opening'))return;
+      card.classList.add('is-opening');
+      window.location.href=card.dataset.href;
+    };
+    card.addEventListener('click',open);
+    card.addEventListener('keydown',event=>{
+      if(event.key==='Enter'||event.key===' '){
+        event.preventDefault();
+        open();
+      }
+    });
+  });
+}
+
 async function initAdmin(){
-  const context=await initCommon(['administrador']);if(!context)return;const session=context.session;
+  const context=await initCommon(['administrador']);if(!context)return;const session=context.session;initDashboardShortcuts();
   try{
     const profile=await window.PlenitudeDB.profile();
     const employees=profile.papel==='administrador'?await window.PlenitudeDB.employees():[];
@@ -87,7 +104,7 @@ async function renderSmartDashboard(activeEmployees,lateCount,tolerance){
   const pendingCount=pending.length;
   const pendingEl=document.getElementById('ajustes-pendentes');if(pendingEl)pendingEl.textContent=String(pendingCount);
   const notes=[];
-  if(pendingCount)notes.push({type:'warn',icon:'✓',title:`${pendingCount} ajuste${pendingCount===1?'':'s'} pendente${pendingCount===1?'':'s'}`,text:'Solicitações aguardando aprovação ou rejeição.',href:'ajustes.html',label:'Analisar'});
+  if(pendingCount)notes.push({type:'warn',icon:'✓',title:`${pendingCount} ajuste${pendingCount===1?'':'s'} pendente${pendingCount===1?'':'s'}`,text:'Solicitações aguardando aprovação ou rejeição.',href:'ajustes.html?status=pendente&fila=1',label:'Analisar'});
   if(lateCount)notes.push({type:'danger',icon:'⏱',title:`${lateCount} atraso${lateCount===1?'':'s'} hoje`,text:`Entrada após a tolerância configurada de ${tolerance} minutos.`,href:'relatorios.html',label:'Detalhes'});
   const absent=activeEmployees.filter(e=>{const n=document.getElementById('ausentes-hoje');return Number(n?.textContent||0)>0}).length?Number(document.getElementById('ausentes-hoje')?.textContent||0):0;
   if(absent)notes.push({type:'warn',icon:'○',title:`${absent} ausência${absent===1?'':'s'} hoje`,text:'Funcionários ativos ainda sem registro de entrada.',href:'ponto.html',label:'Ver ponto'});
@@ -469,6 +486,103 @@ async function renderCalendar(){
 async function initAjustes(){
  const context=await initCommon(['administrador']);if(!context)return;
  const filter=document.getElementById('adjustment-filter');
- async function render(){try{const rows=await window.PlenitudeDB.adminAdjustmentRequests(filter.value||null),list=document.getElementById('adjustments-list');document.getElementById('adjustment-count').textContent=`${rows.filter(r=>r.status==='pendente').length} pendentes`;document.getElementById('adjustments-empty').style.display=rows.length?'none':'block';list.innerHTML=rows.map(r=>`<article class="adjustment-admin-card"><div class="adjustment-admin-main"><div class="request-heading"><div><small>${r.matricula||'—'}</small><h3>${r.funcionario_nome}</h3></div><span class="request-status ${r.status}">${r.status}</span></div><div class="request-facts"><span><b>Data</b>${new Date(r.data_marcacao+'T12:00:00').toLocaleDateString('pt-BR')}</span><span><b>Marcação</b>${labelForMarkType(r.tipo_marcacao)}</span><span><b>Horário</b>${String(r.horario_solicitado).slice(0,5)}</span></div><p>${r.justificativa}</p>${r.resposta_administrador?`<div class="admin-response"><b>Resposta:</b> ${r.resposta_administrador}</div>`:''}</div>${r.status==='pendente'?`<div class="request-actions"><textarea id="response-${r.id}" placeholder="Resposta opcional para a funcionária"></textarea><button class="btn primary" data-decision="aprovada" data-id="${r.id}">Aprovar e incluir ponto</button><button class="btn outline danger" data-decision="rejeitada" data-id="${r.id}">Rejeitar</button></div>`:''}</article>`).join('');list.querySelectorAll('[data-decision]').forEach(b=>b.onclick=async()=>{const decision=b.dataset.decision,id=b.dataset.id,response=document.getElementById(`response-${id}`)?.value||'';if(!confirm(decision==='aprovada'?'Aprovar e criar esta marcação?':'Rejeitar esta solicitação?'))return;b.disabled=true;try{await window.PlenitudeDB.decideAdjustment(id,decision,response);toast(decision==='aprovada'?'Ajuste aprovado e ponto incluído.':'Solicitação rejeitada.');await render()}catch(e){toast(errorText(e),'warn')}finally{b.disabled=false}})}catch(e){toast(errorText(e),'warn');console.error(e)}}
- filter.onchange=render;document.getElementById('refresh-adjustments').onclick=render;await render();
+ const params=new URLSearchParams(location.search);
+ const requestedStatus=params.get('status');
+ const queueMode=params.get('fila')==='1';
+
+ if(requestedStatus && [...filter.options].some(option=>option.value===requestedStatus)){
+   filter.value=requestedStatus;
+ }
+
+ function focusFirstPending(){
+   if(!queueMode)return;
+   const first=document.querySelector('.adjustment-admin-card[data-status="pendente"]');
+   if(!first)return;
+   first.classList.add('queue-current');
+   first.scrollIntoView({behavior:'smooth',block:'center'});
+   const textarea=first.querySelector('textarea');
+   if(textarea)setTimeout(()=>textarea.focus({preventScroll:true}),300);
+ }
+
+ async function render(){
+  try{
+   const rows=await window.PlenitudeDB.adminAdjustmentRequests(filter.value||null);
+   const list=document.getElementById('adjustments-list');
+   const pendingRows=rows.filter(row=>row.status==='pendente');
+   document.getElementById('adjustment-count').textContent=`${pendingRows.length} pendentes`;
+   document.getElementById('adjustments-empty').style.display=rows.length?'none':'block';
+
+   if(queueMode && pendingRows.length===0){
+     list.innerHTML=`
+      <div class="queue-complete">
+       <div class="icon">✓</div>
+       <h3>Nenhum ajuste pendente</h3>
+       <p>A fila de análise foi concluída.</p>
+       <a class="btn primary" href="admin.html">Voltar ao painel</a>
+      </div>`;
+     document.getElementById('adjustments-empty').style.display='none';
+     return;
+   }
+
+   list.innerHTML=rows.map(r=>{
+    const queueIndex=pendingRows.findIndex(item=>item.id===r.id);
+    return `
+    <article class="adjustment-admin-card" data-status="${r.status}" data-adjustment-id="${r.id}">
+     <div class="adjustment-admin-main">
+      <div class="request-heading">
+       <div><small>${r.matricula||'—'}</small><h3>${r.funcionario_nome}</h3></div>
+       <span class="request-status ${r.status}">${r.status}</span>
+      </div>
+      ${queueMode&&r.status==='pendente'?`<div class="queue-position">Ajuste ${queueIndex+1} de ${pendingRows.length}</div>`:''}
+      <div class="request-facts">
+       <span><b>Data</b>${new Date(r.data_marcacao+'T12:00:00').toLocaleDateString('pt-BR')}</span>
+       <span><b>Marcação</b>${labelForMarkType(r.tipo_marcacao)}</span>
+       <span><b>Horário</b>${String(r.horario_solicitado).slice(0,5)}</span>
+      </div>
+      <p>${r.justificativa}</p>
+      ${r.resposta_administrador?`<div class="admin-response"><b>Resposta:</b> ${r.resposta_administrador}</div>`:''}
+     </div>
+     ${r.status==='pendente'?`
+      <div class="request-actions">
+       <textarea id="response-${r.id}" placeholder="Resposta opcional para a funcionária"></textarea>
+       <button class="btn primary" data-decision="aprovada" data-id="${r.id}">Aprovar e incluir ponto</button>
+       <button class="btn outline danger" data-decision="rejeitada" data-id="${r.id}">Rejeitar</button>
+      </div>`:''}
+    </article>`;
+   }).join('');
+
+   list.querySelectorAll('[data-decision]').forEach(button=>button.onclick=async()=>{
+    const decision=button.dataset.decision;
+    const id=button.dataset.id;
+    const response=document.getElementById(`response-${id}`)?.value||'';
+    if(!confirm(decision==='aprovada'?'Aprovar e criar esta marcação?':'Rejeitar esta solicitação?'))return;
+
+    const card=button.closest('.adjustment-admin-card');
+    card?.querySelectorAll('button').forEach(item=>item.disabled=true);
+    try{
+     await window.PlenitudeDB.decideAdjustment(id,decision,response);
+     toast(decision==='aprovada'?'Ajuste aprovado e ponto incluído.':'Solicitação rejeitada.');
+     await render();
+    }catch(error){
+     toast(errorText(error),'warn');
+     card?.querySelectorAll('button').forEach(item=>item.disabled=false);
+    }
+   });
+
+   focusFirstPending();
+  }catch(error){
+   toast(errorText(error),'warn');
+   console.error(error);
+  }
+ }
+
+ filter.onchange=()=>{
+   const url=new URL(location.href);
+   if(filter.value)url.searchParams.set('status',filter.value);
+   else url.searchParams.delete('status');
+   history.replaceState({},'',url);
+   render();
+ };
+ document.getElementById('refresh-adjustments').onclick=render;
+ await render();
 }
