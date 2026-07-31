@@ -147,23 +147,36 @@ document.getElementById('registrar').onclick=async()=>{
 
  async function loadMovements(){
   const today=dateKey(new Date());
-  const [rows,pendingHistory]=await Promise.all([
+
+  const [rows,statusData]=await Promise.all([
    rpc('listar_minhas_movimentacoes',{p_token:token,p_inicio:today,p_fim:today}),
-   rpc('listar_pendencias_retorno_funcionario',{p_token:token})
+   rpc('status_movimentacao_funcionario',{p_token:token})
   ]);
-  const open=(rows||[]).find(r=>r.status==='aberta');
+
+  const status=Array.isArray(statusData)?statusData[0]:statusData;
+  const open=status?.fora_da_loja ? status.movimentacao_aberta : null;
+
   const pendingAlert=document.getElementById('movement-pending-alert');
-  const oldPendencies=pendingHistory||[];
-  if(oldPendencies.length){
-   const first=oldPendencies[0];
+  const pendingCount=Number(status?.pendencias_antigas||0);
+
+  if(pendingCount>0){
    pendingAlert.hidden=false;
-   pendingAlert.innerHTML=`<strong>⚠ ${oldPendencies.length} retorno${oldPendencies.length===1?'':'s'} não registrado${oldPendencies.length===1?'':'s'}</strong><span>A pendência mais antiga é de ${new Date(first.data_local+'T12:00:00').toLocaleDateString('pt-BR')}. Ela não bloqueia uma nova saída hoje, mas deve ser regularizada pelo administrador.</span>`;
+   const oldest=status?.pendencia_mais_antiga
+    ?new Date(status.pendencia_mais_antiga+'T12:00:00').toLocaleDateString('pt-BR')
+    :'data anterior';
+
+   pendingAlert.innerHTML=`
+    <strong>⚠ ${pendingCount} retorno${pendingCount===1?'':'s'} não registrado${pendingCount===1?'':'s'}</strong>
+    <span>A pendência mais antiga é de ${oldest}. Ela não bloqueia uma nova saída hoje, mas deve ser regularizada pelo administrador.</span>`;
   }else{
    pendingAlert.hidden=true;
    pendingAlert.innerHTML='';
   }
-  document.getElementById('movement-state').textContent=open?'Fora da loja':'Dentro da loja';
-  document.getElementById('movement-state').className=`badge ${open?'warn':''}`;
+
+  const state=document.getElementById('movement-state');
+  state.textContent=open?'Fora da loja':'Dentro da loja';
+  state.className=`badge ${open?'warn':''}`;
+
   const exitTrigger=document.getElementById('temporary-exit');
   const exitForm=document.getElementById('movement-exit-form');
   const exitReason=document.getElementById('movement-reason');
@@ -180,8 +193,26 @@ document.getElementById('registrar').onclick=async()=>{
   }else if(exitForm.hidden){
    exitReason.disabled=true;
   }
+
   const box=document.getElementById('my-movements');
-  box.innerHTML=(rows||[]).length?(rows||[]).map(r=>`<div class="movement-item"><div><strong>${r.status==='aberta'?'Saída temporária em andamento':'Saída temporária'}</strong><small>${fmt(r.inicio_em)}${r.fim_em?` → ${fmt(r.fim_em)}`:' → aguardando retorno'}${r.motivo_informado?` · ${r.motivo_informado}`:''}</small></div><span class="request-status ${r.aprovado?'aprovada':'pendente'}">${r.aprovado?(r.classificacao||'analisada'):'aguardando análise'}</span></div>`).join(''):'<div class="mini-empty">Nenhuma saída temporária hoje.</div>';
+  const todayRows=rows||[];
+
+  if(open && !todayRows.some(item=>item.id===open.id)){
+   todayRows.unshift(open);
+  }
+
+  box.innerHTML=todayRows.length
+   ?todayRows.map(r=>`
+    <div class="movement-item">
+     <div>
+      <strong>${r.status==='aberta'?'Saída temporária em andamento':'Saída temporária'}</strong>
+      <small>${fmt(r.inicio_em)}${r.fim_em?` → ${fmt(r.fim_em)}`:' → aguardando retorno'}${r.motivo_informado?` · ${r.motivo_informado}`:''}</small>
+     </div>
+     <span class="request-status ${r.status==='aberta'?'pendente':r.aprovado?'aprovada':'pendente'}">
+      ${r.status==='aberta'?'fora da loja':r.aprovado?(r.classificacao||'analisada'):'aguardando análise'}
+     </span>
+    </div>`).join('')
+   :'<div class="mini-empty">Nenhuma saída temporária hoje.</div>';
  }
  function setTemporaryExitEditing(open){
   const trigger=document.getElementById('temporary-exit');
@@ -238,6 +269,7 @@ document.getElementById('registrar').onclick=async()=>{
    await Promise.all([loadMovements(),load()]);
   }catch(e){
    toast(e.message,'warn');
+   await loadMovements().catch(error=>console.warn('Não foi possível atualizar o estado da movimentação.',error));
   }finally{
    btn.disabled=false;
    btn.textContent=previous;

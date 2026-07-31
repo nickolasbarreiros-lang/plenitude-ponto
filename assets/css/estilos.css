@@ -965,3 +965,14 @@ select,textarea{width:100%;border:1px solid #e7d7d0;border-radius:12px;padding:1
 .movement-pending-alert{display:flex;flex-direction:column;gap:5px;margin:0 0 14px;padding:12px 13px;border:1px solid #efc36c;border-radius:12px;background:#fff7dd;color:#785600;line-height:1.4}
 .movement-pending-alert strong{font-size:13px}
 .movement-pending-alert span{font-size:12px}
+
+
+/* RC4.5 — estado autoritativo da movimentação temporária */
+#movement-state.warn{
+  background:#fff0c9;
+  border-color:#e9c466;
+  color:#8a5b00;
+}
+#temporary-return:not([hidden]){
+  box-shadow:0 10px 24px rgba(222,69,29,.16);
+}
