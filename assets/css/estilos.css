@@ -2413,3 +2413,46 @@ body:not(.offline-contingency) .point-loading-card{
     grid-template-columns:1fr;
   }
 }
+
+/* RC5.38 — corrige sobreposição dos campos no fechamento mensal */
+.closure-form{
+  grid-template-columns:minmax(320px,420px) minmax(0,1fr) auto;
+  column-gap:14px;
+  row-gap:10px;
+  align-items:end;
+}
+.closure-form>label,
+.closure-form>.closure-competence-picker{
+  min-width:0;
+}
+.closure-competence-picker{
+  width:100%;
+  grid-template-columns:minmax(0,1fr) minmax(100px,.62fr);
+}
+.closure-competence-picker select,
+#fc-observacao{
+  max-width:100%;
+  min-width:0;
+}
+.closure-competence-hint{
+  grid-column:1/-1;
+  margin-top:0;
+}
+@media(max-width:1100px){
+  .closure-form{
+    grid-template-columns:minmax(280px,360px) minmax(0,1fr);
+  }
+  #fc-fechar{
+    grid-column:1/-1;
+    justify-self:end;
+  }
+}
+@media(max-width:760px){
+  .closure-form{
+    grid-template-columns:1fr;
+  }
+  #fc-fechar{
+    grid-column:auto;
+    width:100%;
+  }
+}
