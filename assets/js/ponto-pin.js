@@ -3,7 +3,7 @@
  function stored(){try{return JSON.parse(sessionStorage.getItem('plenitude-employee-session')||localStorage.getItem('plenitude-offline-employee-session')||'null')}catch{return null}}
  const sess=stored();
  if(!sess){ window.PlenitudeAuth.getSession().then(s=>s?initPonto():location.replace('index.html')); return; }
- const token=sess.token;let employee=null;let onlineMarks=[];let offlineDayStateReady=false;let contingencyMode=false;let syncInProgress=false;let pointReady=false;let serverReachable=null;let punchInFlight=false;let punchCooldownUntil=0;let punchCooldownTimer=null;let lunchMinimumTimer=null;
+ const token=sess.token;let employee=null;let onlineMarks=[];let offlineDayStateReady=false;let contingencyMode=false;let syncInProgress=false;let pointReady=false;let serverReachable=null;let connectionTransition=null;let punchInFlight=false;let punchCooldownUntil=0;let punchCooldownTimer=null;let lunchMinimumTimer=null;
  const dateKey=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
  const label=t=>({entrada:'Entrada',inicio_intervalo:'Início do almoço',fim_intervalo:'Retorno do almoço',saida:'Saída'})[t]||'Marcação';
  const fmt=v=>new Date(v).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -55,16 +55,8 @@
   image.src=photo;
   avatar.appendChild(image);
  }
- async function rpc(name,args={}){
-  if(serverReachable===false){
-   const error=new Error('Servidor indisponível.');
-   error.code='OFFLINE_FAST_FAIL';
-   throw error;
-  }
-
-  const timeoutMs=8000;
+ async function rawRpc(name,args={},timeoutMs=6500){
   let timer;
-
   try{
    const result=await Promise.race([
     client.rpc(name,args),
@@ -76,49 +68,31 @@
      },timeoutMs);
     })
    ]);
-
    const {data,error}=result;
    if(error)throw error;
    return data;
-  }finally{
-   clearTimeout(timer);
-  }
+  }finally{clearTimeout(timer)}
  }
 
- async function probeServer(timeoutMs=2500){
-  if(!navigator.onLine){
-   serverReachable=false;
-   return false;
+ async function rpc(name,args={},timeoutMs=6500){
+  if(serverReachable===false){
+   const error=new Error('Servidor indisponível.');
+   error.code='OFFLINE_FAST_FAIL';
+   throw error;
   }
+  return rawRpc(name,args,timeoutMs);
+ }
 
-  const config=window.PLENITUDE_SUPABASE||{};
-  if(!config.url||!config.publishableKey){
-   serverReachable=false;
-   return false;
+ async function fetchEmployeeOnline(timeoutMs=4500){
+  const data=await rawRpc('dados_funcionario_token',{p_token:token},timeoutMs);
+  const row=Array.isArray(data)?data[0]:data;
+  if(!row){
+   const error=new Error('Sessão do funcionário inválida ou expirada.');
+   error.code='INVALID_EMPLOYEE_SESSION';
+   throw error;
   }
-
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),timeoutMs);
-
-  try{
-   const response=await fetch(`${config.url}/rest/v1/`,{
-    method:'GET',
-    headers:{
-     apikey:config.publishableKey,
-     Authorization:`Bearer ${config.publishableKey}`
-    },
-    cache:'no-store',
-    signal:controller.signal
-   });
-
-   serverReachable=response.status>0;
-   return serverReachable;
-  }catch{
-   serverReachable=false;
-   return false;
-  }finally{
-   clearTimeout(timer);
-  }
+  serverReachable=true;
+  return row;
  }
  function setPointLoading(message,percent=0){
   const overlay=document.getElementById('point-loading-overlay');
@@ -175,7 +149,10 @@
 
  function isNetworkFailure(error){
   const message=String(error?.message||error||'');
-  return !navigator.onLine||/Failed to fetch|NetworkError|Load failed|fetch|timeout|connection|ERR_INTERNET/i.test(message);
+  const code=String(error?.code||'');
+  return !navigator.onLine||
+   ['OFFLINE_FAST_FAIL','SERVER_TIMEOUT','TypeError'].includes(code)||
+   /Failed to fetch|NetworkError|Load failed|fetch|timeout|connection|ERR_INTERNET|ERR_NETWORK|Servidor indisponível|Tempo de comunicação/i.test(message);
  }
 
  function nextType(count){
@@ -378,6 +355,21 @@
   }
  }
 
+ function cacheEmployeeProfile(){
+  if(!employee)return;
+  localStorage.setItem('plenitude-offline-employee-session',JSON.stringify(sess));
+  localStorage.setItem('plenitude-offline-employee-profile',JSON.stringify(employee));
+  const profiles=JSON.parse(localStorage.getItem('plenitude-offline-employee-profiles')||'{}');
+  profiles[String(employee.matricula||'')]=employee;
+  localStorage.setItem('plenitude-offline-employee-profiles',JSON.stringify(profiles));
+ }
+
+ function restoreEmployeeProfile(){
+  const profiles=JSON.parse(localStorage.getItem('plenitude-offline-employee-profiles')||'{}');
+  const registration=String(sess.matricula||sess.funcionario_matricula||'');
+  return profiles[registration]||JSON.parse(localStorage.getItem('plenitude-offline-employee-profile')||'null');
+ }
+
  async function registerOfflinePunch(){
   const deviceToken=localStorage.getItem('plenitude-device-token')||'';
   if(!deviceToken)throw new Error('Computador não autorizado para contingência.');
@@ -412,95 +404,71 @@
   return {tipo:record.tipo,registrado_em:record.ocorrido_em_dispositivo,offline:true};
  }
 
- window.addEventListener('online',async()=>{
-  const banner=document.getElementById('sync-restored-banner');
-  const text=document.getElementById('sync-restored-text');
-
-  setPointLoading('Verificando conexão com o servidor...',10);
-  const reachable=await probeServer(3000);
-
-  if(!reachable){
-   syncInProgress=false;
-   serverReachable=false;
-
-   if(banner)banner.hidden=true;
-
-   await setContingencyUI(true);
-   setPointLoading(
-    'Sem acesso ao servidor. Recuperando a jornada armazenada neste computador...',
-    55
-   );
-
-   try{
-    await load();
-    document.getElementById('clock-status').textContent='Pronto para registrar';
-    setPointLoading('Jornada local carregada.',100);
-    setTimeout(revealPoint,180);
-   }catch(error){
-    console.warn('Não foi possível restaurar a jornada local.',error);
-    blockPoint(
-     error.message||
-     'Não foi possível recuperar o estado local da jornada.'
-    );
-   }
-
-   return;
-  }
-
-  setPointLoading('Conexão restabelecida. Sincronizando registros offline...',35);
-
-  try{
-   const completed=await syncOfflineQueue();
-
-   if(!completed){
-    await setContingencyUI(true);
-    text.textContent=
-     'A sincronização não foi concluída. O registro de ponto continuará bloqueado.';
-    blockPoint('A sincronização ainda não foi concluída. Verifique a conexão.');
-    return;
-   }
-
-   syncInProgress=true;
-   setPointLoading('Atualizando a jornada oficial...',75);
-   await load();
-   await Promise.allSettled([loadAdjustments(),loadMovements()]);
-   await setContingencyUI(false);
-   syncInProgress=false;
-
-   text.textContent='Sincronização concluída. Sistema atualizado.';
-   revealPoint();
-   setTimeout(()=>banner.hidden=true,3500);
-  }catch(error){
-   syncInProgress=false;
-   console.warn('Sincronização offline falhou',error);
-   await setContingencyUI(true);
-   text.textContent=
-    'Não foi possível concluir a sincronização. O registro de ponto permanece bloqueado.';
-   blockPoint('Não foi possível concluir a sincronização dos dados.');
-  }
- });
-
- window.addEventListener('offline',async()=>{
-  syncInProgress=false;
+ async function switchToOffline(message='Carregando a jornada armazenada neste computador...'){
   serverReachable=false;
-
+  syncInProgress=false;
   const banner=document.getElementById('sync-restored-banner');
   if(banner)banner.hidden=true;
-
   await setContingencyUI(true);
+  setPointLoading(message,55);
+  await load();
+  document.getElementById('clock-status').textContent='Pronto para registrar';
+  setPointLoading('Jornada local carregada.',100);
+  setTimeout(revealPoint,120);
+ }
 
-  try{
-   setPointLoading('Conexão interrompida. Recuperando a jornada local...',55);
-   await load();
-   document.getElementById('clock-status').textContent='Pronto para registrar';
-   setPointLoading('Jornada local carregada.',100);
-   setTimeout(revealPoint,180);
-  }catch(error){
-   blockPoint(
-    error.message||
-    'Não foi possível recuperar a jornada para uso offline.'
-   );
-  }
+ async function switchToOnline(){
+  if(connectionTransition)return connectionTransition;
+  connectionTransition=(async()=>{
+   const banner=document.getElementById('sync-restored-banner');
+   const text=document.getElementById('sync-restored-text');
+   setPointLoading('Confirmando conexão com o servidor...',15);
+   try{
+    employee=await fetchEmployeeOnline(4500);
+    cacheEmployeeProfile();
+    const pending=(await window.PlenitudeOffline.counts()).local;
+    if(pending>0){
+     banner.hidden=false;
+     text.textContent=`Sincronizando ${pending} registro(s) offline...`;
+     setPointLoading('Sincronizando registros offline...',40);
+     const completed=await syncOfflineQueue();
+     if(!completed)throw new Error('A fila offline ainda possui registros não sincronizados.');
+    }
+    syncInProgress=true;
+    setPointLoading('Atualizando a jornada oficial...',70);
+    await load();
+    await Promise.allSettled([loadAdjustments(),loadMovements()]);
+    await setContingencyUI(false);
+    syncInProgress=false;
+    document.getElementById('clock-status').textContent='Pronto para registrar';
+    if(banner){
+     text.textContent='Sincronização concluída. Sistema atualizado.';
+     setTimeout(()=>banner.hidden=true,2500);
+    }
+    setPointLoading('Jornada atualizada.',100);
+    setTimeout(revealPoint,120);
+   }catch(error){
+    syncInProgress=false;
+    if(isNetworkFailure(error)){
+     await switchToOffline('Servidor indisponível. Recuperando a jornada local...');
+    }else{
+     console.error('Falha ao restaurar o modo online',error);
+     blockPoint(error.message||'Não foi possível atualizar a jornada online.');
+    }
+   }finally{connectionTransition=null}
+  })();
+  return connectionTransition;
+ }
+
+ window.addEventListener('online',()=>{
+  if(!pointReady||contingencyMode)switchToOnline();
+ });
+
+ window.addEventListener('offline',()=>{
+  if(connectionTransition)return;
+  switchToOffline('Conexão interrompida. Recuperando a jornada local...').catch(error=>{
+   blockPoint(error.message||'Não foi possível recuperar a jornada offline.');
+  });
  });
 
  function clock(){const d=new Date();document.getElementById('clock-date').textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(d);document.getElementById('clock-time').textContent=d.toLocaleTimeString('pt-BR')}
@@ -554,63 +522,66 @@
  }
 
  async function load(){
-  const now=new Date(),today=dateKey(now),monday=new Date(now);monday.setDate(now.getDate()-((now.getDay()+6)%7));const firstMonth=new Date(now.getFullYear(),now.getMonth(),1);
+  const now=new Date(),today=dateKey(now),monday=new Date(now);
+  monday.setDate(now.getDate()-((now.getDay()+6)%7));
+  const firstMonth=new Date(now.getFullYear(),now.getMonth(),1);
   const isHomologation=String(employee?.matricula||'').replace(/^0+/,'')==='999';
   const weekStart=isHomologation?today:dateKey(monday);
   const monthStart=isHomologation?today:dateKey(firstMonth);
   let data=[],todayBank=null,weekBank=null,monthBank=null;
-  try{
-   [data,todayBank,weekBank,monthBank]=await Promise.all([
-    rpc('marcacoes_funcionario_token',{p_token:token,p_inicio:today,p_fim:today}),
-    rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:today,p_fim:today}),
-    rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:weekStart,p_fim:today}),
-    rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:monthStart,p_fim:today})
-   ]);
 
-   onlineMarks=data||[];
-   offlineDayStateReady=true;
-   await saveOfficialDayState(today,onlineMarks);
-   setOfflineDayStateWarning(false);
-   await setContingencyUI(false);
-  }catch(error){
-   if(!isNetworkFailure(error))throw error;
+  if(serverReachable!==false){
+   try{
+    data=await rpc('marcacoes_funcionario_token',{p_token:token,p_inicio:today,p_fim:today},6000);
+    serverReachable=true;
+    onlineMarks=data||[];
+    offlineDayStateReady=true;
+    await saveOfficialDayState(today,onlineMarks);
+    setOfflineDayStateWarning(false);
+    await setContingencyUI(false);
 
+    const balances=await Promise.allSettled([
+     rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:today,p_fim:today},6000),
+     rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:weekStart,p_fim:today},6000),
+     rpc('banco_horas_funcionario_token',{p_token:token,p_inicio:monthStart,p_fim:today},6000)
+    ]);
+    todayBank=balances[0].status==='fulfilled'?balances[0].value:null;
+    weekBank=balances[1].status==='fulfilled'?balances[1].value:null;
+    monthBank=balances[2].status==='fulfilled'?balances[2].value:null;
+   }catch(error){
+    if(!isNetworkFailure(error))throw error;
+    serverReachable=false;
+   }
+  }
+
+  if(serverReachable===false){
    await setContingencyUI(true);
-
    const snapshot=await loadOfficialDayState(today);
-
    if(snapshot){
     onlineMarks=snapshot.marks||[];
     data=onlineMarks;
     offlineDayStateReady=true;
     setOfflineDayStateWarning(false);
    }else{
-    onlineMarks=[];
-    data=[];
-    offlineDayStateReady=false;
-    setOfflineDayStateWarning(
-     true,
-     'Por segurança, o registro local foi bloqueado. Abra o ponto com internet ao menos uma vez no mesmo dia antes de usar a contingência.'
-    );
+    onlineMarks=[]; data=[]; offlineDayStateReady=false;
+    setOfflineDayStateWarning(true,'Por segurança, o registro local foi bloqueado. Abra o ponto com internet ao menos uma vez no mesmo dia antes de usar a contingência.');
    }
   }
 
   const localMarks=await localTodayMarks();
-  const marks=[...(data||[]),...localMarks].sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em));
+  const seen=new Set();
+  const marks=[...(data||[]),...localMarks]
+   .sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em))
+   .filter(mark=>{const key=`${mark.tipo}|${mark.registrado_em}`;if(seen.has(key))return false;seen.add(key);return true});
+
   document.getElementById('lista-pontos').innerHTML=marks.length?marks.map(m=>`<div class="punch-item ${m.offline?'offline-mark':''}"><span>${label(m.tipo)}${m.offline?' <em>OFFLINE</em>':''}</span><strong>${fmt(m.registrado_em)}</strong></div>`).join(''):'<div class="mini-empty">Nenhuma marcação feita hoje.</div>';
   const labels=['Entrada','Almoço','Retorno','Saída'];
   const actionLabels=['Registrar entrada','Registrar saída para almoço','Registrar retorno do almoço','Registrar saída final'];
   const nextLabel=marks.length<4?labels[marks.length]:null;
   document.getElementById('proxima').textContent=nextLabel?`Próxima marcação: ${nextLabel}`:'Jornada de hoje concluída';
   const punchButton=document.getElementById('registrar');
-  const actionText=marks.length<4
-   ?`${actionLabels[marks.length]}${contingencyMode?' — gravação local':''}`
-   :'Jornada concluída';
-
-  punchButton.innerHTML=marks.length<4
-   ?`<span>◷</span> ${actionText}`
-   :'<span>✓</span> Jornada concluída';
-
+  const actionText=marks.length<4?`${actionLabels[marks.length]}${contingencyMode?' — gravação local':''}`:'Jornada concluída';
+  punchButton.innerHTML=marks.length<4?`<span>◷</span> ${actionText}`:'<span>✓</span> Jornada concluída';
   punchButton.setAttribute('aria-label',actionText);
   document.getElementById('punch-progress').innerHTML=labels.map((_,i)=>`<span class="progress-step ${i<marks.length?'done':''}"></span>`).join('');
   document.getElementById('punch-steps').innerHTML=labels.map((n,i)=>`<div class="punch-step ${i<marks.length?'done':''} ${i===marks.length?'current':''}"><span class="step-icon">${i<marks.length?'✓':i+1}</span><strong>${n}</strong><small>${marks[i]?fmt(marks[i].registrado_em):'Aguardando'}</small></div>`).join('');
@@ -620,61 +591,17 @@
   document.getElementById('journey-progress-fill').style.width=`${progressPercent}%`;
   const completedCard=document.getElementById('journey-complete-card');
   const movementPanel=document.querySelector('.movement-employee-panel');
-  if(marks.length>=4){
-    completedCard.hidden=false;
-    document.getElementById('journey-complete-summary').textContent=marks.map(m=>`${label(m.tipo)} ${fmt(m.registrado_em)}`).join(' · ');
-    movementPanel.hidden=true;
-  }else{completedCard.hidden=true;movementPanel.hidden=false;}
+  if(marks.length>=4){completedCard.hidden=false;document.getElementById('journey-complete-summary').textContent=marks.map(m=>`${label(m.tipo)} ${fmt(m.registrado_em)}`).join(' · ');movementPanel.hidden=true}else{completedCard.hidden=true;movementPanel.hidden=false}
   const signed=n=>`${n>=0?'+':'−'}${String(Math.floor(Math.abs(n||0)/60)).padStart(2,'0')}:${String(Math.abs(n||0)%60).padStart(2,'0')}`;
-  const todaySummary=todayBank?.resumo||{},todayDay=todayBank?.dias?.[0];
+  const todayDay=todayBank?.dias?.[0];
   document.getElementById('self-today-balance').textContent=todayDay?.saldo_minutos==null?(marks.length?'Em andamento':'Aguardando'):signed(todayDay.saldo_minutos);
-  document.getElementById('self-week-balance').textContent=signed(weekBank?.resumo?.saldo_minutos||0);
-  document.getElementById('self-month-balance').textContent=signed(monthBank?.resumo?.saldo_minutos||0);
+  document.getElementById('self-week-balance').textContent=weekBank?signed(weekBank?.resumo?.saldo_minutos||0):'—';
+  document.getElementById('self-month-balance').textContent=monthBank?signed(monthBank?.resumo?.saldo_minutos||0):'—';
   const lunchLocked=applyLunchMinimumRule(marks,punchButton,actionLabels);
-
-  if(!lunchLocked){
-   punchButton.disabled=
-    marks.length>=4||
-    punchInFlight||
-    syncInProgress||
-    Date.now()<punchCooldownUntil||
-    (contingencyMode&&!offlineDayStateReady);
-  }
-
-  if(syncInProgress){
-   punchButton.disabled=true;
-   punchButton.classList.add('sync-lock');
-   punchButton.innerHTML='<span>⏳</span> Sincronizando registros...';
-   punchButton.setAttribute(
-    'aria-label',
-    'Aguarde a sincronização completa antes de registrar um novo ponto.'
-   );
-   document.getElementById('proxima').textContent=
-    'Aguarde a conclusão da sincronização';
-  }else{
-   punchButton.classList.remove('sync-lock');
-  }
-
-  if(contingencyMode&&!offlineDayStateReady&&!syncInProgress){
-   punchButton.innerHTML='<span>⚠</span> Jornada não preparada para uso offline';
-   punchButton.setAttribute(
-    'aria-label',
-    'Registro offline indisponível porque as marcações de hoje não foram preparadas.'
-   );
-   document.getElementById('proxima').textContent=
-    'Reconecte o sistema para atualizar as marcações de hoje';
-  }
-  if(
-   contingencyMode&&
-   offlineDayStateReady&&
-   !syncInProgress&&
-   marks.length<4&&
-   Date.now()>=punchCooldownUntil
-  ){
-   punchButton.disabled=false;
-   punchButton.classList.remove('sync-lock','loading','cooldown');
-  }
-
+  if(!lunchLocked){punchButton.disabled=marks.length>=4||punchInFlight||syncInProgress||Date.now()<punchCooldownUntil||(contingencyMode&&!offlineDayStateReady)}
+  if(syncInProgress){punchButton.disabled=true;punchButton.classList.add('sync-lock');punchButton.innerHTML='<span>⏳</span> Sincronizando registros...';document.getElementById('proxima').textContent='Aguarde a conclusão da sincronização'}else{punchButton.classList.remove('sync-lock')}
+  if(contingencyMode&&!offlineDayStateReady&&!syncInProgress){punchButton.innerHTML='<span>⚠</span> Jornada não preparada para uso offline';document.getElementById('proxima').textContent='Reconecte o sistema para atualizar as marcações de hoje'}
+  if(contingencyMode&&offlineDayStateReady&&!syncInProgress&&marks.length<4&&Date.now()>=punchCooldownUntil){punchButton.disabled=false;punchButton.classList.remove('sync-lock','loading','cooldown')}
   if(Date.now()>=punchCooldownUntil)punchButton.classList.remove('cooldown');
   document.body.classList.toggle('homologation-employee',isHomologation);
   const note=document.getElementById('homologation-note');if(note)note.hidden=!isHomologation;
@@ -683,153 +610,51 @@
   clearTimeout(window.__plenitudePointBootTimeout);
   document.body.classList.add('employee-mode','kiosk-point-mode');
   document.getElementById('ponto-funcionario-select').hidden=true;
-  clock();
-  setInterval(clock,1000);
-  setPointLoading('Verificando a conexão...',5);
-
+  clock();setInterval(clock,1000);
+  setPointLoading('Validando funcionário...',10);
   try{
-   const reachable=await probeServer(2500);
-   setPointLoading(
-    reachable
-     ?'Validando funcionário no servidor...'
-     :'Servidor indisponível. Abrindo contingência local...',
-    18
-   );
-
-   let d;
-
-   if(reachable){
-    try{
-     d=await rpc('dados_funcionario_token',{p_token:token});
-     employee=Array.isArray(d)?d[0]:d;
-
-     if(employee){
-      localStorage.setItem(
-       'plenitude-offline-employee-session',
-       JSON.stringify(sess)
-      );
-      localStorage.setItem(
-       'plenitude-offline-employee-profile',
-       JSON.stringify(employee)
-      );
-
-      const profiles=JSON.parse(
-       localStorage.getItem('plenitude-offline-employee-profiles')||'{}'
-      );
-      profiles[String(employee.matricula||'')]=employee;
-      localStorage.setItem(
-       'plenitude-offline-employee-profiles',
-       JSON.stringify(profiles)
-      );
-     }
-    }catch(error){
-     if(!isNetworkFailure(error))throw error;
-     serverReachable=false;
-    }
+   try{
+    employee=await fetchEmployeeOnline(4500);
+    cacheEmployeeProfile();
+   }catch(error){
+    if(!isNetworkFailure(error))throw error;
+    serverReachable=false;
+    employee=restoreEmployeeProfile();
+    if(!employee)throw new Error('Sem conexão e sem perfil de contingência preparado para este funcionário.');
    }
-
-   if(!serverReachable){
-    const profiles=JSON.parse(
-     localStorage.getItem('plenitude-offline-employee-profiles')||'{}'
-    );
-    const sessionRegistration=String(
-     sess.matricula||sess.funcionario_matricula||''
-    );
-
-    employee=
-     profiles[sessionRegistration]||
-     JSON.parse(
-      localStorage.getItem('plenitude-offline-employee-profile')||'null'
-     );
-
-    if(!employee){
-     throw new Error(
-      'Sem internet e sem perfil de contingência preparado para este funcionário.'
-     );
-    }
-
-    await setContingencyUI(true);
-   }
-
-   if(!employee)throw new Error('Sessão inválida.');
-
-   setPointLoading('Carregando perfil do funcionário...',32);
    document.getElementById('clock-employee').textContent=employee.nome;
    document.getElementById('clock-status').textContent='Carregando jornada';
    renderEmployeeAvatar(employee);
-
-   const self=document.getElementById('employee-self-service');
-   self.hidden=false;
+   const self=document.getElementById('employee-self-service');self.hidden=false;
    document.getElementById('self-profile-name').textContent=employee.nome;
-   document.getElementById('self-profile-role').textContent=
-    employee.cargo||'Funcionário';
+   document.getElementById('self-profile-role').textContent=employee.cargo||'Funcionário';
    document.getElementById('self-profile-code').textContent=employee.matricula;
    document.getElementById('change-pin-panel').hidden=!employee.exigir_troca_pin;
 
    if(serverReachable){
-    setPointLoading('Verificando registros locais pendentes...',45);
-    const synced=await syncOfflineQueue();
-
-    if(!synced){
-     throw new Error(
-      'Existem registros locais que ainda não foram completamente sincronizados.'
-     );
+    const pending=(await window.PlenitudeOffline.counts()).local;
+    if(pending>0){
+     setPointLoading(`Sincronizando ${pending} registro(s) offline...`,40);
+     const completed=await syncOfflineQueue();
+     if(!completed)throw new Error('A fila offline ainda possui registros não sincronizados.');
     }
    }
-
-   setPointLoading(
-    serverReachable
-     ?'Carregando marcações oficiais...'
-     :'Carregando o estado local da jornada...',
-    65
-   );
-
+   setPointLoading(serverReachable?'Carregando jornada oficial...':'Carregando jornada local...',70);
    await load();
-
    if(serverReachable&&!contingencyMode){
-    setPointLoading('Carregando recursos complementares...',85);
-
-    const tools=await Promise.allSettled([
-     loadAdjustments(),
-     loadMovements()
-    ]);
-
-    tools.forEach((result,index)=>{
-     if(result.status==='rejected'){
-      console.warn(
-       ['Ajustes indisponíveis','Movimentações indisponíveis'][index],
-       result.reason
-      );
-     }
-    });
-   }else{
-    await setContingencyUI(true);
-   }
-
-   setPointLoading('Finalizando...',100);
+    setPointLoading('Carregando recursos complementares...',88);
+    await Promise.allSettled([loadAdjustments(),loadMovements()]);
+    await setContingencyUI(false);
+   }else await setContingencyUI(true);
    document.getElementById('clock-status').textContent='Pronto para registrar';
-
-   if('serviceWorker' in navigator&&serverReachable){
-    navigator.serviceWorker.register('./sw.js?v=1.0.0-rc5.12').catch(error=>
-     console.warn('Service Worker indisponível',error)
-    );
-   }
-
-   setTimeout(revealPoint,180);
-  }catch(e){
-   console.error('Falha ao iniciar área do funcionário',e);
-   toast(
-    e.message||'Não foi possível abrir a área do funcionário.',
-    'warn'
-   );
-   blockPoint(
-    e.message||'Não foi possível carregar completamente a jornada.'
-   );
-
-   if(/sessão|token|inválid/i.test(String(e.message||''))){
-    sessionStorage.removeItem('plenitude-employee-session');
-    setTimeout(()=>location.replace('index.html'),1400);
-   }
+   setPointLoading('Finalizando...',100);
+   if('serviceWorker' in navigator&&serverReachable){navigator.serviceWorker.register('./sw.js?v=1.0.0-rc5.14').catch(error=>console.warn('Service Worker indisponível',error))}
+   setTimeout(revealPoint,120);
+  }catch(error){
+   console.error('Falha ao iniciar área do funcionário',error);
+   toast(error.message||'Não foi possível abrir a área do funcionário.','warn');
+   blockPoint(error.message||'Não foi possível carregar completamente a jornada.');
+   if(/sessão|token|inválid|expirada/i.test(String(error.message||''))){sessionStorage.removeItem('plenitude-employee-session');setTimeout(()=>location.replace('index.html'),1400)}
   }
  }
  function startPunchCooldown(button, seconds=5){
