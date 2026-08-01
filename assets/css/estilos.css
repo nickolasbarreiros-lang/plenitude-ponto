@@ -1729,3 +1729,10 @@ body:has(.device-grid) .topbar{
   color:#a14a22;
   font-weight:900;
 }
+
+
+/* RC5.16 — abertura online restaurada */
+body:not(.offline-contingency) .point-loading-card{
+  background:#fff;
+  border-color:#eadbd4;
+}

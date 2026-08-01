@@ -55,6 +55,68 @@
   image.src=photo;
   avatar.appendChild(image);
  }
+
+ function cacheEmployeeProfile(){
+  if(!employee)return;
+
+  localStorage.setItem(
+   'plenitude-offline-employee-session',
+   JSON.stringify(sess)
+  );
+
+  localStorage.setItem(
+   'plenitude-offline-employee-profile',
+   JSON.stringify(employee)
+  );
+
+  let profiles={};
+
+  try{
+   profiles=JSON.parse(
+    localStorage.getItem('plenitude-offline-employee-profiles')||'{}'
+   );
+  }catch{
+   profiles={};
+  }
+
+  profiles[String(employee.matricula||'')]=employee;
+
+  localStorage.setItem(
+   'plenitude-offline-employee-profiles',
+   JSON.stringify(profiles)
+  );
+ }
+
+ function restoreEmployeeProfile(){
+  let profiles={};
+
+  try{
+   profiles=JSON.parse(
+    localStorage.getItem('plenitude-offline-employee-profiles')||'{}'
+   );
+  }catch{
+   profiles={};
+  }
+
+  const registration=String(
+   sess.matricula||
+   sess.funcionario_matricula||
+   ''
+  );
+
+  if(registration&&profiles[registration]){
+   return profiles[registration];
+  }
+
+  try{
+   return JSON.parse(
+    localStorage.getItem('plenitude-offline-employee-profile')||'null'
+   );
+  }catch{
+   return null;
+  }
+ }
+
  async function rpc(name,args={}){
   if(serverReachable===false){
    const error=new Error('Servidor indisponível.');
@@ -292,7 +354,7 @@
   const counts=await window.PlenitudeOffline.counts();
 
   if(status){
-   status.hidden=!active;
+   status.hidden=!active||serverReachable===true;
    status.querySelector('strong').textContent=
     `${counts.local} aguardando sincronização`;
   }
@@ -627,6 +689,8 @@
 
     onlineMarks=data||[];
     offlineDayStateReady=true;
+    contingencyMode=false;
+    syncInProgress=false;
 
     await saveOfficialDayState(today,onlineMarks);
     setOfflineDayStateWarning(false);
@@ -792,7 +856,7 @@
 
   clock();
   setInterval(clock,1000);
-  setPointLoading('Validando funcionário...',10);
+  setPointLoading('Abrindo ponto...',10);
 
   try{
    try{
@@ -863,16 +927,6 @@
 
    if(serverReachable===true){
     await setContingencyUI(false);
-
-    setPointLoading(
-     'Carregando recursos complementares...',
-     88
-    );
-
-    await Promise.allSettled([
-     loadAdjustments(),
-     loadMovements()
-    ]);
    }else{
     await setContingencyUI(true);
    }
@@ -881,6 +935,22 @@
     'Pronto para registrar';
 
    setPointLoading('Finalizando...',100);
+
+   if(serverReachable===true){
+    Promise.allSettled([
+     loadAdjustments(),
+     loadMovements()
+    ]).then(results=>{
+     results.forEach((result,index)=>{
+      if(result.status==='rejected'){
+       console.warn(
+        ['Ajustes indisponíveis','Movimentações indisponíveis'][index],
+        result.reason
+       );
+      }
+     });
+    });
+   }
 
    if('serviceWorker' in navigator&&serverReachable===true){
     navigator.serviceWorker
