@@ -203,6 +203,34 @@ window.addEventListener('online',setContingencyLoginMessage);
 window.addEventListener('offline',setContingencyLoginMessage);
 setContingencyLoginMessage();
 
+(function resumeOnlineReauthentication(){
+ const raw=localStorage.getItem('plenitude-online-reauth-required');
+ if(!raw)return;
+
+ let state={};
+
+ try{
+  state=JSON.parse(raw)||{};
+ }catch{}
+
+ openPanel('employee');
+
+ if(state.registration){
+  matricula.value=String(state.registration);
+  pin.focus();
+ }else{
+  matricula.focus();
+ }
+
+ const pending=Number(state.pendingCount||0);
+
+ feedback.textContent=pending>0
+  ?`Conexão restabelecida. Digite o PIN para sincronizar ${pending} registro(s) offline.`
+  :'Sua sessão expirou. Entre novamente para continuar.';
+
+ feedback.className='login-feedback warning';
+})();
+
 form.onsubmit=async event=>{
  event.preventDefault();
 
@@ -258,6 +286,8 @@ form.onsubmit=async event=>{
     'plenitude-offline-employee-session',
     JSON.stringify(row)
    );
+
+   localStorage.removeItem('plenitude-online-reauth-required');
   }catch(error){
    if(!isNetworkFailure(error))throw error;
 

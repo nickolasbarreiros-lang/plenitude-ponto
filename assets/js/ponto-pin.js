@@ -140,11 +140,89 @@
    ]);
 
    const {data,error}=result;
-   if(error)throw error;
+
+   if(error){
+    if(isExpiredEmployeeSession(error)){
+     const sessionError=new Error('Sessão expirada. Entre novamente.');
+     sessionError.code='EMPLOYEE_SESSION_EXPIRED';
+     sessionError.original=error;
+     throw sessionError;
+    }
+
+    const normalized=new Error(normalizedErrorMessage(error));
+    normalized.code=error.code||'RPC_ERROR';
+    normalized.original=error;
+    throw normalized;
+   }
+
    return data;
   }finally{
    clearTimeout(timer);
   }
+ }
+
+
+ function normalizedErrorMessage(error){
+  if(!error)return 'Erro desconhecido.';
+
+  if(typeof error==='string')return error;
+
+  return String(
+   error.message||
+   error.details||
+   error.hint||
+   error.error_description||
+   error.code||
+   'Erro desconhecido.'
+  );
+ }
+
+ function isExpiredEmployeeSession(error){
+  const message=[
+   error?.message,
+   error?.details,
+   error?.hint,
+   error?.code,
+   error?.status,
+   error
+  ].filter(Boolean).join(' ').toLowerCase();
+
+  return (
+   /sess[aã]o expirada|token expirad|sess[aã]o inv[aá]lida|token inv[aá]lido|entre novamente/.test(message)||
+   error?.code==='INVALID_EMPLOYEE_SESSION'
+  );
+ }
+
+ async function redirectToOnlineLogin(){
+  const pendingCount=window.PlenitudeOffline
+   ?(await window.PlenitudeOffline.counts()).local
+   :0;
+
+  localStorage.setItem(
+   'plenitude-online-reauth-required',
+   JSON.stringify({
+    registration:String(
+     employee?.matricula||
+     sess?.matricula||
+     sess?.funcionario_matricula||
+     ''
+    ),
+    pendingCount,
+    createdAt:new Date().toISOString()
+   })
+  );
+
+  sessionStorage.removeItem('plenitude-employee-session');
+
+  blockPoint(
+   pendingCount>0
+    ?`Sessão expirada. Entre novamente para sincronizar ${pendingCount} registro(s) offline.`
+    :'Sessão expirada. Entre novamente.'
+  );
+
+  setTimeout(()=>{
+   location.replace('index.html');
+  },1200);
  }
 
  async function fetchEmployeeOnline(timeoutMs=5000){
@@ -170,7 +248,19 @@
 
    const {data,error}=result;
 
-   if(error)throw error;
+   if(error){
+    if(isExpiredEmployeeSession(error)){
+     const sessionError=new Error('Sessão expirada. Entre novamente.');
+     sessionError.code='EMPLOYEE_SESSION_EXPIRED';
+     sessionError.original=error;
+     throw sessionError;
+    }
+
+    const normalized=new Error(normalizedErrorMessage(error));
+    normalized.code=error.code||'RPC_ERROR';
+    normalized.original=error;
+    throw normalized;
+   }
 
    const row=Array.isArray(data)?data[0]:data;
 
@@ -699,14 +789,19 @@
    }catch(error){
     syncInProgress=false;
 
-    if(isNetworkFailure(error)){
+    if(
+     error?.code==='EMPLOYEE_SESSION_EXPIRED'||
+     isExpiredEmployeeSession(error)
+    ){
+     await redirectToOnlineLogin();
+    }else if(isNetworkFailure(error)){
      await enterOfflineMode(
       'Servidor indisponível. Recuperando a jornada local...'
      );
     }else{
      console.error('Falha ao restaurar o modo online',error);
      blockPoint(
-      error.message||
+      normalizedErrorMessage(error)||
       'Não foi possível carregar a jornada online.'
      );
     }
@@ -1074,7 +1169,7 @@
 
    if('serviceWorker' in navigator&&serverReachable===true){
     navigator.serviceWorker
-     .register('./sw.js?v=1.0.0-rc5.19')
+     .register('./sw.js?v=1.0.0-rc5.20')
      .catch(error=>
       console.warn('Service Worker indisponível',error)
      );
@@ -1087,22 +1182,28 @@
     error
    );
 
+   if(
+    error?.code==='EMPLOYEE_SESSION_EXPIRED'||
+    isExpiredEmployeeSession(error)
+   ){
+    await redirectToOnlineLogin();
+    return;
+   }
+
+   const message=normalizedErrorMessage(error);
+
    toast(
-    error.message||
+    message||
     'Não foi possível abrir a área do funcionário.',
     'warn'
    );
 
    blockPoint(
-    error.message||
+    message||
     'Não foi possível carregar completamente a jornada.'
    );
 
-   if(
-    /sessão|token|inválid|expirada/i.test(
-     String(error.message||'')
-    )
-   ){
+   if(/sessão|token|inválid|expirada/i.test(message)){
     sessionStorage.removeItem(
      'plenitude-employee-session'
     );
