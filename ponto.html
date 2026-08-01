@@ -6,7 +6,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="#ff6500" name="theme-color"/>
 <title>Registrar ponto | Plenitude</title>
-<link href="assets/css/estilos.css?v=1.0.0-rc5.47b" rel="stylesheet"/>
+<link href="assets/css/estilos.css?v=1.0.0-rc5.48" rel="stylesheet"/>
 </head>
 <body>
 <div class="sync-restored-banner" id="sync-restored-banner" hidden>
@@ -93,8 +93,47 @@
   },20000);
 })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc5.47b"></script><script src="assets/js/auth.js?v=1.0.0-rc5.47b"></script>
-<script src="assets/js/database.js?v=1.0.0-rc5.47b"></script><script src="assets/js/offline-contingencia.js?v=1.0.0-rc5.47b"></script>
-<script src="assets/js/ponto-pin.js?v=1.0.0-rc5.47b"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc5.48"></script><script src="assets/js/auth.js?v=1.0.0-rc5.48"></script>
+<script src="assets/js/database.js?v=1.0.0-rc5.48"></script>
+<script src="assets/js/offline-contingencia.js?v=1.0.0-rc5.48"></script>
+<script src="assets/js/app.js?v=1.0.0-rc5.48"></script>
+<script>
+(async function iniciarPontoPorContexto(){
+  'use strict';
+
+  function carregarModuloFuncionario(){
+    const script=document.createElement('script');
+    script.src='assets/js/ponto-pin.js?v=1.0.0-rc5.48';
+    script.async=false;
+    script.onerror=function(){
+      const message=document.getElementById('point-loading-message');
+      const card=document.querySelector('.point-loading-card');
+      if(card)card.classList.add('error');
+      if(message)message.textContent='Não foi possível carregar o módulo do funcionário.';
+    };
+    document.body.appendChild(script);
+  }
+
+  try{
+    const context=await window.PlenitudeAuth.getAccessContext(true);
+
+    if(context?.profile?.papel==='administrador'){
+      /*
+       * A aba nova compartilha a sessão Supabase pelo localStorage.
+       * Neste caso, nunca devemos carregar ponto-pin.js, pois ele exige
+       * token de funcionário e causa "Sessão expirada".
+       */
+      sessionStorage.removeItem('plenitude-employee-session');
+      document.body.classList.add('administrator-point-mode');
+      await initPonto();
+      return;
+    }
+  }catch(error){
+    console.warn('Não foi possível confirmar a sessão administrativa.',error);
+  }
+
+  carregarModuloFuncionario();
+})();
+</script>
 </body>
 </html>
