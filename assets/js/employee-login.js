@@ -14,6 +14,33 @@ const feedback=document.getElementById('employee-login-feedback');
 
 const OFFLINE_LOGIN_KEY='plenitude-offline-login-v1';
 
+function canonicalRegistration(value){
+ const digits=String(value||'').replace(/\D/g,'');
+ return digits?String(Number(digits)):String(value||'').trim().toLowerCase();
+}
+
+function migrateOfflineLogins(){
+ const logins=getOfflineLogins();
+ const migrated={};
+
+ Object.values(logins).forEach(item=>{
+  const key=canonicalRegistration(item.registration);
+  if(!key)return;
+
+  const previous=migrated[key];
+
+  if(
+   !previous||
+   new Date(item.cachedAt||0)>new Date(previous.cachedAt||0)
+  ){
+   migrated[key]={...item,registration:key};
+  }
+ });
+
+ saveOfflineLogins(migrated);
+ return migrated;
+}
+
 function openPanel(type){
  choice.hidden=true;
  security.hidden=true;
@@ -97,10 +124,21 @@ async function cacheSuccessfulLogin(registration,pinValue,deviceToken,sessionRow
   salt
  });
 
- const logins=getOfflineLogins();
+ const logins=migrateOfflineLogins();
+ const canonical=canonicalRegistration(registration);
 
- logins[registration]={
-  registration,
+ Object.keys(logins).forEach(key=>{
+  const current=logins[key];
+  const currentEmployee=current?.employeeId;
+  const newEmployee=sessionRow.funcionario_id||sessionRow.id||null;
+
+  if(key===canonical||(currentEmployee&&newEmployee&&currentEmployee===newEmployee)){
+   delete logins[key];
+  }
+ });
+
+ logins[canonical]={
+  registration:canonical,
   salt,
   verifier,
   session:sessionRow,
@@ -114,8 +152,8 @@ async function cacheSuccessfulLogin(registration,pinValue,deviceToken,sessionRow
 }
 
 async function offlineLogin(registration,pinValue,deviceToken){
- const logins=getOfflineLogins();
- const cached=logins[registration];
+ const logins=migrateOfflineLogins();
+ const cached=logins[canonicalRegistration(registration)];
 
  if(!cached){
   throw new Error(

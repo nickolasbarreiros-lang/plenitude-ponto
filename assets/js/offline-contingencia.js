@@ -151,7 +151,21 @@ async function syncOne(record,client,deviceToken){
   p_hash_anterior:record.hash_anterior||null,
   p_user_agent:record.user_agent
  });
- if(error)throw error;
+ if(error){
+  const message=String(
+   error.message||
+   error.details||
+   error.hint||
+   error.code||
+   'Falha desconhecida ao sincronizar.'
+  );
+
+  const syncError=new Error(message);
+  syncError.code=error.code||'SYNC_RPC_ERROR';
+  syncError.details=error.details||null;
+  throw syncError;
+ }
+
  record.status='sincronizado';
  record.sincronizado_em=new Date().toISOString();
  record.servidor=Array.isArray(data)?data[0]:data;
@@ -162,6 +176,8 @@ async function syncOne(record,client,deviceToken){
 async function syncAll(client,deviceToken){
  const queue=await pending();
  const results=[];
+ const failures=[];
+
  for(const record of queue){
   try{
    results.push(await syncOne(record,client,deviceToken));
@@ -169,13 +185,27 @@ async function syncAll(client,deviceToken){
    record.status='erro';
    record.tentativas=(record.tentativas||0)+1;
    record.ultimo_erro=error.message||String(error);
+   record.ultimo_erro_em=new Date().toISOString();
    await put(record);
-   if(/Failed to fetch|NetworkError|Load failed|fetch/i.test(record.ultimo_erro))break;
+
+   failures.push({
+    evento_offline_id:record.evento_offline_id,
+    funcionario_nome:record.funcionario_nome,
+    matricula:record.matricula,
+    tipo:record.tipo,
+    message:record.ultimo_erro,
+    code:error.code||null
+   });
+
+   if(/Failed to fetch|NetworkError|Load failed|fetch|ERR_INTERNET/i.test(record.ultimo_erro))break;
   }
  }
  if((await pending()).length===0){
   await cleanupSynced();
  }
+
+ results.failures=failures;
+ results.pending=(await pending()).length;
 
  return results;
 }

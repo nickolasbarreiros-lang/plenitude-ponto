@@ -668,8 +668,19 @@
    const after=await window.PlenitudeOffline.counts();
 
    if(after.local>0){
+    const failure=synced.failures?.[0];
+    const detail=failure?.message
+     ?` Motivo: ${failure.message}`
+     :'';
+
     text.textContent=
-     `${synced.length} enviado(s); ${after.local} ainda aguardam sincronização.`;
+     `${synced.length} enviado(s); ${after.local} ainda aguardam sincronização.${detail}`;
+
+    console.error(
+     'Falha ao sincronizar contingência',
+     synced.failures||[]
+    );
+
     return false;
    }
 
@@ -1169,7 +1180,7 @@
 
    if('serviceWorker' in navigator&&serverReachable===true){
     navigator.serviceWorker
-     .register('./sw.js?v=1.0.0-rc5.20')
+     .register('./sw.js?v=1.0.0-rc5.21')
      .catch(error=>
       console.warn('Service Worker indisponível',error)
      );

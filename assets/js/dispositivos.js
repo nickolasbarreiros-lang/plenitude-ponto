@@ -169,20 +169,49 @@
   let profiles={};
 
   try{
-   logins=JSON.parse(localStorage.getItem('plenitude-offline-login-v1')||'{}');
+   logins=JSON.parse(
+    localStorage.getItem('plenitude-offline-login-v1')||'{}'
+   );
   }catch{}
 
   try{
-   profiles=JSON.parse(localStorage.getItem('plenitude-offline-employee-profiles')||'{}');
+   profiles=JSON.parse(
+    localStorage.getItem('plenitude-offline-employee-profiles')||'{}'
+   );
   }catch{}
 
-  return Object.values(logins).map(item=>{
-   const registration=String(item.registration||'');
-   const profile=profiles[registration]||{};
+  const canonical=value=>{
+   const digits=String(value||'').replace(/\D/g,'');
+   return digits?String(Number(digits)):String(value||'').trim().toLowerCase();
+  };
+
+  const unique=new Map();
+
+  Object.values(logins).forEach(item=>{
+   const canonicalRegistration=canonical(item.registration);
+   const profile=
+    profiles[item.registration]||
+    profiles[canonicalRegistration]||
+    {};
    const session=item.session||{};
 
-   return {
-    registration,
+   const employeeId=
+    item.employeeId||
+    session.funcionario_id||
+    session.id||
+    profile.id||
+    null;
+
+   const key=employeeId
+    ?`id:${employeeId}`
+    :`mat:${canonicalRegistration}`;
+
+   const row={
+    registration:
+     profile.matricula||
+     session.matricula||
+     item.registration||
+     canonicalRegistration,
     name:
      profile.nome||
      item.employeeName||
@@ -193,9 +222,22 @@
     profile:Boolean(Object.keys(profile).length),
     session:Boolean(item.session?.token),
     cachedAt:item.cachedAt||null,
-    deviceBound:Boolean(item.deviceTokenSuffix)
+    deviceBound:Boolean(item.deviceTokenSuffix),
+    employeeId
    };
-  }).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+
+   const previous=unique.get(key);
+
+   if(
+    !previous||
+    new Date(row.cachedAt||0)>new Date(previous.cachedAt||0)
+   ){
+    unique.set(key,row);
+   }
+  });
+
+  return [...unique.values()]
+   .sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
  }
 
  function renderPreparedEmployees(){
