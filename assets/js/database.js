@@ -260,6 +260,15 @@
 
 
 
+  async function monthClosureAudit(year,month){
+    const {data,error}=await client.rpc('auditar_competencia_admin',{
+      p_ano:year,
+      p_mes:month
+    });
+    if(error) throw error;
+    return data||{};
+  }
+
   async function monthClosures(startYear=null,endYear=null){
     const {data,error}=await client.rpc('listar_fechamentos_admin',{p_ano_inicio:startYear,p_ano_fim:endYear});
     if(error) throw error; return data||[];
@@ -344,5 +353,5 @@
     if(error) throw error;
   }
 
-  window.PlenitudeDB=Object.freeze({employeeMovements,registerEmployeeMovement,adminMovements,historicalReturnPendencies,journeyPendenciesAdmin,refreshJourneyPendenciesAdmin,createAdminMovement,analyzeMovement,regularizeMovementReturn,archiveMovement,masterPinStatus,setMasterPin,monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks});
+  window.PlenitudeDB=Object.freeze({employeeMovements,registerEmployeeMovement,adminMovements,historicalReturnPendencies,journeyPendenciesAdmin,refreshJourneyPendenciesAdmin,createAdminMovement,analyzeMovement,regularizeMovementReturn,archiveMovement,masterPinStatus,setMasterPin,monthClosureAudit,monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks});
 })();
