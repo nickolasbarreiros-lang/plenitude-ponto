@@ -333,7 +333,46 @@
  }
 
 
+ function forceOnlineVisualState(){
+  contingencyMode=false;
+  syncInProgress=false;
+
+  document.body.classList.remove('offline-contingency');
+  document.getElementById('clock-time')?.classList.remove('offline-clock');
+
+  const status=document.getElementById('offline-point-status');
+  if(status)status.hidden=true;
+
+  const banner=document.getElementById('sync-restored-banner');
+  if(banner)banner.hidden=true;
+
+  const punchButton=document.getElementById('registrar');
+  punchButton?.classList.remove(
+   'sync-lock','loading','cooldown','lunch-wait'
+  );
+
+  const movementPanel=document.querySelector('.movement-employee-panel');
+  movementPanel?.classList.remove('offline-disabled-panel');
+  movementPanel?.removeAttribute('aria-disabled');
+  movementPanel?.querySelector('.offline-feature-notice')?.remove();
+  movementPanel?.querySelectorAll('button,input,textarea,select').forEach(el=>{
+   el.disabled=false;
+  });
+
+  const adjustmentPanel=document.getElementById('adjustment-panel');
+  adjustmentPanel?.classList.remove('offline-disabled-panel');
+  adjustmentPanel?.removeAttribute('aria-disabled');
+  adjustmentPanel?.querySelector('.offline-feature-notice')?.remove();
+  adjustmentPanel?.querySelectorAll('button,input,textarea,select').forEach(el=>{
+   el.disabled=false;
+  });
+
+  const selfPinButton=document.getElementById('abrir-troca-pin');
+  if(selfPinButton)selfPinButton.disabled=false;
+ }
+
  async function setContingencyUI(active){
+  if(!active)forceOnlineVisualState();
   contingencyMode=active;
 
   const foot=document.getElementById('clock-footnote');
@@ -552,6 +591,7 @@
      }
     }else if(banner){
      banner.hidden=true;
+     if(text)text.textContent='';
     }
 
     syncInProgress=false;
@@ -695,6 +735,7 @@
     await saveOfficialDayState(today,onlineMarks);
     setOfflineDayStateWarning(false);
     await setContingencyUI(false);
+    forceOnlineVisualState();
 
     const balances=await Promise.allSettled([
      rpc(
@@ -840,6 +881,11 @@
    );
   }
 
+  if(serverReachable===true&&marks.length<4&&!punchInFlight&&!syncInProgress){
+   forceOnlineVisualState();
+   punchButton.disabled=false;
+  }
+
   if(Date.now()>=punchCooldownUntil)punchButton.classList.remove('cooldown');
   document.body.classList.toggle('homologation-employee',isHomologation);
   const note=document.getElementById('homologation-note');if(note)note.hidden=!isHomologation;
@@ -927,6 +973,7 @@
 
    if(serverReachable===true){
     await setContingencyUI(false);
+    forceOnlineVisualState();
    }else{
     await setContingencyUI(true);
    }

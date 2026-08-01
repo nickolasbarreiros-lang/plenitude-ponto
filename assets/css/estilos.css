@@ -1736,3 +1736,12 @@ body:not(.offline-contingency) .point-loading-card{
   background:#fff;
   border-color:#eadbd4;
 }
+
+
+/* RC5.17 — respeitar o atributo hidden nos indicadores */
+.sync-restored-banner[hidden],
+.offline-point-status[hidden],
+.point-loading-overlay[hidden],
+.success-banner[hidden]{
+  display:none !important;
+}
