@@ -1277,7 +1277,7 @@
 
    if('serviceWorker' in navigator&&serverReachable===true){
     navigator.serviceWorker
-     .register('./sw.js?v=1.0.0-rc5.25')
+     .register('./sw.js?v=1.0.0-rc5.26b')
      .catch(error=>
       console.warn('Service Worker indisponível',error)
      );
