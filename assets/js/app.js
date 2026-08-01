@@ -826,47 +826,350 @@ let CALENDAR_STATE={employee:null,events:[],marks:[]};
 const occurrenceTypeToDb={'Folga':'folga','Férias':'ferias','Feriado':'feriado','Atestado':'atestado','Compensação':'compensacao'};
 const occurrenceTypeFromDb={folga:'Folga',ferias:'Férias',feriado:'Feriado',atestado:'Atestado',compensacao:'Compensação',justificativa:'Justificativa'};
 async function initCalendario(){
-  const context=await initCommon(['administrador']);if(!context)return;const session=context.session;
+  const context=await initCommon(['administrador']);
+  if(!context)return;
+
   try{
-    const employees=await window.PlenitudeDB.employees();CALENDAR_STATE.employee=employees[0]||null;
-    calendarCursor=new Date();
-    document.getElementById('cal-prev').onclick=async()=>{calendarCursor.setMonth(calendarCursor.getMonth()-1);await renderCalendar()};
-    document.getElementById('cal-next').onclick=async()=>{calendarCursor.setMonth(calendarCursor.getMonth()+1);await renderCalendar()};
-    document.getElementById('event-form').onsubmit=async e=>{
-      e.preventDefault();
-      if(!CALENDAR_STATE.employee){toast('Cadastre um funcionário antes de adicionar ocorrências.','warn');return}
-      const date=document.getElementById('event-date').value,type=document.getElementById('event-type').value,note=document.getElementById('event-note').value.trim();
-      if(!date)return;
-      const button=e.submitter;if(button)button.disabled=true;
-      try{
-        await window.PlenitudeDB.saveOccurrence(CALENDAR_STATE.employee.id,{tipo:occurrenceTypeToDb[type],dataInicio:date,dataFim:date,descricao:note});
-        toast('Ocorrência salva no Supabase.');await renderCalendar();
-      }catch(error){toast(errorText(error),'warn');console.error(error)}finally{if(button)button.disabled=false}
+    const employees=await window.PlenitudeDB.employees();
+    CALENDAR_STATE.employee=employees[0]||null;
+    CALENDAR_STATE.holidays=[];
+
+    const employeeSelect=document.getElementById('calendar-employee');
+    employeeSelect.innerHTML=employees.length
+      ?employees.map(employee=>`
+        <option value="${employee.id}">
+          ${employee.nome} — ${employee.matricula||'sem matrícula'}
+        </option>`).join('')
+      :'<option value="">Nenhum funcionário cadastrado</option>';
+
+    employeeSelect.onchange=async()=>{
+      CALENDAR_STATE.employee=employees.find(item=>item.id===employeeSelect.value)||null;
+      await renderCalendar();
     };
+
+    calendarCursor=new Date();
+
+    document.getElementById('cal-prev').onclick=async()=>{
+      calendarCursor.setMonth(calendarCursor.getMonth()-1);
+      await renderCalendar();
+    };
+
+    document.getElementById('cal-next').onclick=async()=>{
+      calendarCursor.setMonth(calendarCursor.getMonth()+1);
+      await renderCalendar();
+    };
+
+    document.getElementById('event-form').onsubmit=async event=>{
+      event.preventDefault();
+
+      if(!CALENDAR_STATE.employee){
+        toast('Cadastre ou selecione um funcionário.','warn');
+        return;
+      }
+
+      const date=document.getElementById('event-date').value;
+      const type=document.getElementById('event-type').value;
+      const note=document.getElementById('event-note').value.trim();
+
+      if(!date)return;
+
+      const button=event.submitter;
+      if(button)button.disabled=true;
+
+      try{
+        await window.PlenitudeDB.saveOccurrence(
+          CALENDAR_STATE.employee.id,
+          {
+            tipo:occurrenceTypeToDb[type],
+            dataInicio:date,
+            dataFim:date,
+            descricao:note
+          }
+        );
+        toast('Ocorrência salva.');
+        await renderCalendar();
+      }catch(error){
+        toast(errorText(error),'warn');
+        console.error(error);
+      }finally{
+        if(button)button.disabled=false;
+      }
+    };
+
+    document.getElementById('holiday-form').onsubmit=saveHolidayFromForm;
+    document.getElementById('holiday-new').onclick=resetHolidayForm;
+    document.getElementById('holiday-delete').onclick=deleteHolidayFromForm;
+
+    document.getElementById('holiday-seed-year').onclick=async()=>{
+      const year=calendarCursor.getFullYear();
+      const confirmed=confirm(
+        `Carregar o calendário oficial de ${year} para Serra/ES?\n\n`+
+        'Feriados já cadastrados não serão duplicados. Pontos facultativos serão carregados desativados para conferência.'
+      );
+
+      if(!confirmed)return;
+
+      const button=document.getElementById('holiday-seed-year');
+      button.disabled=true;
+
+      try{
+        const result=await window.PlenitudeDB.seedCompanyHolidays(year);
+        toast(`${result.inseridos||0} data(s) adicionada(s) ao calendário.`);
+        await renderCalendar();
+      }catch(error){
+        toast(errorText(error),'warn');
+        console.error(error);
+      }finally{
+        button.disabled=false;
+      }
+    };
+
     await renderCalendar();
-  }catch(error){toast(errorText(error),'warn');console.error(error)}
-}
-async function renderCalendar(){
-  const year=calendarCursor.getFullYear(),month=calendarCursor.getMonth(),first=new Date(year,month,1),last=new Date(year,month+1,0);
-  const start=localDateKey(first),end=localDateKey(last);
-  if(CALENDAR_STATE.employee){
-    [CALENDAR_STATE.events,CALENDAR_STATE.marks]=await Promise.all([
-      window.PlenitudeDB.occurrencesForRange(CALENDAR_STATE.employee.id,start,end),
-      window.PlenitudeDB.marksForRange(start,end)
-    ]);
-  }else{CALENDAR_STATE.events=[];CALENDAR_STATE.marks=[]}
-  const eventsByDate={};CALENDAR_STATE.events.forEach(ev=>{eventsByDate[ev.data_inicio]=ev});
-  const marksByDate={};CALENDAR_STATE.marks.filter(m=>!CALENDAR_STATE.employee||m.funcionario_id===CALENDAR_STATE.employee.id).forEach(m=>(marksByDate[m.data_local]??=[]).push(m));
-  document.getElementById('cal-title').textContent=new Intl.DateTimeFormat('pt-BR',{month:'long',year:'numeric'}).format(first);
-  const grid=document.getElementById('calendar-grid');grid.innerHTML=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(x=>`<div class="cal-weekday">${x}</div>`).join('');
-  for(let i=0;i<first.getDay();i++)grid.insertAdjacentHTML('beforeend','<div class="cal-day muted-day"></div>');
-  for(let day=1;day<=last.getDate();day++){
-    const d=new Date(year,month,day),key=localDateKey(d),ev=eventsByDate[key],p=marksByDate[key]||[],today=key===localDateKey();
-    grid.insertAdjacentHTML('beforeend',`<button class="cal-day ${today?'today':''} ${ev?'has-event':''} ${p.length?'has-punch':''}" data-date="${key}"><span>${day}</span>${p.length?`<small>${p.length}/4 pontos</small>`:''}${ev?`<em>${occurrenceTypeFromDb[ev.tipo]||ev.tipo}</em>`:''}</button>`);
+  }catch(error){
+    toast(errorText(error),'warn');
+    console.error(error);
   }
-  grid.querySelectorAll('[data-date]').forEach(btn=>btn.onclick=()=>{
-    const key=btn.dataset.date,ev=eventsByDate[key];document.getElementById('event-date').value=key;
-    document.getElementById('event-type').value=ev?occurrenceTypeFromDb[ev.tipo]||'Folga':'Folga';document.getElementById('event-note').value=ev?.descricao||'';
+}
+
+function resetHolidayForm(){
+  document.getElementById('holiday-form').reset();
+  document.getElementById('holiday-id').value='';
+  document.getElementById('holiday-active').checked=true;
+  document.getElementById('holiday-reduces-load').checked=true;
+  document.getElementById('holiday-rule').value='banco_simples';
+  document.getElementById('holiday-scope').value='nacional';
+  document.getElementById('holiday-editor-status').textContent='Novo';
+  document.getElementById('holiday-delete').hidden=true;
+}
+
+function fillHolidayForm(holiday){
+  document.getElementById('holiday-id').value=holiday.id||'';
+  document.getElementById('holiday-date').value=holiday.data;
+  document.getElementById('holiday-name').value=holiday.nome||'';
+  document.getElementById('holiday-scope').value=holiday.abrangencia||'empresa';
+  document.getElementById('holiday-rule').value=holiday.regra_trabalho||'banco_simples';
+  document.getElementById('holiday-reduces-load').checked=holiday.reduz_carga!==false;
+  document.getElementById('holiday-active').checked=holiday.ativo!==false;
+  document.getElementById('holiday-note').value=holiday.observacao||'';
+  document.getElementById('holiday-editor-status').textContent='Editando';
+  document.getElementById('holiday-delete').hidden=false;
+  document.getElementById('holiday-editor-status').scrollIntoView({
+    behavior:'smooth',
+    block:'center'
+  });
+}
+
+async function saveHolidayFromForm(event){
+  event.preventDefault();
+  const button=event.submitter;
+  if(button)button.disabled=true;
+
+  try{
+    await window.PlenitudeDB.saveCompanyHoliday({
+      id:document.getElementById('holiday-id').value||null,
+      data:document.getElementById('holiday-date').value,
+      nome:document.getElementById('holiday-name').value.trim(),
+      abrangencia:document.getElementById('holiday-scope').value,
+      regraTrabalho:document.getElementById('holiday-rule').value,
+      reduzCarga:document.getElementById('holiday-reduces-load').checked,
+      ativo:document.getElementById('holiday-active').checked,
+      observacao:document.getElementById('holiday-note').value.trim()
+    });
+
+    toast('Feriado salvo e carga prevista atualizada.');
+    resetHolidayForm();
+    await renderCalendar();
+  }catch(error){
+    toast(errorText(error),'warn');
+    console.error(error);
+  }finally{
+    if(button)button.disabled=false;
+  }
+}
+
+async function deleteHolidayFromForm(){
+  const id=document.getElementById('holiday-id').value;
+  if(!id)return;
+
+  if(!confirm('Excluir este feriado do calendário da empresa?'))return;
+
+  try{
+    await window.PlenitudeDB.deleteCompanyHoliday(id);
+    toast('Feriado excluído.');
+    resetHolidayForm();
+    await renderCalendar();
+  }catch(error){
+    toast(errorText(error),'warn');
+    console.error(error);
+  }
+}
+
+function holidayRuleLabel(rule){
+  return ({
+    banco_simples:'Banco simples',
+    banco_dobro:'Banco em dobro',
+    folha:'Pagamento em folha',
+    normal:'Dia normal'
+  })[rule]||rule;
+}
+
+async function renderCalendar(){
+  const year=calendarCursor.getFullYear();
+  const month=calendarCursor.getMonth();
+  const first=new Date(year,month,1);
+  const last=new Date(year,month+1,0);
+  const start=localDateKey(first);
+  const end=localDateKey(last);
+
+  const requests=[
+    window.PlenitudeDB.companyHolidays(start,end)
+  ];
+
+  if(CALENDAR_STATE.employee){
+    requests.push(
+      window.PlenitudeDB.occurrencesForRange(
+        CALENDAR_STATE.employee.id,
+        start,
+        end
+      ),
+      window.PlenitudeDB.marksForRange(start,end)
+    );
+  }
+
+  const results=await Promise.all(requests);
+  CALENDAR_STATE.holidays=results[0]||[];
+
+  if(CALENDAR_STATE.employee){
+    CALENDAR_STATE.events=results[1]||[];
+    CALENDAR_STATE.marks=results[2]||[];
+  }else{
+    CALENDAR_STATE.events=[];
+    CALENDAR_STATE.marks=[];
+  }
+
+  const holidaysByDate={};
+  CALENDAR_STATE.holidays.forEach(item=>{
+    holidaysByDate[item.data]=item;
+  });
+
+  const eventsByDate={};
+  CALENDAR_STATE.events.forEach(event=>{
+    eventsByDate[event.data_inicio]=event;
+  });
+
+  const marksByDate={};
+  CALENDAR_STATE.marks
+    .filter(mark=>
+      !CALENDAR_STATE.employee||
+      mark.funcionario_id===CALENDAR_STATE.employee.id
+    )
+    .forEach(mark=>{
+      (marksByDate[mark.data_local]??=[]).push(mark);
+    });
+
+  document.getElementById('cal-title').textContent=
+    new Intl.DateTimeFormat('pt-BR',{
+      month:'long',
+      year:'numeric'
+    }).format(first);
+
+  const grid=document.getElementById('calendar-grid');
+  grid.innerHTML=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
+    .map(day=>`<div class="cal-weekday">${day}</div>`)
+    .join('');
+
+  for(let index=0;index<first.getDay();index++){
+    grid.insertAdjacentHTML(
+      'beforeend',
+      '<div class="cal-day muted-day"></div>'
+    );
+  }
+
+  for(let day=1;day<=last.getDate();day++){
+    const date=new Date(year,month,day);
+    const key=localDateKey(date);
+    const event=eventsByDate[key];
+    const holiday=holidaysByDate[key];
+    const marks=marksByDate[key]||[];
+    const today=key===localDateKey();
+
+    grid.insertAdjacentHTML(
+      'beforeend',
+      `<button class="cal-day
+        ${today?'today':''}
+        ${event?'has-event':''}
+        ${holiday?'has-holiday':''}
+        ${marks.length?'has-punch':''}
+        ${holiday&&!holiday.ativo?'holiday-inactive':''}"
+        data-date="${key}">
+        <span>${day}</span>
+        ${marks.length?`<small>${marks.length}/4 pontos</small>`:''}
+        ${holiday?`<em class="holiday-name">🎉 ${holiday.nome}</em>`:''}
+        ${event?`<em>${occurrenceTypeFromDb[event.tipo]||event.tipo}</em>`:''}
+      </button>`
+    );
+  }
+
+  grid.querySelectorAll('[data-date]').forEach(button=>{
+    button.onclick=()=>{
+      const key=button.dataset.date;
+      const event=eventsByDate[key];
+      const holiday=holidaysByDate[key];
+
+      document.getElementById('event-date').value=key;
+      document.getElementById('event-type').value=
+        event
+          ?occurrenceTypeFromDb[event.tipo]||'Folga'
+          :'Folga';
+      document.getElementById('event-note').value=event?.descricao||'';
+
+      if(holiday){
+        fillHolidayForm(holiday);
+      }else{
+        resetHolidayForm();
+        document.getElementById('holiday-date').value=key;
+      }
+    };
+  });
+
+  renderHolidayMonthList();
+}
+
+function renderHolidayMonthList(){
+  const list=document.getElementById('holiday-month-list');
+  const rows=CALENDAR_STATE.holidays||[];
+
+  document.getElementById('holiday-month-count').textContent=
+    String(rows.length);
+
+  list.innerHTML=rows.length
+    ?rows.map(item=>`
+      <button type="button" class="holiday-list-item ${item.ativo?'':'inactive'}"
+        data-holiday-id="${item.id}">
+        <span class="holiday-list-date">
+          ${new Intl.DateTimeFormat('pt-BR',{
+            day:'2-digit',
+            month:'short'
+          }).format(dateFromKey(item.data))}
+        </span>
+        <span>
+          <strong>${item.nome}</strong>
+          <small>
+            ${item.abrangencia} ·
+            ${item.reduz_carga?'retira da carga':'não altera carga'} ·
+            ${holidayRuleLabel(item.regra_trabalho)}
+          </small>
+        </span>
+        <b>${item.ativo?'ATIVO':'INATIVO'}</b>
+      </button>`
+    ).join('')
+    :'<div class="mini-empty">Nenhum feriado cadastrado neste mês.</div>';
+
+  list.querySelectorAll('[data-holiday-id]').forEach(button=>{
+    button.onclick=()=>{
+      const holiday=rows.find(item=>item.id===button.dataset.holidayId);
+      if(holiday)fillHolidayForm(holiday);
+    };
   });
 }
 

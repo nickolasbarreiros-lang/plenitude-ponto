@@ -2989,3 +2989,125 @@ body:not(.offline-contingency) .point-loading-card{
     line-height:1.05;
   }
 }
+
+
+/* RC5.43 — calendário de feriados da empresa */
+.calendar-toolbar{
+  display:grid;
+  grid-template-columns:minmax(240px,1fr) auto;
+  gap:10px;
+  align-items:end;
+  margin-bottom:14px;
+}
+.calendar-toolbar label{
+  display:grid;
+  gap:5px;
+  font-weight:800;
+}
+.calendar-editors{
+  display:grid;
+  gap:14px;
+}
+.holiday-editor{
+  border-color:#efbd63;
+  background:linear-gradient(145deg,#fff,#fff9e9);
+}
+.holiday-check{
+  display:flex!important;
+  align-items:center;
+  gap:9px;
+  min-height:44px;
+  padding:10px 12px;
+  border:1px solid #ded1ca;
+  border-radius:12px;
+  background:#fff;
+}
+.holiday-check input{
+  width:18px;
+  height:18px;
+}
+.holiday-form-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.holiday-month-list{
+  display:grid;
+  gap:8px;
+}
+.holiday-list-item{
+  display:grid;
+  grid-template-columns:62px minmax(0,1fr) auto;
+  align-items:center;
+  gap:11px;
+  width:100%;
+  border:1px solid #e6d7cf;
+  border-left:5px solid #d99500;
+  border-radius:12px;
+  background:#fff;
+  padding:10px 12px;
+  text-align:left;
+  cursor:pointer;
+}
+.holiday-list-item.inactive{
+  opacity:.62;
+  border-left-color:#999;
+}
+.holiday-list-date{
+  display:grid;
+  place-items:center;
+  min-height:42px;
+  border-radius:9px;
+  background:#fff1c9;
+  color:#7f5300;
+  font-weight:950;
+  text-transform:uppercase;
+}
+.holiday-list-item>span:nth-child(2){
+  display:grid;
+  gap:3px;
+}
+.holiday-list-item small{
+  color:#776762;
+}
+.holiday-list-item>b{
+  padding:5px 8px;
+  border-radius:999px;
+  background:#e9f8ef;
+  color:#13733b;
+  font-size:9px;
+}
+.holiday-list-item.inactive>b{
+  background:#eee;
+  color:#666;
+}
+.cal-day.has-holiday{
+  border-color:#e0a72d!important;
+  background:linear-gradient(145deg,#fff,#fff4cf);
+}
+.cal-day.has-holiday:before{
+  content:'';
+  position:absolute;
+  inset:0 auto 0 0;
+  width:5px;
+  border-radius:inherit;
+  background:#dfa000;
+}
+.cal-day .holiday-name{
+  color:#855900;
+  font-weight:900;
+}
+.cal-day.holiday-inactive{
+  opacity:.62;
+}
+.calendar-legend .dot.holiday{
+  background:#dfa000;
+}
+.calendar-help{
+  background:#fff8e8;
+}
+@media(max-width:850px){
+  .calendar-toolbar{
+    grid-template-columns:1fr;
+  }
+}

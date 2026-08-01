@@ -111,6 +111,43 @@
     if(error) throw error; return data;
   }
 
+  async function companyHolidays(start,end){
+    const {data,error}=await client.rpc('listar_feriados_empresa_admin',{
+      p_inicio:start,
+      p_fim:end
+    });
+    if(error) throw error;
+    return data||[];
+  }
+
+  async function saveCompanyHoliday(values){
+    const {data,error}=await client.rpc('salvar_feriado_empresa_admin',{
+      p_id:values.id||null,
+      p_data:values.data,
+      p_nome:values.nome,
+      p_abrangencia:values.abrangencia,
+      p_regra_trabalho:values.regraTrabalho,
+      p_reduz_carga:values.reduzCarga,
+      p_ativo:values.ativo,
+      p_observacao:values.observacao||null
+    });
+    if(error) throw error;
+    return Array.isArray(data)?data[0]:data;
+  }
+
+  async function deleteCompanyHoliday(id){
+    const {error}=await client.rpc('excluir_feriado_empresa_admin',{p_id:id});
+    if(error) throw error;
+  }
+
+  async function seedCompanyHolidays(year){
+    const {data,error}=await client.rpc('gerar_feriados_padrao_serra_admin',{
+      p_ano:year
+    });
+    if(error) throw error;
+    return data||{};
+  }
+
   async function occurrencesForRange(employeeId,start,end){
     let query=client.from('ocorrencias').select('*').gte('data_inicio',start).lte('data_inicio',end).order('data_inicio');
     if(employeeId) query=query.eq('funcionario_id',employeeId);
@@ -382,5 +419,5 @@
     if(error) throw error;
   }
 
-  window.PlenitudeDB=Object.freeze({employeeMovements,registerEmployeeMovement,adminMovements,historicalReturnPendencies,journeyPendenciesAdmin,refreshJourneyPendenciesAdmin,createAdminMovement,analyzeMovement,regularizeMovementReturn,archiveMovement,masterPinStatus,setMasterPin,monthClosureAudit,monthlyMirrorStatuses,updateMonthlyMirrorStatus,monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks});
+  window.PlenitudeDB=Object.freeze({employeeMovements,registerEmployeeMovement,adminMovements,historicalReturnPendencies,journeyPendenciesAdmin,refreshJourneyPendenciesAdmin,createAdminMovement,analyzeMovement,regularizeMovementReturn,archiveMovement,masterPinStatus,setMasterPin,monthClosureAudit,monthlyMirrorStatuses,updateMonthlyMirrorStatus,monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,companyHolidays,saveCompanyHoliday,deleteCompanyHoliday,seedCompanyHolidays,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks});
 })();

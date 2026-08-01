@@ -1,4 +1,4 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#2c2324"><title>Calendário | Plenitude Ponto</title><link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc5.42"></head><body>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#2c2324"><title>Calendário | Plenitude Ponto</title><link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc5.43"></head><body>
 <div class="app-shell"><aside class="sidebar"><div class="sidebar-brand"><img class="logo" src="assets/img/logo-plenitude.png" alt="Plenitude"></div><p class="sidebar-label">CONTROLE DE PONTO</p><nav>
 <a data-page="admin" href="admin.html"><span>▦</span><b>Painel</b></a><a data-page="ponto" href="ponto.html"><span>◷</span><b>Registrar ponto</b></a><a data-page="funcionarios" href="funcionarios.html"><span>♙</span><b>Funcionário</b></a><a data-page="jornada" href="jornada.html"><span>▤</span><b>Jornada</b></a><a data-page="calendario" class="active" href="calendario.html"><span>▣</span><b>Calendário</b></a><a data-page="ajustes" href="ajustes.html"><span>✓</span><b>Ajustes</b></a>
     <a data-page="contingencia" href="contingencia.html"><span>☁</span><b>Contingência</b></a><a data-page="relatorios" href="relatorios.html"><span>▥</span><b>Relatórios</b></a><a data-page="fechamento" href="fechamento.html"><span>🔒</span><b>Fechamento</b></a><a data-page="auditoria" href="auditoria.html"><span>⌕</span><b>Auditoria</b></a><a data-page="backup" href="backup.html"><span>⇩</span><b>Backup</b></a>
@@ -6,7 +6,101 @@
     <a data-page="homologacao" href="homologacao.html"><span>🧪</span><b>Homologação</b></a><a data-page="configuracoes" href="configuracoes.html"><span>⚙</span><b>Configurações</b></a>
 </nav><button id="sair" class="link-button">↪ Sair do sistema</button></aside>
 <main class="content"><header class="topbar"><div><p class="eyebrow">ORGANIZAÇÃO</p><h1>Calendário mensal</h1><p class="muted">Visualize registros e marque férias, folgas, feriados ou atestados.</p></div><span class="badge">Agenda de jornada</span></header>
-<section class="calendar-layout"><article class="panel calendar-panel"><div class="calendar-head"><button id="cal-prev" class="btn outline" type="button">←</button><h2 id="cal-title"></h2><button id="cal-next" class="btn outline" type="button">→</button></div><div id="calendar-grid" class="calendar-grid"></div></article>
-<article class="panel event-editor"><div class="panel-head"><div><p class="panel-kicker">EVENTO</p><h2>Adicionar ocorrência</h2></div></div><form id="event-form" class="form-grid"><label class="full">Data<input id="event-date" type="date" required></label><label class="full">Tipo<select id="event-type"><option>Folga</option><option>Férias</option><option>Feriado</option><option>Atestado</option><option>Compensação</option></select></label><label class="full">Observação<textarea id="event-note" rows="4" placeholder="Informação opcional"></textarea></label><button class="btn primary full" type="submit">Salvar no calendário</button></form><div class="calendar-legend"><span><i class="dot punch"></i>Com marcação</span><span><i class="dot event"></i>Com evento</span><span><i class="dot current"></i>Hoje</span></div></article></section>
-</main></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc5.42"></script><script src="assets/js/auth.js?v=1.0.0-rc5.42"></script>
-  <script src="assets/js/database.js?v=1.0.0-rc5.42"></script><script src="assets/js/app.js?v=1.0.0-rc5.42"></script><script>initCalendario()</script></body></html>
+<section class="calendar-layout">
+<article class="panel calendar-panel">
+  <div class="calendar-head">
+    <button id="cal-prev" class="btn outline" type="button">←</button>
+    <h2 id="cal-title"></h2>
+    <button id="cal-next" class="btn outline" type="button">→</button>
+  </div>
+  <div class="calendar-toolbar">
+    <label>Funcionário
+      <select id="calendar-employee"></select>
+    </label>
+    <button id="holiday-seed-year" class="btn outline" type="button">Carregar calendário oficial do ano</button>
+  </div>
+  <div id="calendar-grid" class="calendar-grid"></div>
+</article>
+
+<div class="calendar-editors">
+  <article class="panel event-editor">
+    <div class="panel-head">
+      <div><p class="panel-kicker">FUNCIONÁRIO</p><h2>Ocorrência individual</h2></div>
+    </div>
+    <form id="event-form" class="form-grid">
+      <label class="full">Data<input id="event-date" type="date" required></label>
+      <label class="full">Tipo
+        <select id="event-type">
+          <option>Folga</option><option>Férias</option><option>Atestado</option><option>Compensação</option>
+        </select>
+      </label>
+      <label class="full">Observação<textarea id="event-note" rows="3" placeholder="Informação opcional"></textarea></label>
+      <button class="btn primary full" type="submit">Salvar ocorrência</button>
+    </form>
+  </article>
+
+  <article class="panel holiday-editor">
+    <div class="panel-head">
+      <div><p class="panel-kicker">EMPRESA</p><h2>Feriado ou dia especial</h2></div>
+      <span id="holiday-editor-status" class="badge">Novo</span>
+    </div>
+    <form id="holiday-form" class="form-grid">
+      <input id="holiday-id" type="hidden">
+      <label>Data<input id="holiday-date" type="date" required></label>
+      <label>Abrangência
+        <select id="holiday-scope">
+          <option value="nacional">Nacional</option>
+          <option value="estadual">Estadual — ES</option>
+          <option value="municipal">Municipal — Serra</option>
+          <option value="empresa">Empresa</option>
+          <option value="facultativo">Ponto facultativo</option>
+        </select>
+      </label>
+      <label class="full">Nome<input id="holiday-name" type="text" maxlength="120" required placeholder="Ex.: Nossa Senhora da Penha"></label>
+      <label>Regra quando houver trabalho
+        <select id="holiday-rule">
+          <option value="banco_simples">Crédito simples no banco</option>
+          <option value="banco_dobro">Crédito em dobro no banco</option>
+          <option value="folha">Pagamento em folha</option>
+          <option value="normal">Tratar como dia normal</option>
+        </select>
+      </label>
+      <label class="holiday-check">
+        <input id="holiday-reduces-load" type="checkbox" checked>
+        <span>Retirar da carga prevista</span>
+      </label>
+      <label class="holiday-check">
+        <input id="holiday-active" type="checkbox" checked>
+        <span>Feriado ativo</span>
+      </label>
+      <label class="full">Observação<textarea id="holiday-note" rows="2" placeholder="Lei, decreto ou regra interna"></textarea></label>
+      <div class="holiday-form-actions full">
+        <button class="btn primary" type="submit">Salvar feriado</button>
+        <button id="holiday-new" class="btn outline" type="button">Limpar</button>
+        <button id="holiday-delete" class="btn outline danger" type="button" hidden>Excluir</button>
+      </div>
+    </form>
+  </article>
+
+  <article class="panel holiday-list-panel">
+    <div class="panel-head">
+      <div><p class="panel-kicker">CALENDÁRIO DA EMPRESA</p><h2>Feriados do mês</h2></div>
+      <span id="holiday-month-count" class="badge">0</span>
+    </div>
+    <div id="holiday-month-list" class="holiday-month-list"></div>
+  </article>
+
+  <article class="panel calendar-help">
+    <h3>Como afeta a carga prevista</h3>
+    <p>Feriados ativos com “Retirar da carga prevista” zeram a jornada esperada daquele dia. Se houver trabalho, a regra escolhida define banco simples, banco em dobro, pagamento em folha ou cálculo normal.</p>
+    <div class="calendar-legend">
+      <span><i class="dot punch"></i>Com marcação</span>
+      <span><i class="dot event"></i>Ocorrência individual</span>
+      <span><i class="dot holiday"></i>Feriado da empresa</span>
+      <span><i class="dot current"></i>Hoje</span>
+    </div>
+  </article>
+</div>
+</section>
+</main></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc5.43"></script><script src="assets/js/auth.js?v=1.0.0-rc5.43"></script>
+  <script src="assets/js/database.js?v=1.0.0-rc5.43"></script><script src="assets/js/app.js?v=1.0.0-rc5.43"></script><script>initCalendario()</script></body></html>
