@@ -19,7 +19,7 @@ async function analyze(button,action){const card=button.closest('.contingency-ca
   payload.p_horario_corrigido=new Date(time).toISOString();
  }
 
- await rpc('analisar_contingencia_admin',payload);
+ await rpc('analisar_contingencia_admin_v2',payload);
  toast(action==='aprovar'?'Registro aprovado.':'Registro rejeitado.');
  await load();
 }catch(e){
