@@ -116,6 +116,17 @@ async function createRecord({employee,tipo,deviceToken,existing=[]}){
  return payload;
 }
 
+async function cleanupSynced(){
+ const rows=await all();
+ const synced=rows.filter(record=>record.status==='sincronizado');
+
+ for(const record of synced){
+  await remove(record.evento_offline_id);
+ }
+
+ return synced.length;
+}
+
 async function counts(){
  const rows=await all();
  return {
@@ -162,6 +173,10 @@ async function syncAll(client,deviceToken){
    if(/Failed to fetch|NetworkError|Load failed|fetch/i.test(record.ultimo_erro))break;
   }
  }
+ if((await pending()).length===0){
+  await cleanupSynced();
+ }
+
  return results;
 }
 
@@ -199,6 +214,6 @@ async function selfTest(){
 }
 
 window.PlenitudeOffline=Object.freeze({
- openDB,all,pending,put,remove,createRecord,counts,syncAll,setMeta,getMeta,selfTest
+ openDB,all,pending,put,remove,createRecord,counts,syncAll,cleanupSynced,setMeta,getMeta,selfTest
 });
 })();
