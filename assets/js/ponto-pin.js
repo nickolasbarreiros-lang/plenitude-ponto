@@ -3,7 +3,7 @@
  function stored(){try{return JSON.parse(sessionStorage.getItem('plenitude-employee-session')||localStorage.getItem('plenitude-offline-employee-session')||'null')}catch{return null}}
  const sess=stored();
  if(!sess){ window.PlenitudeAuth.getSession().then(s=>s?initPonto():location.replace('index.html')); return; }
- const token=sess.token;let employee=null;let onlineMarks=[];let offlineDayStateReady=false;let contingencyMode=false;let syncInProgress=false;let pointReady=false;let serverReachable=null;let punchInFlight=false;let punchCooldownUntil=0;let punchCooldownTimer=null;let lunchMinimumTimer=null;
+ const token=sess.token;let employee=null;let onlineMarks=[];let currentJourneyMarks=[];let offlineDayStateReady=false;let contingencyMode=false;let syncInProgress=false;let pointReady=false;let serverReachable=null;let punchInFlight=false;let punchCooldownUntil=0;let punchCooldownTimer=null;let lunchMinimumTimer=null;
  const dateKey=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
  const label=t=>({entrada:'Entrada',inicio_intervalo:'Início do almoço',fim_intervalo:'Retorno do almoço',saida:'Saída'})[t]||'Marcação';
  const fmt=v=>new Date(v).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -221,6 +221,12 @@
   page?.classList.remove('point-booting');
 
   if(button)button.hidden=false;
+
+  refreshPunchAvailability();
+
+  requestAnimationFrame(()=>{
+   refreshPunchAvailability();
+  });
  }
 
  function blockPoint(message){
@@ -333,6 +339,42 @@
  }
 
 
+
+ function refreshPunchAvailability(){
+  const button=document.getElementById('registrar');
+  if(!button)return;
+
+  const marks=currentJourneyMarks||[];
+  const journeyComplete=marks.length>=4;
+  const cooldownActive=Date.now()<punchCooldownUntil;
+  const offlineAllowed=
+   contingencyMode&&
+   offlineDayStateReady;
+
+  const canRegister=
+   pointReady&&
+   !journeyComplete&&
+   !punchInFlight&&
+   !syncInProgress&&
+   !cooldownActive&&
+   (
+    serverReachable===true||
+    offlineAllowed
+   );
+
+  button.disabled=!canRegister;
+
+  if(canRegister){
+   button.removeAttribute('disabled');
+   button.classList.remove(
+    'sync-lock',
+    'loading',
+    'cooldown',
+    'lunch-wait'
+   );
+  }
+ }
+
  function forceOnlineVisualState(){
   contingencyMode=false;
   syncInProgress=false;
@@ -369,6 +411,8 @@
 
   const selfPinButton=document.getElementById('abrir-troca-pin');
   if(selfPinButton)selfPinButton.disabled=false;
+
+  refreshPunchAvailability();
  }
 
  async function setContingencyUI(active){
@@ -795,7 +839,11 @@
   }
 
   const localMarks=await localTodayMarks();
-  const marks=[...(data||[]),...localMarks].sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em));
+  const marks=[...(data||[]),...localMarks].sort(
+   (a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em)
+  );
+
+  currentJourneyMarks=marks;
   document.getElementById('lista-pontos').innerHTML=marks.length?marks.map(m=>`<div class="punch-item ${m.offline?'offline-mark':''}"><span>${label(m.tipo)}${m.offline?' <em>OFFLINE</em>':''}</span><strong>${fmt(m.registrado_em)}</strong></div>`).join(''):'<div class="mini-empty">Nenhuma marcação feita hoje.</div>';
   const labels=['Entrada','Almoço','Retorno','Saída'];
   const actionLabels=['Registrar entrada','Registrar saída para almoço','Registrar retorno do almoço','Registrar saída final'];
@@ -863,30 +911,15 @@
    document.getElementById('proxima').textContent=
     'Reconecte o sistema para atualizar as marcações de hoje';
   }
-  if(
-   marks.length<4&&
-   !syncInProgress&&
-   !punchInFlight&&
-   Date.now()>=punchCooldownUntil&&
-   (
-    serverReachable===true||
-    (contingencyMode&&offlineDayStateReady)
-   )
-  ){
-   punchButton.disabled=false;
-   punchButton.classList.remove(
-    'sync-lock',
-    'loading',
-    'cooldown'
-   );
-  }
-
-  if(serverReachable===true&&marks.length<4&&!punchInFlight&&!syncInProgress){
+  if(serverReachable===true){
    forceOnlineVisualState();
-   punchButton.disabled=false;
   }
 
-  if(Date.now()>=punchCooldownUntil)punchButton.classList.remove('cooldown');
+  refreshPunchAvailability();
+
+  if(Date.now()>=punchCooldownUntil){
+   punchButton.classList.remove('cooldown');
+  }
   document.body.classList.toggle('homologation-employee',isHomologation);
   const note=document.getElementById('homologation-note');if(note)note.hidden=!isHomologation;
  }
@@ -1001,7 +1034,7 @@
 
    if('serviceWorker' in navigator&&serverReachable===true){
     navigator.serviceWorker
-     .register('./sw.js?v=1.0.0-rc5.15')
+     .register('./sw.js?v=1.0.0-rc5.18')
      .catch(error=>
       console.warn('Service Worker indisponível',error)
      );
