@@ -223,10 +223,17 @@
   if(button)button.hidden=false;
 
   refreshPunchAvailability();
+  unlockOnlinePunchButton();
 
   requestAnimationFrame(()=>{
    refreshPunchAvailability();
+   unlockOnlinePunchButton();
   });
+
+  setTimeout(()=>{
+   refreshPunchAvailability();
+   unlockOnlinePunchButton();
+  },100);
  }
 
  function blockPoint(message){
@@ -340,6 +347,32 @@
 
 
 
+
+ function unlockOnlinePunchButton(){
+  const button=document.getElementById('registrar');
+  if(!button)return;
+
+  const marks=currentJourneyMarks||[];
+  const hasNextMark=marks.length<4;
+
+  if(
+   serverReachable===true&&
+   pointReady&&
+   hasNextMark&&
+   !punchInFlight&&
+   !syncInProgress
+  ){
+   button.disabled=false;
+   button.removeAttribute('disabled');
+   button.classList.remove(
+    'sync-lock',
+    'loading',
+    'cooldown',
+    'lunch-wait'
+   );
+  }
+ }
+
  function refreshPunchAvailability(){
   const button=document.getElementById('registrar');
   if(!button)return;
@@ -363,6 +396,11 @@
    );
 
   button.disabled=!canRegister;
+  button.dataset.pointReady=String(pointReady);
+  button.dataset.serverReachable=String(serverReachable);
+  button.dataset.syncInProgress=String(syncInProgress);
+  button.dataset.punchInFlight=String(punchInFlight);
+  button.dataset.marks=String(marks.length);
 
   if(canRegister){
    button.removeAttribute('disabled');
@@ -413,6 +451,7 @@
   if(selfPinButton)selfPinButton.disabled=false;
 
   refreshPunchAvailability();
+  unlockOnlinePunchButton();
  }
 
  async function setContingencyUI(active){
@@ -916,6 +955,7 @@
   }
 
   refreshPunchAvailability();
+  unlockOnlinePunchButton();
 
   if(Date.now()>=punchCooldownUntil){
    punchButton.classList.remove('cooldown');
@@ -1034,7 +1074,7 @@
 
    if('serviceWorker' in navigator&&serverReachable===true){
     navigator.serviceWorker
-     .register('./sw.js?v=1.0.0-rc5.18')
+     .register('./sw.js?v=1.0.0-rc5.19')
      .catch(error=>
       console.warn('Service Worker indisponível',error)
      );
