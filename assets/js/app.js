@@ -652,15 +652,44 @@ async function renderEmployeeSummary(todayMarks){
 async function initRelatorios(){
   const context=await initCommon(['administrador']);if(!context)return;
   const month=document.getElementById('rel-mes'),now=new Date();
-  month.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const params=new URLSearchParams(location.search);
+  month.value=params.get('mes')||
+   `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
   try{
-    const [employees,profile]=await Promise.all([window.PlenitudeDB.employees(),window.PlenitudeDB.profile()]);
-    DB_STATE.employees=employees;DB_STATE.profile=profile;
+    const [employees,profile]=await Promise.all([
+      window.PlenitudeDB.employees(),
+      window.PlenitudeDB.profile()
+    ]);
+
+    DB_STATE.employees=employees;
+    DB_STATE.profile=profile;
+
     const select=document.getElementById('rel-funcionario');
-    select.innerHTML=employees.length?employees.map(f=>`<option value="${f.id}">${f.nome} — ${f.matricula||'sem matrícula'}</option>`).join(''):'<option value="">Nenhum funcionário cadastrado</option>';
+    select.innerHTML=employees.length
+     ?employees.map(f=>`<option value="${f.id}">${f.nome} — ${f.matricula||'sem matrícula'}</option>`).join('')
+     :'<option value="">Nenhum funcionário cadastrado</option>';
+
+    const requestedEmployee=params.get('funcionario');
+    if(requestedEmployee&&employees.some(item=>item.id===requestedEmployee)){
+     select.value=requestedEmployee;
+    }
+
     document.getElementById('atualizar-relatorio').onclick=renderRelatorio;
     document.getElementById('imprimir-relatorio').onclick=()=>window.print();
-    select.onchange=renderRelatorio;month.onchange=renderRelatorio;
+    document.getElementById('imprimir-todos-relatorio').onclick=()=>{
+     const selectedMonth=month.value;
+     if(!selectedMonth)return;
+
+     window.open(
+      `espelhos-impressao.html?mes=${encodeURIComponent(selectedMonth)}&todos=1`,
+      '_blank',
+      'noopener'
+     );
+    };
+
+    select.onchange=renderRelatorio;
+    month.onchange=renderRelatorio;
     await renderRelatorio();
   }catch(error){toast(errorText(error),'warn');console.error(error)}
 }

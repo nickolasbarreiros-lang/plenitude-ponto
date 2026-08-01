@@ -8,7 +8,10 @@
   rows:[],
   selected:null,
   audit:null,
-  auditLoading:false
+  auditLoading:false,
+  mirrors:[],
+  mirrorsLoading:false,
+  mirrorKey:null
  };
 
  const monthSelect=document.getElementById('fc-mes-select');
@@ -209,6 +212,212 @@
   }
  }
 
+
+ function selectedCompetenceKey(){
+  const {year,month}=selectedParts();
+  return key(year,month);
+ }
+
+ function mirrorPrintUrl(employeeId=null){
+  const {year,month}=selectedParts();
+  const params=new URLSearchParams({
+   mes:key(year,month)
+  });
+
+  if(employeeId){
+   params.set('funcionario',employeeId);
+  }else{
+   params.set('todos','1');
+  }
+
+  return `espelhos-impressao.html?${params.toString()}`;
+ }
+
+ function renderMirrors(){
+  const panel=document.getElementById('fc-mirror-panel');
+  const list=document.getElementById('fc-mirror-list');
+  const empty=document.getElementById('fc-mirror-empty');
+  const {year,month}=selectedParts();
+  const row=rowFor(year,month);
+
+  if(!panel||!list||!empty)return;
+
+  if(row?.status!=='fechado'){
+   panel.hidden=true;
+   return;
+  }
+
+  panel.hidden=false;
+  document.getElementById('fc-mirror-title').textContent=
+   `Espelhos de ${competence(year,month)}`;
+
+  if(state.mirrorsLoading){
+   list.innerHTML='<div class="mini-empty">Carregando controle de assinaturas...</div>';
+   empty.style.display='none';
+   return;
+  }
+
+  const total=state.mirrors.length;
+  const signed=state.mirrors.filter(item=>item.status==='assinado').length;
+  const pending=total-signed;
+
+  document.getElementById('fc-mirror-total').textContent=String(total);
+  document.getElementById('fc-mirror-pending').textContent=String(pending);
+  document.getElementById('fc-mirror-signed').textContent=String(signed);
+
+  list.innerHTML=state.mirrors.map(item=>{
+   const isSigned=item.status==='assinado';
+   const signedAt=item.assinado_em
+    ?new Intl.DateTimeFormat('pt-BR').format(
+      new Date(`${item.assinado_em}T12:00:00`)
+     )
+    :'';
+
+   return `
+    <article class="closure-mirror-card ${isSigned?'is-signed':'is-pending'}">
+     <div class="closure-mirror-person">
+      <span class="closure-mirror-avatar">${(item.funcionario_nome||'?').charAt(0)}</span>
+      <div>
+       <strong>${item.funcionario_nome}</strong>
+       <small>Matrícula ${item.matricula||'—'} · ${item.cargo||'Funcionário'}</small>
+      </div>
+     </div>
+
+     <span class="closure-mirror-status">
+      ${isSigned?'✓ ASSINADO':'○ AGUARDANDO ASSINATURA'}
+     </span>
+
+     <div class="closure-mirror-info">
+      ${isSigned
+       ?`<b>Recebido em ${signedAt}</b>
+          <small>${item.registrado_por_nome
+            ?`Registrado por ${item.registrado_por_nome}`
+            :'Devolução registrada'}</small>
+          ${item.observacao?`<small>${item.observacao}</small>`:''}`
+       :`<b>Espelho ainda não devolvido</b>
+          <small>Imprima, recolha a assinatura e registre o recebimento.</small>`}
+     </div>
+
+     <div class="closure-mirror-actions">
+      <a class="btn outline compact"
+       href="${mirrorPrintUrl(item.funcionario_id)}"
+       target="_blank" rel="noopener">
+       Abrir espelho
+      </a>
+
+      <button class="btn ${isSigned?'outline':'primary'} compact"
+       data-mirror-status="${isSigned?'pendente':'assinado'}"
+       data-employee-id="${item.funcionario_id}">
+       ${isSigned?'Marcar como pendente':'Marcar como assinado'}
+      </button>
+     </div>
+    </article>`;
+  }).join('');
+
+  empty.style.display=total?'none':'block';
+
+  list.querySelectorAll('[data-mirror-status]').forEach(button=>{
+   button.onclick=()=>changeMirrorStatus(button);
+  });
+ }
+
+ async function loadMirrors(force=false){
+  const {year,month}=selectedParts();
+  const row=rowFor(year,month);
+  const selectedKey=selectedCompetenceKey();
+
+  if(row?.status!=='fechado'){
+   state.mirrors=[];
+   state.mirrorKey=null;
+   renderMirrors();
+   return;
+  }
+
+  if(!force&&state.mirrorKey===selectedKey&&state.mirrors.length){
+   renderMirrors();
+   return;
+  }
+
+  state.mirrorsLoading=true;
+  renderMirrors();
+
+  try{
+   state.mirrors=await window.PlenitudeDB.monthlyMirrorStatuses(year,month);
+   state.mirrorKey=selectedKey;
+  }catch(error){
+   toast(errorText(error),'warn');
+   console.error(error);
+   state.mirrors=[];
+  }finally{
+   state.mirrorsLoading=false;
+   renderMirrors();
+  }
+ }
+
+ async function changeMirrorStatus(button){
+  const {year,month}=selectedParts();
+  const employeeId=button.dataset.employeeId;
+  const nextStatus=button.dataset.mirrorStatus;
+
+  button.disabled=true;
+
+  try{
+   if(nextStatus==='assinado'){
+    const today=localDateKey(new Date());
+    const signedDate=prompt(
+     'Informe a data em que o funcionário assinou o espelho:',
+     today
+    );
+
+    if(signedDate===null)return;
+
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(signedDate)){
+     throw new Error('Informe a data no formato AAAA-MM-DD.');
+    }
+
+    const note=prompt(
+     'Observação opcional sobre o recebimento do espelho:',
+     ''
+    );
+
+    await window.PlenitudeDB.updateMonthlyMirrorStatus(
+     employeeId,
+     year,
+     month,
+     'assinado',
+     signedDate,
+     note||''
+    );
+
+    toast('Espelho marcado como assinado.');
+   }else{
+    const confirmed=confirm(
+     'Deseja voltar este espelho para pendente de assinatura?'
+    );
+
+    if(!confirmed)return;
+
+    await window.PlenitudeDB.updateMonthlyMirrorStatus(
+     employeeId,
+     year,
+     month,
+     'pendente',
+     null,
+     ''
+    );
+
+    toast('Espelho voltou para pendente.');
+   }
+
+   await loadMirrors(true);
+  }catch(error){
+   toast(errorText(error),'warn');
+   console.error(error);
+  }finally{
+   button.disabled=false;
+  }
+ }
+
  function renderSelected(){
   const {year,month}=selectedParts();
   const row=rowFor(year,month);
@@ -234,6 +443,11 @@
 
   updateCompetenceHint();
   renderAudit();
+  renderMirrors();
+
+  if(row?.status==='fechado'){
+   loadMirrors().catch(error=>console.error(error));
+  }
  }
 
  function render(){
@@ -455,8 +669,18 @@
 
  closeButton.onclick=closeMonth;
  document.getElementById('fc-refresh').onclick=load;
- monthSelect.onchange=auditSelected;
- yearSelect.onchange=auditSelected;
+ document.getElementById('fc-refresh-mirrors').onclick=()=>loadMirrors(true);
+ document.getElementById('fc-print-all').onclick=()=>{
+  window.open(mirrorPrintUrl(), '_blank', 'noopener');
+ };
+ monthSelect.onchange=()=>{
+  state.mirrorKey=null;
+  auditSelected();
+ };
+ yearSelect.onchange=()=>{
+  state.mirrorKey=null;
+  auditSelected();
+ };
 
  await load();
 })();

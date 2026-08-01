@@ -2456,3 +2456,298 @@ body:not(.offline-contingency) .point-loading-card{
     width:100%;
   }
 }
+
+
+/* RC5.39 - controle de espelhos assinados em papel */
+.closure-mirror-panel{
+  border-color:#e4d4cc;
+}
+.closure-mirror-head-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.closure-mirror-summary{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-bottom:14px;
+}
+.closure-mirror-summary article{
+  display:grid;
+  gap:4px;
+  padding:14px;
+  border:1px solid #e6d9d3;
+  border-radius:13px;
+  background:#fff8f4;
+}
+.closure-mirror-summary span{
+  color:#7c6b64;
+  font-size:12px;
+}
+.closure-mirror-summary strong{
+  font-size:24px;
+}
+.closure-mirror-summary .pending{
+  border-color:#e8bd62;
+  background:#fff8e5;
+}
+.closure-mirror-summary .signed{
+  border-color:#a8dbb8;
+  background:#f0faf3;
+}
+.closure-mirror-list{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:11px;
+}
+.closure-mirror-card{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:10px 14px;
+  padding:14px;
+  border:1px solid #e4d8d2;
+  border-left:6px solid #d89b19;
+  border-radius:14px;
+  background:#fff;
+}
+.closure-mirror-card.is-signed{
+  border-left-color:#22a95a;
+  background:#f7fcf8;
+}
+.closure-mirror-person{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+.closure-mirror-avatar{
+  display:grid;
+  place-items:center;
+  width:38px;
+  height:38px;
+  flex:0 0 38px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#ff6419,#ff2859);
+  color:#fff;
+  font-weight:950;
+}
+.closure-mirror-person>div{
+  display:grid;
+  gap:2px;
+  min-width:0;
+}
+.closure-mirror-person strong,
+.closure-mirror-person small{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.closure-mirror-person small{
+  color:#7f6e67;
+}
+.closure-mirror-status{
+  align-self:start;
+  padding:6px 9px;
+  border-radius:999px;
+  background:#fff0bd;
+  color:#875700;
+  font-size:10px;
+  font-weight:950;
+}
+.is-signed .closure-mirror-status{
+  background:#d9f3e3;
+  color:#176e3c;
+}
+.closure-mirror-info{
+  display:grid;
+  gap:3px;
+  grid-column:1/-1;
+  padding:10px;
+  border-radius:10px;
+  background:#fff8ed;
+}
+.is-signed .closure-mirror-info{
+  background:#eaf8ef;
+}
+.closure-mirror-info small{
+  color:#76645e;
+}
+.closure-mirror-actions{
+  grid-column:1/-1;
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+/* Impressão individual e em lote */
+.mirror-print-body{
+  background:#ece8e5;
+}
+.mirror-print-toolbar{
+  position:sticky;
+  top:0;
+  z-index:10;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  padding:18px 24px;
+  border-bottom:1px solid #d8ccc6;
+  background:rgba(255,255,255,.96);
+  backdrop-filter:blur(12px);
+}
+.mirror-print-toolbar h1{
+  margin:3px 0;
+}
+.mirror-print-toolbar>div:last-child{
+  display:flex;
+  gap:8px;
+}
+.mirror-print-root{
+  display:grid;
+  gap:20px;
+  max-width:1180px;
+  margin:24px auto;
+  padding:0 20px 40px;
+}
+.mirror-print-page{
+  padding:22px;
+  border:1px solid #cfc4bf;
+  border-radius:15px;
+  background:#fff;
+  box-shadow:0 12px 30px rgba(45,31,26,.12);
+}
+.mirror-print-summary{
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:7px;
+  margin:12px 0;
+}
+.mirror-print-summary div{
+  display:grid;
+  gap:3px;
+  padding:8px;
+  border:1px solid #ddd2cc;
+  border-radius:8px;
+  text-align:center;
+}
+.mirror-print-summary span{
+  color:#776762;
+  font-size:10px;
+}
+.mirror-print-summary strong{
+  font-size:14px;
+}
+.mirror-print-table{
+  width:100%;
+  min-width:0;
+  border-collapse:collapse;
+  font-size:10px;
+}
+.mirror-print-table th,
+.mirror-print-table td{
+  padding:5px 4px;
+  border:1px solid #d7ccc6;
+  text-align:center;
+}
+.mirror-paper-signatures{
+  margin-top:20px;
+  page-break-inside:avoid;
+}
+.mirror-paper-signatures>p{
+  margin:0 0 34px;
+  color:#62534e;
+  font-size:11px;
+}
+.mirror-paper-signatures>div{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:70px;
+}
+.mirror-paper-signatures section{
+  display:grid;
+  gap:5px;
+  text-align:center;
+}
+.mirror-paper-signatures section>span{
+  border-top:1px solid #332b29;
+}
+.mirror-paper-signatures small{
+  color:#766762;
+}
+
+@media(max-width:900px){
+  .closure-mirror-list{
+    grid-template-columns:1fr;
+  }
+  .closure-mirror-summary{
+    grid-template-columns:1fr;
+  }
+}
+@media print{
+  @page{
+    size:A4 portrait;
+    margin:8mm;
+  }
+  .mirror-print-body{
+    background:#fff!important;
+  }
+  .mirror-print-toolbar{
+    display:none!important;
+  }
+  .mirror-print-root{
+    display:block;
+    max-width:none;
+    margin:0;
+    padding:0;
+  }
+  .mirror-print-page{
+    min-height:277mm;
+    margin:0;
+    padding:5mm;
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+    page-break-after:always;
+    break-after:page;
+  }
+  .mirror-print-page:last-child{
+    page-break-after:auto;
+    break-after:auto;
+  }
+  .mirror-print-page .time-sheet-header{
+    grid-template-columns:38mm 1fr 38mm;
+    gap:4mm;
+    padding-bottom:3mm;
+  }
+  .mirror-print-page .time-sheet-header img{
+    width:34mm;
+  }
+  .mirror-print-page .time-sheet-identification{
+    padding-top:3mm;
+    gap:3mm;
+  }
+  .mirror-print-summary{
+    gap:1.5mm;
+    margin:3mm 0;
+  }
+  .mirror-print-summary div{
+    padding:2mm 1mm;
+    border-radius:0;
+  }
+  .mirror-print-table{
+    font-size:7.5px;
+  }
+  .mirror-print-table th,
+  .mirror-print-table td{
+    padding:1.25mm .7mm;
+  }
+  .mirror-paper-signatures{
+    margin-top:6mm;
+  }
+  .mirror-paper-signatures>p{
+    margin-bottom:13mm;
+  }
+}

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="theme-color" content="#2c2324">
+ <title>Espelhos mensais | Plenitude Ponto</title>
+ <link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc5.39">
+</head>
+<body class="mirror-print-body">
+ <div class="mirror-print-toolbar no-print">
+  <div>
+   <p class="eyebrow">ESPELHOS MENSAIS</p>
+   <h1 id="batch-title">Preparando impressão...</h1>
+   <p id="batch-subtitle" class="muted">Carregando funcionários e jornadas.</p>
+  </div>
+  <div>
+   <button id="batch-back" class="btn outline">Voltar</button>
+   <button id="batch-print" class="btn primary" disabled>Imprimir / Salvar PDF</button>
+  </div>
+ </div>
+
+ <main id="mirror-print-root" class="mirror-print-root">
+  <div class="panel mini-empty">Gerando espelhos...</div>
+ </main>
+
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+ <script src="assets/js/supabase-config.js?v=1.0.0-rc5.39"></script>
+ <script src="assets/js/auth.js?v=1.0.0-rc5.39"></script>
+ <script src="assets/js/database.js?v=1.0.0-rc5.39"></script>
+ <script src="assets/js/app.js?v=1.0.0-rc5.39"></script>
+ <script src="assets/js/espelhos-impressao.js?v=1.0.0-rc5.39"></script>
+</body>
+</html>
