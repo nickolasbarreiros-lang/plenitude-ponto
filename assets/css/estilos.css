@@ -1752,3 +1752,61 @@ body:not(.offline-contingency) .point-loading-card{
 .point-toast.success{border:1px solid #9dd7ae;background:#e9f8ee;color:#16713a}
 .point-toast.warn{border:1px solid #e6bd67;background:#fff3d2;color:#80580a}
 @media(max-width:640px){.point-toast-region{top:10px;right:10px;width:calc(100% - 20px)}}
+
+
+/* RC5.25 — jornadas incompletas de dias anteriores */
+.employee-journey-pendencies{
+  display:grid;
+  gap:10px;
+  margin:12px 0;
+}
+.employee-journey-pendencies[hidden]{
+  display:none !important;
+}
+.employee-journey-pendencies article{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:12px 14px;
+  border:1px solid #e9a744;
+  border-radius:12px;
+  background:#fff4d8;
+  color:#714900;
+}
+.employee-journey-pendencies article>div{
+  display:grid;
+  gap:3px;
+}
+.employee-journey-pendencies span{
+  font-size:12px;
+  line-height:1.4;
+}
+.employee-journey-pendencies button{
+  flex:0 0 auto;
+  border:1px solid #d98212;
+  border-radius:10px;
+  background:#fff;
+  color:#9a4b00;
+  padding:9px 12px;
+  font-weight:900;
+  cursor:pointer;
+}
+.chart-column.is-pending .chart-value,
+.chart-column.is-pending small{
+  color:#b14d00;
+  font-weight:800;
+}
+.chart-column.is-pending .chart-bar{
+  background:repeating-linear-gradient(
+    135deg,
+    #ffb22c 0 8px,
+    #ffe1a0 8px 16px
+  );
+}
+@media(max-width:700px){
+  .employee-journey-pendencies article{
+    align-items:stretch;
+    flex-direction:column;
+  }
+}

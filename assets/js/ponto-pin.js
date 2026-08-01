@@ -918,6 +918,77 @@
   return true;
  }
 
+
+ async function loadJourneyPendencies(){
+  if(serverReachable!==true)return [];
+
+  const rows=await rpc(
+   'listar_minhas_pendencias_jornada',
+   {p_token:token}
+  );
+
+  renderJourneyPendencies(rows||[]);
+  return rows||[];
+ }
+
+ function renderJourneyPendencies(rows){
+  let box=document.getElementById('employee-journey-pendencies');
+  const host=document.querySelector('.clock-action-card');
+
+  if(!host)return;
+
+  if(!box){
+   box=document.createElement('section');
+   box.id='employee-journey-pendencies';
+   box.className='employee-journey-pendencies';
+   host.insertAdjacentElement('afterend',box);
+  }
+
+  if(!rows?.length){
+   box.hidden=true;
+   box.innerHTML='';
+   return;
+  }
+
+  box.hidden=false;
+  box.innerHTML=rows.map(row=>{
+   const date=new Date(`${row.data_local}T12:00:00`)
+    .toLocaleDateString('pt-BR');
+   const missing=row.marcacao_faltante_label||'marcação';
+
+   return `
+    <article>
+     <div>
+      <strong>⚠ Jornada incompleta em ${date}</strong>
+      <span>Faltou registrar ${missing}. Envie uma solicitação de correção para regularizar o dia.</span>
+     </div>
+     <button type="button" data-open-adjustment="${row.data_local}" data-mark-type="${row.marcacao_faltante}">
+      Solicitar correção
+     </button>
+    </article>`;
+  }).join('');
+
+  box.querySelectorAll('[data-open-adjustment]').forEach(button=>{
+   button.onclick=()=>{
+    if(contingencyMode||serverReachable!==true){
+     toast('A solicitação de correção exige conexão com o servidor.','warn');
+     return;
+    }
+
+    const dateInput=document.getElementById('adjustment-date');
+    const typeInput=document.getElementById('adjustment-type');
+
+    setAdjustmentEditing(true);
+
+    if(dateInput)dateInput.value=button.dataset.openAdjustment;
+    if(typeInput)typeInput.value=button.dataset.markType||'saida';
+
+    document.getElementById('adjustment-panel')
+     ?.scrollIntoView({behavior:'smooth',block:'center'});
+   };
+  });
+ }
+
  async function load(){
   const now=new Date();
   const today=dateKey(now);
@@ -1190,12 +1261,13 @@
    if(serverReachable===true){
     Promise.allSettled([
      loadAdjustments(),
-     loadMovements()
+     loadMovements(),
+     loadJourneyPendencies()
     ]).then(results=>{
      results.forEach((result,index)=>{
       if(result.status==='rejected'){
        console.warn(
-        ['Ajustes indisponíveis','Movimentações indisponíveis'][index],
+        ['Ajustes indisponíveis','Movimentações indisponíveis','Pendências de jornada indisponíveis'][index],
         result.reason
        );
       }
@@ -1205,7 +1277,7 @@
 
    if('serviceWorker' in navigator&&serverReachable===true){
     navigator.serviceWorker
-     .register('./sw.js?v=1.0.0-rc5.23')
+     .register('./sw.js?v=1.0.0-rc5.25')
      .catch(error=>
       console.warn('Service Worker indisponível',error)
      );

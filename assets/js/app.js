@@ -237,6 +237,28 @@ async function renderSmartDashboard(activeEmployees,lateCount,tolerance){
   const pendingCount=pending.length;
   const pendingEl=document.getElementById('ajustes-pendentes');if(pendingEl)pendingEl.textContent=String(pendingCount);
   const notes=[];
+  let journeyPendencies=[];
+  try{
+    await window.PlenitudeDB.refreshJourneyPendenciesAdmin();
+    journeyPendencies=await window.PlenitudeDB.journeyPendenciesAdmin();
+  }catch(error){
+    console.warn('Pendências de jornada indisponíveis',error);
+  }
+
+  if(journeyPendencies.length){
+    const oldest=journeyPendencies[0];
+    const date=new Date(`${oldest.data_local}T12:00:00`).toLocaleDateString('pt-BR');
+
+    notes.push({
+      type:'danger',
+      icon:'⚠',
+      title:`${journeyPendencies.length} jornada${journeyPendencies.length===1?'':'s'} incompleta${journeyPendencies.length===1?'':'s'}`,
+      text:`Mais antiga: ${oldest.funcionario_nome}, ${date}. Faltou ${String(oldest.marcacao_faltante_label||'marcação').toLowerCase()}.`,
+      href:`relatorios.html?funcionario=${encodeURIComponent(oldest.funcionario_id)}&inicio=${oldest.data_local}&fim=${oldest.data_local}`,
+      label:'Ver jornada'
+    });
+  }
+
   let returnPendencies=[];
   try{returnPendencies=await window.PlenitudeDB.historicalReturnPendencies()}catch(error){console.warn('Pendências de retorno indisponíveis',error)}
   if(returnPendencies.length){
@@ -403,8 +425,14 @@ async function renderWeekChartDB(employeeId=DB_STATE.employee?.id,schedule=DB_ST
       state=day.extraDay?'is-extra-day':'is-complete';
     }else if(day.count){
       value=`${day.count}/4`;
-      subtitle=`Em andamento · entrada ${day.first}`;
-      state='is-partial';
+
+      if(day.isToday){
+        subtitle=`Em andamento · entrada ${day.first}`;
+        state='is-partial';
+      }else{
+        subtitle=`Pendência · jornada incompleta`;
+        state='is-pending';
+      }
     }else if(day.isToday){
       subtitle=day.scheduled?'Aguardando marcação hoje':'Hoje sem jornada prevista';
       state='is-today-empty';
