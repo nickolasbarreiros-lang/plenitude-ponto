@@ -651,7 +651,7 @@
 
   syncInProgress=true;
   banner.hidden=false;
-  text.textContent=`Enviando ${before.local} registro(s) para conferência...`;
+  text.textContent=`Importando ${before.local} registro(s) offline...`;
 
   if(punchButton){
    punchButton.disabled=true;
@@ -685,7 +685,7 @@
    }
 
    text.textContent=
-    `${synced.length} registro(s) sincronizado(s). Atualizando a jornada...`;
+    `${synced.length} registro(s) importado(s). Atualizando a jornada oficial...`;
    return true;
   }finally{
    syncInProgress=false;
@@ -762,7 +762,7 @@
     if(pendingCount>0){
      if(banner)banner.hidden=false;
      if(text)text.textContent=
-      `Sincronizando ${pendingCount} registro(s) offline...`;
+      `Importando ${pendingCount} registro(s) offline...`;
 
      setPointLoading('Sincronizando registros offline...',40);
 
@@ -1180,7 +1180,7 @@
 
    if('serviceWorker' in navigator&&serverReachable===true){
     navigator.serviceWorker
-     .register('./sw.js?v=1.0.0-rc5.21')
+     .register('./sw.js?v=1.0.0-rc5.22')
      .catch(error=>
       console.warn('Service Worker indisponível',error)
      );
