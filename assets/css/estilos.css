@@ -1830,3 +1830,89 @@ body:not(.offline-contingency) .point-loading-card{
 @media(max-width:800px){.journey-critical-alert{grid-template-columns:auto 1fr}.journey-alert-action{grid-column:1/-1;width:100%}}
 @media(max-width:520px){.journey-critical-alert{grid-template-columns:1fr;text-align:center}.journey-alert-icon,.journey-alert-missing{margin-inline:auto}.journey-alert-heading{justify-content:center}}
 @media(prefers-reduced-motion:reduce){.journey-critical-alert,.journey-alert-icon,.journey-critical-alert:after{animation:none!important}}
+
+
+/* RC5.28 — solicitação enviada e aguardando análise */
+.journey-review-alert{
+  position:relative;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:18px;
+  padding:18px 20px;
+  border:2px solid #d89b19;
+  border-left-width:10px;
+  border-radius:16px;
+  background:linear-gradient(135deg,#fffaf0,#fff0bd);
+  color:#674500;
+  box-shadow:0 12px 28px rgba(164,110,0,.14);
+}
+.journey-review-icon{
+  display:grid;
+  place-items:center;
+  width:58px;
+  height:58px;
+  border-radius:50%;
+  background:#d59100;
+  color:#fff;
+  font-size:29px;
+  box-shadow:0 0 0 7px rgba(213,145,0,.13);
+}
+.journey-review-badge{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:4px 10px;
+  border-radius:999px;
+  background:#d59100;
+  color:#fff;
+  font-size:11px;
+  font-weight:950;
+  letter-spacing:.08em;
+}
+.journey-review-missing{
+  width:max-content;
+  max-width:100%;
+  padding:7px 11px;
+  border:1px solid rgba(174,112,0,.25);
+  border-radius:10px;
+  background:rgba(255,255,255,.72);
+  color:#835800;
+  font-weight:900;
+}
+.journey-review-action{
+  min-width:190px;
+  border:1px solid #d89b19;
+  border-radius:12px;
+  padding:12px 15px;
+  background:#fff;
+  color:#8d5c00;
+  font-weight:900;
+  cursor:pointer;
+}
+.journey-rejection-reason{
+  display:block;
+  padding:8px 10px;
+  border-radius:9px;
+  background:rgba(255,255,255,.68);
+  color:#731b1b !important;
+}
+@media(max-width:800px){
+  .journey-review-alert{
+    grid-template-columns:auto 1fr;
+  }
+  .journey-review-action{
+    grid-column:1/-1;
+    width:100%;
+  }
+}
+@media(max-width:520px){
+  .journey-review-alert{
+    grid-template-columns:1fr;
+    text-align:center;
+  }
+  .journey-review-icon,
+  .journey-review-missing{
+    margin-inline:auto;
+  }
+}

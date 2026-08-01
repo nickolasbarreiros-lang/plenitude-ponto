@@ -922,13 +922,39 @@
  async function loadJourneyPendencies(){
   if(serverReachable!==true)return [];
 
-  const rows=await rpc(
-   'listar_minhas_pendencias_jornada',
-   {p_token:token}
-  );
+  const [pendencyResult,adjustmentResult]=await Promise.allSettled([
+   rpc('listar_minhas_pendencias_jornada',{p_token:token}),
+   rpc('listar_meus_ajustes',{p_token:token})
+  ]);
 
-  renderJourneyPendencies(rows||[]);
-  return rows||[];
+  if(pendencyResult.status==='rejected'){
+   throw pendencyResult.reason;
+  }
+
+  const rows=pendencyResult.value||[];
+  const adjustments=
+   adjustmentResult.status==='fulfilled'
+    ?adjustmentResult.value||[]
+    :[];
+
+  const enriched=rows.map(row=>{
+   const related=adjustments
+    .filter(item=>
+     item.data_marcacao===row.data_local&&
+     item.tipo_marcacao===row.marcacao_faltante
+    )
+    .sort((a,b)=>
+     new Date(b.criado_em||0)-new Date(a.criado_em||0)
+    )[0]||null;
+
+   return {
+    ...row,
+    solicitacao:related
+   };
+  });
+
+  renderJourneyPendencies(enriched);
+  return enriched;
  }
 
  function renderJourneyPendencies(rows){
@@ -955,6 +981,57 @@
    const date=new Date(`${row.data_local}T12:00:00`)
     .toLocaleDateString('pt-BR');
    const missing=row.marcacao_faltante_label||'marcação';
+   const request=row.solicitacao||null;
+   const status=String(request?.status||'').toLowerCase();
+
+   if(status==='pendente'){
+    return `
+     <article class="journey-review-alert">
+      <div class="journey-review-icon" aria-hidden="true">⏳</div>
+      <div class="journey-alert-content">
+       <div class="journey-alert-heading">
+        <strong>CORREÇÃO ENVIADA</strong>
+        <span class="journey-review-badge">EM ANÁLISE</span>
+       </div>
+       <p>A correção da jornada de <b>${date}</b> foi enviada.</p>
+       <div class="journey-review-missing">${missing}</div>
+       <small>
+        Aguardando análise do administrador. Você pode continuar
+        registrando o ponto normalmente.
+       </small>
+      </div>
+      <button type="button" class="journey-review-action"
+       data-view-adjustment="${request.id||''}">
+       📄 Solicitação enviada
+      </button>
+     </article>`;
+   }
+
+   if(status==='rejeitada'){
+    const response=request.resposta_administrador
+     ?`<small class="journey-rejection-reason"><b>Resposta:</b> ${request.resposta_administrador}</small>`
+     :'';
+
+    return `
+     <article class="journey-critical-alert journey-rejected-alert">
+      <div class="journey-alert-icon" aria-hidden="true">!</div>
+      <div class="journey-alert-content">
+       <div class="journey-alert-heading">
+        <strong>CORREÇÃO REJEITADA</strong>
+        <span class="journey-alert-badge">AÇÃO NECESSÁRIA</span>
+       </div>
+       <p>A jornada de <b>${date}</b> continua incompleta.</p>
+       <div class="journey-alert-missing">❌ ${missing.toUpperCase()}</div>
+       ${response}
+       <small>Revise os dados e envie uma nova solicitação.</small>
+      </div>
+      <button type="button" class="journey-alert-action"
+       data-open-adjustment="${row.data_local}"
+       data-mark-type="${row.marcacao_faltante}">
+       📝 Enviar nova correção
+      </button>
+     </article>`;
+   }
 
    return `
     <article class="journey-critical-alert">
@@ -966,7 +1043,10 @@
       </div>
       <p>O dia <b>${date}</b> terminou sem o registro de:</p>
       <div class="journey-alert-missing">❌ ${missing.toUpperCase()}</div>
-      <small>Envie uma solicitação de correção. Este aviso permanecerá visível até a regularização.</small>
+      <small>
+       Envie uma solicitação de correção. O ponto atual continuará
+       funcionando normalmente.
+      </small>
      </div>
      <button type="button" class="journey-alert-action"
       data-open-adjustment="${row.data_local}"
@@ -983,15 +1063,22 @@
      return;
     }
 
-    const dateInput=document.getElementById('adjustment-date');
-    const typeInput=document.getElementById('adjustment-type');
-
     setAdjustmentEditing(true);
+
+    const dateInput=document.getElementById('ajuste-data');
+    const typeInput=document.getElementById('ajuste-tipo');
 
     if(dateInput)dateInput.value=button.dataset.openAdjustment;
     if(typeInput)typeInput.value=button.dataset.markType||'saida';
 
     document.getElementById('adjustment-panel')
+     ?.scrollIntoView({behavior:'smooth',block:'center'});
+   };
+  });
+
+  box.querySelectorAll('[data-view-adjustment]').forEach(button=>{
+   button.onclick=()=>{
+    document.getElementById('my-adjustments')
      ?.scrollIntoView({behavior:'smooth',block:'center'});
    };
   });
@@ -1285,7 +1372,7 @@
 
    if('serviceWorker' in navigator&&serverReachable===true){
     navigator.serviceWorker
-     .register('./sw.js?v=1.0.0-rc5.27')
+     .register('./sw.js?v=1.0.0-rc5.28')
      .catch(error=>
       console.warn('Service Worker indisponível',error)
      );
@@ -1717,7 +1804,11 @@ document.getElementById('registrar').onclick=async()=>{
 
    toast('Solicitação enviada para análise.');
    setAdjustmentEditing(false);
-   await loadAdjustments();
+
+   await Promise.all([
+    loadAdjustments(),
+    loadJourneyPendencies()
+   ]);
   }catch(err){
    toast(err.message,'warn');
   }finally{
