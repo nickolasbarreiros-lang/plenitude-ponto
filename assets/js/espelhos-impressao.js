@@ -54,9 +54,28 @@
    .replace(/"/g,'&quot;');
  }
 
- function mirrorPage(employee,company,result,index,total){
+ function mirrorPage(employee,company,result,employeeSchedules,index,total){
   const summary=result.resumo||{};
-  const days=(result.dias||[]).filter(day=>
+  const allDays=result.dias||[];
+  const plannedMinutes=allDays.reduce(
+   (total,day)=>total+Number(day.previsto_minutos||0),
+   0
+  );
+  const weeklyMinutes=(employeeSchedules||[]).reduce((total,row)=>{
+   if(!row.ativo||!row.entrada||!row.inicio_intervalo||!row.fim_intervalo||!row.saida){
+    return total;
+   }
+
+   const toMinutes=value=>{
+    const [hours,minutes]=String(value).slice(0,5).split(':').map(Number);
+    return hours*60+minutes;
+   };
+
+   return total+
+    Math.max(0,toMinutes(row.inicio_intervalo)-toMinutes(row.entrada))+
+    Math.max(0,toMinutes(row.saida)-toMinutes(row.fim_intervalo));
+  },0);
+  const days=allDays.filter(day=>
    day.previsto_minutos>0||
    day.quantidade_marcacoes>0||
    day.ocorrencia
@@ -117,12 +136,17 @@
 
    <div class="mirror-print-summary">
     <div><span>Dias trabalhados</span><strong>${summary.dias_trabalhados||0}</strong></div>
-    <div><span>Horas previstas</span><strong>${fmtMinutes(summary.previsto_minutos||0)}</strong></div>
+    <div><span>Carga prevista</span><strong>${fmtMinutes(plannedMinutes)}</strong></div>
     <div><span>Horas trabalhadas</span><strong>${fmtMinutes(summary.trabalhado_minutos||0)}</strong></div>
     <div><span>Saldo</span><strong>${signedMinutes(summary.saldo_minutos||0)}</strong></div>
     <div><span>Créditos</span><strong>+${fmtMinutes(summary.credito_minutos||0)}</strong></div>
     <div><span>Débitos</span><strong>-${fmtMinutes(summary.debito_minutos||0)}</strong></div>
    </div>
+
+   <p class="mirror-schedule-basis">
+    Base semanal: <b>${fmtMinutes(weeklyMinutes)}</b> ·
+    Carga da competência calculada pela soma da jornada prevista em cada dia do calendário.
+   </p>
 
    <table class="mirror-print-table">
     <thead>
@@ -193,17 +217,17 @@
    document.getElementById('batch-subtitle').textContent=
     `Gerando ${index+1} de ${selectedEmployees.length}: ${employee.nome}`;
 
-   const result=await window.PlenitudeDB.bankHours(
-    employee.id,
-    start,
-    end
-   );
+   const [result,employeeSchedules]=await Promise.all([
+    window.PlenitudeDB.bankHours(employee.id,start,end),
+    window.PlenitudeDB.schedules(employee.id)
+   ]);
 
    pages.push(
     mirrorPage(
      employee,
      company,
      result,
+     employeeSchedules,
      index,
      selectedEmployees.length
     )

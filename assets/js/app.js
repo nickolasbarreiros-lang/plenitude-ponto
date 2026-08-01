@@ -713,7 +713,11 @@ async function renderRelatorio(){
     document.title=`Espelho de Ponto - ${employee.nome||'Funcionário'} - ${selected}`;
     const result=await window.PlenitudeDB.bankHours(employeeId,start,end),summary=result.resumo||{},days=result.dias||[];
     document.getElementById('rel-dias').textContent=summary.dias_trabalhados||0;
-    document.getElementById('rel-previsto').textContent=fmtMinutes(summary.previsto_minutos||0);
+    const plannedMinutes=days.reduce(
+      (total,day)=>total+Number(day.previsto_minutos||0),
+      0
+    );
+    document.getElementById('rel-previsto').textContent=fmtMinutes(plannedMinutes);
     document.getElementById('rel-horas').textContent=fmtMinutes(summary.trabalhado_minutos||0);
     document.getElementById('rel-saldo').textContent=signedMinutes(summary.saldo_minutos||0);
     document.getElementById('rel-creditos').textContent=`+${fmtMinutes(summary.credito_minutos||0)}`;

@@ -2967,3 +2967,25 @@ body:not(.offline-contingency) .point-loading-card{
     font-size:5.8pt;
   }
 }
+
+
+/* RC5.42 — base de cálculo da carga prevista */
+.mirror-schedule-basis{
+  margin:0 0 8px;
+  padding:7px 9px;
+  border:1px solid #ded3cd;
+  border-radius:8px;
+  background:#faf7f5;
+  color:#665853;
+  font-size:10px;
+  line-height:1.35;
+}
+@media print{
+  .mirror-schedule-basis{
+    margin:0 0 1.5mm;
+    padding:1mm 1.5mm;
+    border-radius:0;
+    font-size:5.7pt;
+    line-height:1.05;
+  }
+}
