@@ -2751,3 +2751,219 @@ body:not(.offline-contingency) .point-loading-card{
     margin-bottom:13mm;
   }
 }
+
+
+/* RC5.41 — espelho mensal limitado a uma única folha A4 */
+@media print{
+  @page{
+    size:A4 portrait;
+    margin:6mm;
+  }
+
+  .mirror-print-page{
+    box-sizing:border-box;
+    width:198mm;
+    height:285mm;
+    min-height:0;
+    max-height:285mm;
+    overflow:hidden;
+    padding:3.5mm 4mm;
+    page-break-after:always;
+    break-after:page;
+    page-break-inside:avoid;
+    break-inside:avoid;
+  }
+
+  .mirror-print-page:last-child{
+    page-break-after:auto;
+    break-after:auto;
+  }
+
+  .mirror-print-page .time-sheet-header{
+    grid-template-columns:29mm minmax(0,1fr) 31mm;
+    gap:3mm;
+    padding-bottom:2mm;
+  }
+
+  .mirror-print-page .time-sheet-header img{
+    width:27mm;
+    max-height:19mm;
+    object-fit:contain;
+  }
+
+  .mirror-print-page .time-sheet-header p{
+    margin:0 0 .6mm;
+    font-size:6.8pt;
+  }
+
+  .mirror-print-page .time-sheet-header h2{
+    margin:0;
+    font-size:11pt;
+    line-height:1.08;
+  }
+
+  .mirror-print-page .time-sheet-header span,
+  .mirror-print-page .time-sheet-period small{
+    font-size:6.5pt;
+    line-height:1.15;
+  }
+
+  .mirror-print-page .time-sheet-period strong{
+    font-size:8pt;
+    line-height:1.1;
+  }
+
+  .mirror-print-page .time-sheet-identification{
+    grid-template-columns:2.1fr .75fr 1.2fr .85fr;
+    gap:1.5mm;
+    padding:2mm 0;
+  }
+
+  .mirror-print-page .time-sheet-identification>div{
+    min-width:0;
+  }
+
+  .mirror-print-page .time-sheet-identification small{
+    font-size:6pt;
+  }
+
+  .mirror-print-page .time-sheet-identification strong{
+    overflow:hidden;
+    font-size:7.2pt;
+    line-height:1.12;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .mirror-print-summary{
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:1mm;
+    margin:1.8mm 0;
+  }
+
+  .mirror-print-summary div{
+    padding:1.2mm .6mm;
+    border-radius:0;
+  }
+
+  .mirror-print-summary span{
+    font-size:5.7pt;
+    line-height:1;
+  }
+
+  .mirror-print-summary strong{
+    font-size:7.2pt;
+    line-height:1.05;
+  }
+
+  .mirror-print-table{
+    table-layout:fixed;
+    width:100%;
+    font-size:6.1pt;
+    line-height:1.03;
+  }
+
+  .mirror-print-table th,
+  .mirror-print-table td{
+    height:4.15mm;
+    padding:.45mm .35mm;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .mirror-print-table th:nth-child(1),
+  .mirror-print-table td:nth-child(1){
+    width:18mm;
+  }
+
+  .mirror-print-table th:nth-child(n+2):nth-child(-n+5),
+  .mirror-print-table td:nth-child(n+2):nth-child(-n+5){
+    width:17mm;
+  }
+
+  .mirror-print-table th:nth-child(6),
+  .mirror-print-table td:nth-child(6),
+  .mirror-print-table th:nth-child(7),
+  .mirror-print-table td:nth-child(7),
+  .mirror-print-table th:nth-child(8),
+  .mirror-print-table td:nth-child(8){
+    width:18mm;
+  }
+
+  .mirror-paper-signatures{
+    margin-top:3.5mm;
+  }
+
+  .mirror-paper-signatures>p{
+    margin:0 0 9mm;
+    font-size:6.4pt;
+    line-height:1.15;
+  }
+
+  .mirror-paper-signatures>div{
+    gap:28mm;
+  }
+
+  .mirror-paper-signatures strong{
+    font-size:6.6pt;
+  }
+
+  .mirror-paper-signatures small{
+    font-size:5.8pt;
+  }
+
+  .mirror-density-compact .mirror-print-table{
+    font-size:5.8pt;
+  }
+
+  .mirror-density-compact .mirror-print-table th,
+  .mirror-density-compact .mirror-print-table td{
+    height:3.85mm;
+    padding:.35mm .3mm;
+  }
+
+  .mirror-density-compact .mirror-paper-signatures{
+    margin-top:2.5mm;
+  }
+
+  .mirror-density-max .time-sheet-header{
+    grid-template-columns:25mm minmax(0,1fr) 28mm;
+  }
+
+  .mirror-density-max .time-sheet-header img{
+    width:23mm;
+    max-height:16mm;
+  }
+
+  .mirror-density-max .time-sheet-identification{
+    padding:1.4mm 0;
+  }
+
+  .mirror-density-max .mirror-print-summary{
+    margin:1.1mm 0;
+  }
+
+  .mirror-density-max .mirror-print-summary div{
+    padding:.8mm .4mm;
+  }
+
+  .mirror-density-max .mirror-print-table{
+    font-size:5.35pt;
+  }
+
+  .mirror-density-max .mirror-print-table th,
+  .mirror-density-max .mirror-print-table td{
+    height:3.45mm;
+    padding:.25mm .25mm;
+  }
+
+  .mirror-density-max .mirror-paper-signatures{
+    margin-top:2mm;
+  }
+
+  .mirror-density-max .mirror-paper-signatures>p{
+    margin-bottom:7mm;
+    font-size:5.8pt;
+  }
+}

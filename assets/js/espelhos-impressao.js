@@ -83,7 +83,14 @@
    </tr>`;
   }).join('');
 
-  return `<section class="mirror-print-page">
+  const densityClass=
+   days.length>=29
+    ?' mirror-density-max'
+    :days.length>=24
+      ?' mirror-density-compact'
+      :'';
+
+  return `<section class="mirror-print-page${densityClass}">
    <header class="time-sheet-header">
     <img src="assets/img/logo-plenitude.png" alt="Plenitude">
     <div>
