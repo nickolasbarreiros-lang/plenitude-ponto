@@ -7,6 +7,31 @@
  const dateKey=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
  const label=t=>({entrada:'Entrada',inicio_intervalo:'Início do almoço',fim_intervalo:'Retorno do almoço',saida:'Saída'})[t]||'Marcação';
  const fmt=v=>new Date(v).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+ function toast(message,type='success'){
+  const text=String(message||'').trim();
+  if(!text)return;
+
+  let region=document.getElementById('point-toast-region');
+  if(!region){
+   region=document.createElement('div');
+   region.id='point-toast-region';
+   region.className='point-toast-region';
+   region.setAttribute('aria-live','polite');
+   document.body.appendChild(region);
+  }
+
+  const item=document.createElement('div');
+  item.className=`point-toast ${type==='warn'?'warn':'success'}`;
+  item.textContent=text;
+  region.appendChild(item);
+
+  requestAnimationFrame(()=>item.classList.add('visible'));
+  setTimeout(()=>{
+   item.classList.remove('visible');
+   setTimeout(()=>item.remove(),220);
+  },4200);
+ }
+
  function employeeInitials(name){
   return String(name||'P')
    .trim()
@@ -1180,7 +1205,7 @@
 
    if('serviceWorker' in navigator&&serverReachable===true){
     navigator.serviceWorker
-     .register('./sw.js?v=1.0.0-rc5.22')
+     .register('./sw.js?v=1.0.0-rc5.23')
      .catch(error=>
       console.warn('Service Worker indisponível',error)
      );
@@ -1306,19 +1331,38 @@ document.getElementById('registrar').onclick=async()=>{
     if(isNetworkFailure(e)){
      try{
       const m=await registerOfflinePunch();
-      showSuccess(`${label(m.tipo)} gravada em contingência às ${fmt(m.registrado_em)}`);
-      toast(`${label(m.tipo)} salva localmente. Necessita sincronização e conferência.`,'warn');
+      showSuccess(
+       `${label(m.tipo)} gravada em contingência às ${fmt(m.registrado_em)}`
+      );
+
       await load();
+
+      toast(
+       `${label(m.tipo)} salva localmente e aguardando sincronização.`,
+       'warn'
+      );
+
       startPunchCooldown(b,5);
      }catch(offlineError){
-      toast(offlineError.message,'warn');
-      b.disabled=false;
+      console.error('Falha após tentativa de registro offline',offlineError);
+
+      try{
+       await load();
+      }catch(loadError){
+       console.warn(
+        'Não foi possível atualizar imediatamente a jornada local.',
+        loadError
+       );
+      }
+
+      toast(normalizedErrorMessage(offlineError),'warn');
       b.innerHTML=previous;
+      refreshPunchAvailability();
      }
     }else{
-     toast(e.message,'warn');
-     b.disabled=false;
+     toast(normalizedErrorMessage(e),'warn');
      b.innerHTML=previous;
+     refreshPunchAvailability();
     }
   }finally{
     punchInFlight=false;
