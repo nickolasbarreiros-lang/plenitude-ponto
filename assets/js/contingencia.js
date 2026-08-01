@@ -9,8 +9,17 @@ ${r.conflito?`<div class="notice compact danger"><b>Conflito:</b> ${r.conflito}<
 ${actionable?`<div class="contingency-actions"><label>Horário para aprovação<input data-time type="datetime-local" value="${new Date(new Date(r.ocorrido_em_dispositivo).getTime()-new Date(r.ocorrido_em_dispositivo).getTimezoneOffset()*60000).toISOString().slice(0,16)}"></label><label class="wide">Observação<textarea data-note placeholder="Conferência realizada, justificativa ou motivo da rejeição."></textarea></label><button class="btn primary" data-approve="${r.id}">Aprovar</button><button class="btn outline danger" data-reject="${r.id}">Rejeitar</button></div>`:`<div class="admin-response">${r.observacao_admin||'Registro já analisado.'}</div>`}</article>`}
 async function load(){const box=document.getElementById('cont-list');box.innerHTML='<div class="mini-empty">Carregando...</div>';try{const rows=await rpc('listar_contingencias_admin',{p_status:document.getElementById('cont-status').value||null,p_inicio:document.getElementById('cont-start').value||null,p_fim:document.getElementById('cont-end').value||null});document.getElementById('cont-count').textContent=`${rows.filter(r=>['pendente','conflitante'].includes(r.status)).length} pendente(s)`;box.innerHTML=rows.length?rows.map(card).join(''):'<div class="panel mini-empty">Nenhum registro de contingência.</div>';box.querySelectorAll('[data-approve]').forEach(b=>b.onclick=()=>analyze(b,'aprovar'));box.querySelectorAll('[data-reject]').forEach(b=>b.onclick=()=>analyze(b,'rejeitar'))}catch(e){box.innerHTML='';toast(e.message,'warn')}}
 async function analyze(button,action){const card=button.closest('.contingency-card'),note=card.querySelector('[data-note]').value.trim(),time=card.querySelector('[data-time]').value;if(action==='rejeitar'&&note.length<5)return toast('Informe o motivo da rejeição.','warn');if(!confirm(action==='aprovar'?'Aprovar e criar a marcação oficial?':'Rejeitar este registro offline?'))return;card.querySelectorAll('button,input,textarea').forEach(e=>e.disabled=true);try{
+ const recordId=
+  action==='aprovar'
+   ?button.dataset.approve
+   :button.dataset.reject;
+
+ if(!recordId){
+  throw new Error('Identificador do registro de contingência não encontrado.');
+ }
+
  const payload={
-  p_id:button.dataset[action],
+  p_id:recordId,
   p_acao:action,
   p_observacao:note||null
  };
