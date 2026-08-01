@@ -957,13 +957,21 @@
    const missing=row.marcacao_faltante_label||'marcação';
 
    return `
-    <article>
-     <div>
-      <strong>⚠ Jornada incompleta em ${date}</strong>
-      <span>Faltou registrar ${missing}. Envie uma solicitação de correção para regularizar o dia.</span>
+    <article class="journey-critical-alert">
+     <div class="journey-alert-icon" aria-hidden="true">⚠</div>
+     <div class="journey-alert-content">
+      <div class="journey-alert-heading">
+       <strong>ATENÇÃO! JORNADA INCOMPLETA</strong>
+       <span class="journey-alert-badge">PENDÊNCIA</span>
+      </div>
+      <p>O dia <b>${date}</b> terminou sem o registro de:</p>
+      <div class="journey-alert-missing">❌ ${missing.toUpperCase()}</div>
+      <small>Envie uma solicitação de correção. Este aviso permanecerá visível até a regularização.</small>
      </div>
-     <button type="button" data-open-adjustment="${row.data_local}" data-mark-type="${row.marcacao_faltante}">
-      Solicitar correção
+     <button type="button" class="journey-alert-action"
+      data-open-adjustment="${row.data_local}"
+      data-mark-type="${row.marcacao_faltante}">
+      📝 Solicitar correção agora
      </button>
     </article>`;
   }).join('');
@@ -1277,7 +1285,7 @@
 
    if('serviceWorker' in navigator&&serverReachable===true){
     navigator.serviceWorker
-     .register('./sw.js?v=1.0.0-rc5.26b')
+     .register('./sw.js?v=1.0.0-rc5.27')
      .catch(error=>
       console.warn('Service Worker indisponível',error)
      );

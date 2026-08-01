@@ -1810,3 +1810,23 @@ body:not(.offline-contingency) .point-loading-card{
     flex-direction:column;
   }
 }
+
+.employee-journey-pendencies{display:grid;gap:14px;margin:16px 0 18px}
+.employee-journey-pendencies[hidden]{display:none!important}
+.journey-critical-alert{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:18px;overflow:hidden;padding:18px 20px;border:2px solid #d93025;border-left-width:10px;border-radius:16px;background:linear-gradient(135deg,#fff5f5 0%,#ffd9d9 58%,#ffc4c4 100%);color:#651515;box-shadow:0 14px 34px rgba(177,25,25,.18);animation:journeyCriticalPulse 2.2s ease-in-out infinite}
+.journey-critical-alert:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 0%,rgba(255,255,255,.24) 44%,rgba(255,255,255,.52) 50%,rgba(255,255,255,.24) 56%,transparent 100%);transform:translateX(-120%);animation:journeyAlertSweep 4.8s ease-in-out infinite}
+.journey-alert-icon{position:relative;z-index:1;display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:#b71c1c;color:#fff;font-size:34px;font-weight:900;box-shadow:0 0 0 7px rgba(183,28,28,.12);animation:journeyIconBlink 1.3s ease-in-out infinite}
+.journey-alert-content{position:relative;z-index:1;display:grid;gap:7px}
+.journey-alert-heading{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.journey-alert-heading strong{color:#9f1515;font-size:18px;letter-spacing:.03em}
+.journey-alert-badge{display:inline-flex;align-items:center;min-height:28px;padding:4px 10px;border-radius:999px;background:#b71c1c;color:#fff;font-size:11px;font-weight:950;letter-spacing:.08em}
+.journey-alert-content p{margin:0;font-size:14px}
+.journey-alert-missing{width:max-content;max-width:100%;padding:7px 11px;border:1px solid rgba(183,28,28,.28);border-radius:10px;background:rgba(255,255,255,.72);color:#a31313;font-size:16px;font-weight:950}
+.journey-alert-content small{color:#7d2c2c;font-size:12px;line-height:1.45}
+.journey-alert-action{position:relative;z-index:1;min-width:210px;border:0;border-radius:12px;padding:13px 16px;background:linear-gradient(135deg,#c5161d,#f12639);color:#fff;font-weight:950;font-size:14px;cursor:pointer;box-shadow:0 10px 22px rgba(176,20,32,.25)}
+@keyframes journeyCriticalPulse{0%,100%{box-shadow:0 14px 34px rgba(177,25,25,.18)}50%{box-shadow:0 14px 34px rgba(177,25,25,.25),0 0 0 7px rgba(217,48,37,.12)}}
+@keyframes journeyIconBlink{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes journeyAlertSweep{0%,65%{transform:translateX(-120%)}82%,100%{transform:translateX(120%)}}
+@media(max-width:800px){.journey-critical-alert{grid-template-columns:auto 1fr}.journey-alert-action{grid-column:1/-1;width:100%}}
+@media(max-width:520px){.journey-critical-alert{grid-template-columns:1fr;text-align:center}.journey-alert-icon,.journey-alert-missing{margin-inline:auto}.journey-alert-heading{justify-content:center}}
+@media(prefers-reduced-motion:reduce){.journey-critical-alert,.journey-alert-icon,.journey-critical-alert:after{animation:none!important}}
