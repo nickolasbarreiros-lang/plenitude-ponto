@@ -3111,20 +3111,3 @@ body:not(.offline-contingency) .point-loading-card{
     grid-template-columns:1fr;
   }
 }
-
-
-/* RC5.46 — acesso ao ponto pelo painel administrativo */
-body.administrator-point-mode #point-loading-overlay{
-  display:none!important;
-}
-body.administrator-point-mode #point-page{
-  opacity:1!important;
-  pointer-events:auto!important;
-}
-body.administrator-point-mode #ponto-funcionario-select{
-  display:block;
-  min-width:260px;
-}
-body.administrator-point-mode #employee-self-service{
-  display:none!important;
-}

@@ -6,7 +6,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="#ff6500" name="theme-color"/>
 <title>Registrar ponto | Plenitude</title>
-<link href="assets/css/estilos.css?v=1.0.0-rc5.46" rel="stylesheet"/>
+<link href="assets/css/estilos.css?v=1.0.0-rc5.47b" rel="stylesheet"/>
 </head>
 <body>
 <div class="sync-restored-banner" id="sync-restored-banner" hidden>
@@ -93,58 +93,8 @@
   },20000);
 })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc5.46"></script><script src="assets/js/auth.js?v=1.0.0-rc5.46"></script>
-<script src="assets/js/database.js?v=1.0.0-rc5.46"></script>
-<script src="assets/js/offline-contingencia.js?v=1.0.0-rc5.46"></script>
-<script src="assets/js/app.js?v=1.0.0-rc5.46"></script>
-<script>
-(async function iniciarTelaDePonto(){
-  'use strict';
-
-  function carregarModoFuncionario(){
-    const script=document.createElement('script');
-    script.src='assets/js/ponto-pin.js?v=1.0.0-rc5.46';
-    script.defer=false;
-    script.onerror=function(){
-      const message=document.getElementById('point-loading-message');
-      const card=document.querySelector('.point-loading-card');
-
-      if(card)card.classList.add('error');
-      if(message){
-        message.textContent='Não foi possível carregar o módulo de registro de ponto.';
-      }
-    };
-    document.body.appendChild(script);
-  }
-
-  try{
-    const context=await window.PlenitudeAuth.getAccessContext();
-
-    if(context?.profile?.papel==='administrador'){
-      /*
-       * A sessão PIN antiga não pode prevalecer quando o administrador abre
-       * Registrar ponto pelo painel. O modo administrativo usa a sessão
-       * autenticada do Supabase e permite escolher o funcionário.
-       */
-      sessionStorage.removeItem('plenitude-employee-session');
-
-      document.body.classList.add('administrator-point-mode');
-      await initPonto();
-      return;
-    }
-  }catch(error){
-    /*
-     * Sem sessão administrativa válida ou sem internet, preservamos o fluxo
-     * PIN/offline do funcionário.
-     */
-    console.info(
-      'Modo administrativo não identificado; iniciando fluxo do funcionário.',
-      error
-    );
-  }
-
-  carregarModoFuncionario();
-})();
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc5.47b"></script><script src="assets/js/auth.js?v=1.0.0-rc5.47b"></script>
+<script src="assets/js/database.js?v=1.0.0-rc5.47b"></script><script src="assets/js/offline-contingencia.js?v=1.0.0-rc5.47b"></script>
+<script src="assets/js/ponto-pin.js?v=1.0.0-rc5.47b"></script>
 </body>
 </html>
