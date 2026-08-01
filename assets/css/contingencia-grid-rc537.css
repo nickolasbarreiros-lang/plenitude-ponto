@@ -1,0 +1,154 @@
+
+/* RC5.37 — folha exclusiva da página de contingência */
+#cont-tabs.contingency-tabs{
+  display:flex!important;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:0 0 14px;
+}
+#cont-tabs.contingency-tabs button{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  width:auto;
+  border:1px solid #dfd2cc;
+  border-radius:999px;
+  background:#fff;
+  padding:8px 12px;
+  color:#4d413d;
+  font-weight:850;
+  cursor:pointer;
+}
+#cont-tabs.contingency-tabs button span{
+  display:grid;
+  place-items:center;
+  min-width:23px;
+  height:23px;
+  padding:0 6px;
+  border-radius:999px;
+  background:#f1e6e0;
+  font-size:11px;
+}
+#cont-tabs.contingency-tabs button.active{
+  border-color:#ff6b2d;
+  background:#fff1e9;
+  color:#c9470c;
+}
+#cont-tabs.contingency-tabs button.active span{
+  background:#ff6b2d;
+  color:#fff;
+}
+
+#cont-list.contingency-admin-list.contingency-grid{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:12px!important;
+  align-items:start;
+}
+
+#cont-list .contingency-compact-card{
+  position:relative;
+  display:block!important;
+  overflow:hidden;
+  min-width:0;
+  margin:0!important;
+  border:1px solid #e6dad4;
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 7px 18px rgba(65,42,32,.06);
+}
+
+#cont-list .contingency-card-summary{
+  position:relative;
+  display:grid!important;
+  grid-template-columns:6px minmax(0,1fr) auto auto;
+  align-items:center;
+  gap:12px;
+  width:100%;
+  min-height:108px;
+  border:0;
+  background:transparent;
+  padding:12px 14px 12px 0;
+  text-align:left;
+  cursor:pointer;
+}
+
+#cont-list .contingency-card-accent{
+  align-self:stretch;
+  width:6px;
+  border-radius:0 999px 999px 0;
+  background:#d89b19;
+}
+#cont-list .contingency-approved .contingency-card-accent{background:#22a95a}
+#cont-list .contingency-duplicate .contingency-card-accent{background:#d89b19}
+#cont-list .contingency-rejected .contingency-card-accent{background:#d83d35}
+#cont-list .contingency-conflict .contingency-card-accent,
+#cont-list .contingency-pending .contingency-card-accent{background:#d86b19}
+
+#cont-list .contingency-summary-main{
+  display:grid;
+  gap:3px;
+  min-width:0;
+}
+#cont-list .contingency-summary-main small{
+  overflow:hidden;
+  color:#76655f;
+  font-size:10px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+#cont-list .contingency-summary-main strong{
+  color:#251f1d;
+  font-size:16px;
+}
+#cont-list .contingency-summary-main>span{
+  color:#5f504b;
+  font-size:12px;
+}
+#cont-list .contingency-summary-main em{
+  overflow:hidden;
+  color:#917d74;
+  font-size:11px;
+  font-style:normal;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+#cont-list .contingency-expand-icon{
+  color:#8d7c75;
+  font-size:20px;
+  transition:transform .2s ease;
+}
+#cont-list .contingency-compact-card.is-expanded .contingency-expand-icon{
+  transform:rotate(180deg);
+}
+#cont-list .contingency-card-details{
+  padding:0 14px 14px;
+}
+#cont-list .contingency-card-details[hidden]{
+  display:none!important;
+}
+#cont-list .contingency-compact-card.is-expanded{
+  grid-column:span 2;
+  box-shadow:0 14px 30px rgba(65,42,32,.12);
+}
+#cont-list .compact-actions{
+  display:grid;
+  grid-template-columns:minmax(170px,.65fr) minmax(0,1.35fr);
+  gap:10px;
+  margin-top:10px;
+}
+#cont-list .compact-action-buttons{
+  grid-column:1/-1;
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+@media(max-width:980px){
+  #cont-list.contingency-admin-list.contingency-grid{
+    grid-template-columns:1fr!important;
+  }
+  #cont-list .contingency-compact-card.is-expanded{
+    grid-column:span 1;
+  }
+}
