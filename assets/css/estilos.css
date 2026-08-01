@@ -2097,3 +2097,10 @@ body:not(.offline-contingency) .point-loading-card{
     animation:none!important;
   }
 }
+
+.closure-competence-picker{display:grid;grid-template-columns:minmax(160px,1fr) minmax(110px,.65fr);gap:10px;align-items:end}
+.closure-competence-picker label{display:grid;gap:6px;min-width:0}
+.closure-competence-picker select{width:100%;min-height:44px;border:1px solid #ddcec7;border-radius:12px;background:#fff;padding:0 12px;font:inherit;font-weight:800;color:#2c2725}
+.closure-competence-picker select:focus{outline:3px solid rgba(255,85,36,.14);border-color:#ff6a2d}
+.closure-competence-hint{grid-column:1/-1;color:#8a6f65;font-size:12px;line-height:1.4}
+@media(max-width:640px){.closure-competence-picker{grid-template-columns:1fr}}

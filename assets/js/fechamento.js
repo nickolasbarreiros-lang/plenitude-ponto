@@ -11,12 +11,21 @@
   auditLoading:false
  };
 
- const monthInput=document.getElementById('fc-mes');
+ const monthSelect=document.getElementById('fc-mes-select');
+ const yearSelect=document.getElementById('fc-ano-select');
  const closeButton=document.getElementById('fc-fechar');
  const now=new Date();
 
- monthInput.value=
-  `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+ for(let year=now.getFullYear()+1;year>=now.getFullYear()-6;year--){
+  const option=document.createElement('option');
+  option.value=String(year);
+  option.textContent=String(year);
+  yearSelect.appendChild(option);
+ }
+
+ const previousMonth=new Date(now.getFullYear(),now.getMonth()-1,1);
+ monthSelect.value=String(previousMonth.getMonth()+1);
+ yearSelect.value=String(previousMonth.getFullYear());
 
  const fmtDate=value=>
   value
@@ -35,12 +44,25 @@
  const key=(year,month)=>
   `${year}-${String(month).padStart(2,'0')}`;
 
- function selectedParts(){
-  const [year,month]=(monthInput.value||'')
-   .split('-')
-   .map(Number);
+ function updateCompetenceHint(){
+  const {year,month}=selectedParts();
+  const hint=document.getElementById('fc-competence-hint');
+  if(!hint||!year||!month)return;
 
-  return {year,month};
+  const currentKey=key(now.getFullYear(),now.getMonth()+1);
+  const selectedKey=key(year,month);
+
+  hint.textContent=
+   selectedKey===currentKey
+    ?'Atenção: esta é a competência atual e ainda está em andamento.'
+    :`Competência selecionada: ${competence(year,month)}.`;
+ }
+
+ function selectedParts(){
+  return {
+   year:Number(yearSelect.value||0),
+   month:Number(monthSelect.value||0)
+  };
  }
 
  function rowFor(year,month){
@@ -210,6 +232,7 @@
     <span>A auditoria determinará se o fechamento pode ser realizado.</span>`;
   }
 
+  updateCompetenceHint();
   renderAudit();
  }
 
@@ -276,7 +299,8 @@
   body.querySelectorAll('[data-close]').forEach(button=>{
    button.onclick=()=>{
     const [year,month]=button.dataset.close.split('-').map(Number);
-    monthInput.value=key(year,month);
+    monthSelect.value=String(month);
+    yearSelect.value=String(year);
     auditSelected();
     window.scrollTo({top:0,behavior:'smooth'});
    };
@@ -431,7 +455,8 @@
 
  closeButton.onclick=closeMonth;
  document.getElementById('fc-refresh').onclick=load;
- monthInput.onchange=auditSelected;
+ monthSelect.onchange=auditSelected;
+ yearSelect.onchange=auditSelected;
 
  await load();
 })();
