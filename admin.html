@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#2c2324">
   <title>Painel administrativo | Plenitude Ponto</title>
-  <link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc5.28">
+  <link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc5.29">
 </head>
 <body>
 <div class="app-shell">
@@ -18,7 +18,7 @@
       <a data-page="funcionarios" href="funcionarios.html"><span>♙</span><b>Funcionário</b></a>
       <a data-page="jornada" href="jornada.html"><span>▤</span><b>Jornada</b></a>
           <a data-page="calendario" href="calendario.html"><span>▣</span><b>Calendário</b></a>
-<a data-page="ajustes" href="ajustes.html"><span>✓</span><b>Ajustes</b></a>
+<a id="sidebar-ajustes-link" data-page="ajustes" href="ajustes.html"><span>✓</span><b>Ajustes</b><em id="sidebar-ajustes-badge" class="sidebar-alert-badge" hidden>0</em></a>
     <a data-page="contingencia" href="contingencia.html"><span>☁</span><b>Contingência</b></a><a data-page="relatorios" href="relatorios.html"><span>▥</span><b>Relatórios</b></a><a data-page="fechamento" href="fechamento.html"><span>🔒</span><b>Fechamento</b></a>
       <a data-page="auditoria" href="auditoria.html"><span>⌕</span><b>Auditoria</b></a><a data-page="backup" href="backup.html"><span>⇩</span><b>Backup</b></a>
     <a data-page="dispositivos" href="dispositivos.html"><span>▣</span><b>Dispositivo</b></a>
@@ -44,12 +44,12 @@
     <section class="notice"><strong>Sistema online:</strong> funcionários, jornadas e marcações de ponto são gravados com horário oficial no Supabase.</section>
 
     <section class="cards operational-cards">
-      <article class="metric-card dashboard-shortcut" data-href="funcionarios.html" role="link" tabindex="0" aria-label="Abrir funcionários"><i>♙</i><span>Funcionários</span><strong id="total-func">0</strong><small>Cadastros ativos</small></article>
-      <article class="metric-card dashboard-shortcut" data-href="relatorios.html?visao=presentes" role="link" tabindex="0" aria-label="Abrir relatório de presentes"><i>●</i><span>Presentes</span><strong id="presentes-hoje">0</strong><small>Com entrada registrada</small></article>
-      <article class="metric-card dashboard-shortcut" data-href="relatorios.html?visao=almoco" role="link" tabindex="0" aria-label="Abrir relatório de funcionários em almoço"><i>◷</i><span>Em almoço</span><strong id="em-almoco">0</strong><small>Intervalo em andamento</small></article>
-      <article class="metric-card dashboard-shortcut" data-href="relatorios.html?visao=ausentes" role="link" tabindex="0" aria-label="Abrir relatório de ausentes"><i>○</i><span>Ausentes</span><strong id="ausentes-hoje">0</strong><small>Sem entrada hoje</small></article>
-      <article class="metric-card dashboard-shortcut" data-href="relatorios.html?visao=atrasos" role="link" tabindex="0" aria-label="Abrir relatório de atrasos"><i>⏱</i><span>Atrasos hoje</span><strong id="atrasos-hoje">0</strong><small>Fora da tolerância</small></article>
-      <article class="metric-card dashboard-shortcut dashboard-shortcut-priority" data-href="ajustes.html?status=pendente&fila=1" role="link" tabindex="0" aria-label="Analisar ajustes pendentes"><i>✓</i><span>Ajustes pendentes</span><strong id="ajustes-pendentes">0</strong><small>Aguardando análise</small></article>
+      <article id="metric-funcionarios" class="metric-card dashboard-shortcut" data-href="funcionarios.html" role="link" tabindex="0" aria-label="Abrir funcionários"><i>♙</i><span>Funcionários</span><strong id="total-func">0</strong><small>Cadastros ativos</small></article>
+      <article id="metric-presentes" class="metric-card dashboard-shortcut" data-href="relatorios.html?visao=presentes" role="link" tabindex="0" aria-label="Abrir relatório de presentes"><i>●</i><span>Presentes</span><strong id="presentes-hoje">0</strong><small>Com entrada registrada</small></article>
+      <article id="metric-almoco" class="metric-card dashboard-shortcut" data-href="relatorios.html?visao=almoco" role="link" tabindex="0" aria-label="Abrir relatório de funcionários em almoço"><i>◷</i><span>Em almoço</span><strong id="em-almoco">0</strong><small>Intervalo em andamento</small></article>
+      <article id="metric-ausentes" class="metric-card dashboard-shortcut" data-href="relatorios.html?visao=ausentes" role="link" tabindex="0" aria-label="Abrir relatório de ausentes"><i>○</i><span>Ausentes</span><strong id="ausentes-hoje">0</strong><small>Sem entrada hoje</small></article>
+      <article id="metric-atrasos" class="metric-card dashboard-shortcut" data-href="relatorios.html?visao=atrasos" role="link" tabindex="0" aria-label="Abrir relatório de atrasos"><i>⏱</i><span>Atrasos hoje</span><strong id="atrasos-hoje">0</strong><small>Fora da tolerância</small></article>
+      <article id="metric-ajustes" class="metric-card dashboard-shortcut dashboard-shortcut-priority" data-href="ajustes.html?status=pendente&fila=1" role="link" tabindex="0" aria-label="Analisar ajustes pendentes"><i>✓</i><span>Ajustes pendentes</span><strong id="ajustes-pendentes">0</strong><small>Aguardando análise</small></article>
       <article class="metric-card dashboard-shortcut" data-href="relatorios.html?visao=saldo-mes" role="link" tabindex="0" aria-label="Abrir saldo do mês"><i>±</i><span>Saldo do mês</span><strong id="saldo-mes">00:00</strong><small>Funcionário selecionado</small></article>
     </section>
 
@@ -123,8 +123,8 @@
     </section>
   </main>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc5.28"></script><script src="assets/js/auth.js?v=1.0.0-rc5.28"></script>
-  <script src="assets/js/database.js?v=1.0.0-rc5.28"></script><script src="assets/js/app.js?v=1.0.0-rc5.28"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc5.29"></script><script src="assets/js/auth.js?v=1.0.0-rc5.29"></script>
+  <script src="assets/js/database.js?v=1.0.0-rc5.29"></script><script src="assets/js/app.js?v=1.0.0-rc5.29"></script>
 <script>initAdmin()</script>
 </body>
 </html>

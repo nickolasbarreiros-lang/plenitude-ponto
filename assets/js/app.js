@@ -230,12 +230,13 @@ async function refreshSelectedEmployeeDashboard(){
   ]);
 }
 
+function setOperationalCardState(id,value,state='normal',options={}){const card=document.getElementById(id);if(!card)return;card.classList.remove('metric-state-normal','metric-state-ok','metric-state-info','metric-state-warning','metric-state-danger','metric-state-critical','metric-state-pulse');const numeric=Number(value||0);const resolved=typeof state==='function'?state(numeric):state;card.classList.add(`metric-state-${resolved}`);if(options.pulse&&numeric>0)card.classList.add('metric-state-pulse');}
+function updateOperationalDashboardCards({presentCount,lunchCount,absentCount,lateCount,adjustmentCount,journeyCount,returnCount}){setOperationalCardState('metric-presentes',presentCount,presentCount>0?'ok':'normal');setOperationalCardState('metric-almoco',lunchCount,lunchCount>0?'info':'normal');setOperationalCardState('metric-ausentes',absentCount,absentCount>=2?'danger':absentCount===1?'warning':'normal',{pulse:absentCount>0});setOperationalCardState('metric-atrasos',lateCount,lateCount>=2?'danger':lateCount===1?'warning':'normal',{pulse:lateCount>0});const actionable=Number(adjustmentCount||0)+Number(journeyCount||0)+Number(returnCount||0);const card=document.getElementById('metric-ajustes');const val=document.getElementById('ajustes-pendentes');if(val)val.textContent=String(actionable);if(card?.querySelector('span'))card.querySelector('span').textContent='Pendências';if(card?.querySelector('small'))card.querySelector('small').textContent=actionable?'Exigem atenção do gestor':'Nenhuma ação pendente';setOperationalCardState('metric-ajustes',actionable,actionable>=3?'critical':actionable>0?'danger':'normal',{pulse:actionable>0});const badge=document.getElementById('sidebar-ajustes-badge');if(badge){badge.textContent=String(actionable);badge.hidden=actionable===0;}return actionable;}
 async function renderSmartDashboard(activeEmployees,lateCount,tolerance){
 
   let pending=[];
   try{pending=await window.PlenitudeDB.adminAdjustmentRequests('pendente')}catch(e){console.warn('Ajustes pendentes indisponíveis',e)}
   const pendingCount=pending.length;
-  const pendingEl=document.getElementById('ajustes-pendentes');if(pendingEl)pendingEl.textContent=String(pendingCount);
   const notes=[];
   let journeyPendencies=[];
   try{
@@ -270,9 +271,13 @@ async function renderSmartDashboard(activeEmployees,lateCount,tolerance){
   const absent=activeEmployees.filter(e=>{const n=document.getElementById('ausentes-hoje');return Number(n?.textContent||0)>0}).length?Number(document.getElementById('ausentes-hoje')?.textContent||0):0;
   if(absent)notes.push({type:'warn',icon:'○',title:`${absent} ausência${absent===1?'':'s'} hoje`,text:'Funcionários ativos ainda sem registro de entrada.',href:'ponto.html',label:'Ver ponto'});
   if(!notes.length)notes.push({type:'ok',icon:'●',title:'Tudo em ordem',text:'Nenhuma pendência operacional identificada neste momento.',href:'relatorios.html',label:'Relatórios'});
-  const box=document.getElementById('dashboard-notifications');
-  if(box)box.innerHTML=notes.map(n=>`<article class="dashboard-note ${n.type}"><span class="note-icon">${n.icon}</span><div><strong>${n.title}</strong><small>${n.text}</small></div><a href="${n.href}">${n.label}</a></article>`).join('');
-  const count=document.getElementById('notification-count');if(count)count.textContent=String(notes.filter(n=>n.type!=='ok').length);
+  const severityOrder={danger:0,warn:1,ok:2};notes.sort((a,b)=>(severityOrder[a.type]??9)-(severityOrder[b.type]??9));
+  const alertCount=notes.filter(note=>note.type!=='ok').length;
+  const actionableCount=updateOperationalDashboardCards({presentCount:Number(document.getElementById('presentes-hoje')?.textContent||0),lunchCount:Number(document.getElementById('em-almoco')?.textContent||0),absentCount:absent,lateCount,adjustmentCount:pendingCount,journeyCount:journeyPendencies.length,returnCount:returnPendencies.length});
+  const box=document.getElementById('dashboard-notifications');const panel=box?.closest('.alert-panel');
+  if(box)box.innerHTML=notes.map(note=>`<article class="dashboard-note ${note.type}"><span class="note-icon">${note.icon}</span><div><strong>${note.title}</strong><small>${note.text}</small></div><a href="${note.href}">${note.label}</a></article>`).join('');
+  if(panel){panel.classList.toggle('has-operational-alerts',alertCount>0);panel.classList.toggle('has-critical-alerts',notes.some(note=>note.type==='danger'));}
+  const count=document.getElementById('notification-count');if(count){count.textContent=String(alertCount);count.classList.toggle('has-alerts',alertCount>0);count.classList.toggle('is-critical',notes.some(note=>note.type==='danger'));count.title=alertCount?`${alertCount} grupo(s) de alerta e ${actionableCount} ação(ões) pendente(s)`:'Nenhuma notificação operacional';}
 }
 
 async function renderMonthOverview(employee){
