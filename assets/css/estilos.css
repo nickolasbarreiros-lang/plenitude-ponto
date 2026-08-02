@@ -3124,3 +3124,30 @@ body.administrator-point-mode #point-page{
 body.administrator-point-mode #ponto-funcionario-select{
   display:block!important;
 }
+
+
+/* RC5.50 — solicitações do mês vigente e pendências anteriores */
+.my-adjustments-head{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:8px;
+}
+.my-adjustments-head h4{
+  margin:0;
+}
+.my-adjustments-head small{
+  color:#88756d;
+  text-align:right;
+}
+.my-adjustments-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.my-adjustments-actions:empty{
+  display:none;
+}

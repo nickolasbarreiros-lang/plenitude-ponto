@@ -1763,9 +1763,109 @@ document.getElementById('registrar').onclick=async()=>{
  document.getElementById('temporary-exit-send').onclick=()=>registerMovement('saida');
  document.getElementById('temporary-return').onclick=()=>registerMovement('retorno');
 
+ let showAllAdjustments=false;
+
+ function adjustmentMonthKey(value){
+  return String(value||'').slice(0,7);
+ }
+
+ function adjustmentItemTemplate(r){
+  const status=String(r.status||'').toLowerCase();
+  return `<div class="adjustment-item">
+   <div>
+    <strong>
+     ${new Date(r.data_marcacao+'T12:00:00').toLocaleDateString('pt-BR')}
+     · ${label(r.tipo_marcacao)}
+    </strong>
+    <small>
+     ${String(r.horario_solicitado).slice(0,5)} — ${r.justificativa}
+    </small>
+    ${r.resposta_administrador
+      ?`<em>Resposta: ${r.resposta_administrador}</em>`
+      :''}
+   </div>
+   <span class="request-status ${status}">${status}</span>
+  </div>`;
+ }
+
  async function loadAdjustments(){
-  const data=await rpc('listar_meus_ajustes',{p_token:token}),box=document.getElementById('my-adjustments');
-  const rows=data||[];box.innerHTML=rows.length?`<h4>Minhas solicitações</h4>${rows.slice(0,8).map(r=>`<div class="adjustment-item"><div><strong>${new Date(r.data_marcacao+'T12:00:00').toLocaleDateString('pt-BR')} · ${label(r.tipo_marcacao)}</strong><small>${String(r.horario_solicitado).slice(0,5)} — ${r.justificativa}</small>${r.resposta_administrador?`<em>Resposta: ${r.resposta_administrador}</em>`:''}</div><span class="request-status ${r.status}">${r.status}</span></div>`).join('')}`:'<div class="mini-empty">Nenhuma solicitação de ajuste.</div>';
+  const data=await rpc('listar_meus_ajustes',{p_token:token});
+  const box=document.getElementById('my-adjustments');
+  const rows=(data||[]).sort((a,b)=>
+   new Date(b.criado_em||b.data_marcacao||0)-
+   new Date(a.criado_em||a.data_marcacao||0)
+  );
+
+  if(!rows.length){
+   box.innerHTML='<div class="mini-empty">Nenhuma solicitação de ajuste.</div>';
+   return;
+  }
+
+  const currentMonth=new Intl.DateTimeFormat('en-CA',{
+   timeZone:'America/Sao_Paulo',
+   year:'numeric',
+   month:'2-digit'
+  }).format(new Date()).slice(0,7);
+
+  /*
+   * Tela principal:
+   * - todas as solicitações da competência atual;
+   * - solicitações antigas somente enquanto estiverem pendentes.
+   */
+  const relevantRows=rows.filter(row=>
+   adjustmentMonthKey(row.data_marcacao)===currentMonth||
+   String(row.status||'').toLowerCase()==='pendente'
+  );
+
+  const visibleRows=showAllAdjustments?rows:relevantRows.slice(0,5);
+  const hiddenCount=showAllAdjustments
+   ?0
+   :Math.max(0,relevantRows.length-visibleRows.length);
+  const hasHistoricalRows=rows.length>relevantRows.length;
+
+  box.innerHTML=`
+   <div class="my-adjustments-head">
+    <h4>${showAllAdjustments?'Histórico completo':'Minhas solicitações'}</h4>
+    <small>
+     ${showAllAdjustments
+      ?`${rows.length} registro(s)`
+      :'Mês vigente e pendências anteriores'}
+    </small>
+   </div>
+
+   ${visibleRows.length
+    ?visibleRows.map(adjustmentItemTemplate).join('')
+    :'<div class="mini-empty">Nenhuma solicitação do mês ou pendência anterior.</div>'}
+
+   <div class="my-adjustments-actions">
+    ${hiddenCount
+      ?`<button type="button" class="btn outline compact" data-show-more-adjustments>
+         Ver mais ${hiddenCount}
+        </button>`
+      :''}
+
+    ${hasHistoricalRows||showAllAdjustments
+      ?`<button type="button" class="btn outline compact" data-toggle-adjustment-history>
+         ${showAllAdjustments?'Voltar para solicitações atuais':'Ver histórico completo'}
+        </button>`
+      :''}
+   </div>`;
+
+  box.querySelector('[data-show-more-adjustments]')?.addEventListener(
+   'click',
+   ()=>{
+    showAllAdjustments=true;
+    loadAdjustments();
+   }
+  );
+
+  box.querySelector('[data-toggle-adjustment-history]')?.addEventListener(
+   'click',
+   ()=>{
+    showAllAdjustments=!showAllAdjustments;
+    loadAdjustments();
+   }
+  );
  }
  const adjustmentToggle=document.getElementById('toggle-adjustment');
  const adjustmentForm=document.getElementById('adjustment-form');
