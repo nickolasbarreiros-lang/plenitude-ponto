@@ -424,15 +424,22 @@ document.querySelector('.month-picker-shell')?.addEventListener('click',event=>{
 const contingencyLogoutButton=document.getElementById('sair');
 if(contingencyLogoutButton){
  contingencyLogoutButton.onclick=async()=>{
+  if(contingencyLogoutButton.disabled)return;
   contingencyLogoutButton.disabled=true;
+  contingencyLogoutButton.setAttribute('aria-busy','true');
+
+  /*
+   * Remove somente dados temporários do ponto. Não apaga toda a sessão do
+   * navegador, evitando perder preferências e estados legítimos do sistema.
+   */
+  sessionStorage.removeItem('plenitude-employee-session');
+  sessionStorage.removeItem('plenitude_rc537_cache_reset');
+  localStorage.removeItem('plenitude-employee-session');
 
   try{
    await window.PlenitudeAuth.signOut();
   }catch(error){
    console.warn('Falha ao encerrar a sessão pelo Supabase.',error);
-  }finally{
-   sessionStorage.clear();
-   localStorage.removeItem('plenitude-employee-session');
    location.replace('index.html');
   }
  };

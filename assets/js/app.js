@@ -1354,3 +1354,23 @@ async function initAjustes(){
  document.getElementById('refresh-adjustments').onclick=render;
  await render();
 }
+
+
+/* RC5.59 — vínculo explícito entre painel e ponto */
+document.addEventListener('click',event=>{
+  const link=event.target.closest(
+    '#dashboard-open-point, a[data-page="ponto"]'
+  );
+
+  if(!link)return;
+
+  const selected=
+    document.getElementById('dashboard-employee-global')?.value||
+    localStorage.getItem('plenitude-dashboard-employee');
+
+  if(!selected)return;
+
+  const url=new URL(link.href,location.href);
+  url.searchParams.set('funcionario',selected);
+  link.href=url.toString();
+});
