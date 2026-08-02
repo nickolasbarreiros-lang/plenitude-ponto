@@ -148,6 +148,13 @@ async function refreshSelectedEmployeeDashboard(){
   document.getElementById('analysis-status').textContent=employee.ativo===false?'Inativo':'Ativo';
 
   const reportQuery=`?funcionario=${encodeURIComponent(selectedId)}`;
+  const pointQuery=`?funcionario=${encodeURIComponent(selectedId)}`;
+  const dashboardPointLink=document.getElementById('dashboard-open-point');
+  const sidebarPointLink=document.querySelector('a[data-page="ponto"]');
+
+  if(dashboardPointLink)dashboardPointLink.href=`ponto.html${pointQuery}`;
+  if(sidebarPointLink)sidebarPointLink.href=`ponto.html${pointQuery}`;
+
   const weekLink=document.getElementById('week-report-link');
   const monthLink=document.getElementById('month-report-link');
   const scheduleLink=document.getElementById('schedule-edit-link');
@@ -611,9 +618,46 @@ async function initPonto(){
     const selector=document.getElementById('ponto-funcionario-select');
     if(profile.papel==='administrador'){
       selector.hidden=false;
-      selector.innerHTML=employees.length?employees.map(f=>`<option value="${f.id}">${f.nome}</option>`).join(''):'<option value="">Nenhum funcionário cadastrado</option>';
-      DB_STATE.employee=employees[0]||null;
-      selector.onchange=async()=>{DB_STATE.employee=employees.find(f=>f.id===selector.value)||null;renderClockEmployee(DB_STATE.employee);await loadRealPunches()};
+      selector.innerHTML=employees.length
+        ?employees.map(f=>`<option value="${f.id}">${f.nome}</option>`).join('')
+        :'<option value="">Nenhum funcionário cadastrado</option>';
+
+      const requestedEmployeeId=
+        new URLSearchParams(location.search).get('funcionario')||
+        localStorage.getItem('plenitude-dashboard-employee');
+
+      DB_STATE.employee=
+        employees.find(f=>f.id===requestedEmployeeId)||
+        employees[0]||
+        null;
+
+      if(DB_STATE.employee){
+        selector.value=DB_STATE.employee.id;
+        localStorage.setItem(
+          'plenitude-dashboard-employee',
+          DB_STATE.employee.id
+        );
+      }
+
+      selector.onchange=async()=>{
+        DB_STATE.employee=
+          employees.find(f=>f.id===selector.value)||
+          null;
+
+        if(DB_STATE.employee){
+          localStorage.setItem(
+            'plenitude-dashboard-employee',
+            DB_STATE.employee.id
+          );
+
+          const url=new URL(location.href);
+          url.searchParams.set('funcionario',DB_STATE.employee.id);
+          history.replaceState({},'',url);
+        }
+
+        renderClockEmployee(DB_STATE.employee);
+        await loadRealPunches();
+      };
     }else{
       DB_STATE.employee=await window.PlenitudeDB.ownEmployee();
       selector.hidden=true;
