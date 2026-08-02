@@ -246,6 +246,38 @@ async function renderSmartDashboard(activeEmployees,lateCount,tolerance){
     console.warn('Pendências de jornada indisponíveis',error);
   }
 
+  /*
+   * Uma jornada incompleta deixa de ser contada separadamente quando já existe
+   * uma solicitação pendente para o mesmo funcionário, data e marcação.
+   * Assim, o painel mostra uma única ação necessária, e não duas.
+   */
+  const pendingAdjustmentKeys=new Set(
+    pending.map(item=>[
+      String(item.funcionario_id||''),
+      String(item.data_marcacao||''),
+      String(item.tipo_marcacao||'')
+    ].join('|'))
+  );
+
+  journeyPendencies=journeyPendencies.filter(item=>{
+    const exactKey=[
+      String(item.funcionario_id||''),
+      String(item.data_local||''),
+      String(item.marcacao_faltante||'')
+    ].join('|');
+
+    if(pendingAdjustmentKeys.has(exactKey))return false;
+
+    /*
+     * Compatibilidade com versões antigas em que a solicitação não retornava
+     * o tipo da marcação de forma consistente: funcionário + data já bastam.
+     */
+    return !pending.some(request=>
+      String(request.funcionario_id||'')===String(item.funcionario_id||'')&&
+      String(request.data_marcacao||'')===String(item.data_local||'')
+    );
+  });
+
   if(journeyPendencies.length){
     const oldest=journeyPendencies[0];
     const date=new Date(`${oldest.data_local}T12:00:00`).toLocaleDateString('pt-BR');
