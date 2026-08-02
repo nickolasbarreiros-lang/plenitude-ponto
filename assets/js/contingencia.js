@@ -397,15 +397,32 @@ document.getElementById('cont-current-view').onclick=()=>{
  await load();
 })().catch(error=>toast(error.message,'warn'));
 
+
+const contMonthInput=document.getElementById('cont-month');
+const contMonthOpen=document.getElementById('cont-month-open');
+
+function openContingencyMonthPicker(){
+ if(!contMonthInput)return;
+
+ if(typeof contMonthInput.showPicker==='function'){
+  contMonthInput.showPicker();
+  return;
+ }
+
+ contMonthInput.focus();
+ contMonthInput.click();
+}
+
+contMonthOpen?.addEventListener('click',event=>{
+ event.preventDefault();
+ event.stopPropagation();
+ openContingencyMonthPicker();
+});
+
+document.querySelector('.month-picker-shell')?.addEventListener('click',event=>{
+ if(event.target===contMonthInput)return;
+ openContingencyMonthPicker();
+});
+
 })();
 
-const __contMonth=document.getElementById('cont-month');
-if(__contMonth){
- ['click','focus','pointerdown'].forEach(evt=>{
-   __contMonth.addEventListener(evt,()=>{
-      if(typeof __contMonth.showPicker==='function'){
-         try{__contMonth.showPicker();}catch(e){}
-      }
-   });
- });
-}
