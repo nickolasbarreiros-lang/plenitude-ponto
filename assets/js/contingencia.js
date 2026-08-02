@@ -398,3 +398,14 @@ document.getElementById('cont-current-view').onclick=()=>{
 })().catch(error=>toast(error.message,'warn'));
 
 })();
+
+const __contMonth=document.getElementById('cont-month');
+if(__contMonth){
+ ['click','focus','pointerdown'].forEach(evt=>{
+   __contMonth.addEventListener(evt,()=>{
+      if(typeof __contMonth.showPicker==='function'){
+         try{__contMonth.showPicker();}catch(e){}
+      }
+   });
+ });
+}
