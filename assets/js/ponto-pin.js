@@ -931,7 +931,21 @@
    throw pendencyResult.reason;
   }
 
-  const rows=pendencyResult.value||[];
+  const todayKey=new Intl.DateTimeFormat('en-CA',{
+   timeZone:'America/Sao_Paulo',
+   year:'numeric',
+   month:'2-digit',
+   day:'2-digit'
+  }).format(new Date());
+
+  /*
+   * Defesa visual: pendências só podem aparecer para dias já encerrados.
+   * Isso também impede que uma pendência antiga criada incorretamente seja
+   * mostrada enquanto o banco ainda está sendo corrigido.
+   */
+  const rows=(pendencyResult.value||[])
+   .filter(row=>String(row.data_local||'')<todayKey);
+
   const adjustments=
    adjustmentResult.status==='fulfilled'
     ?adjustmentResult.value||[]
