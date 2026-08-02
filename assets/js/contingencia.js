@@ -375,10 +375,6 @@ document.querySelectorAll('[data-tab-status]').forEach(button=>{
 
 document.getElementById('cont-status').onchange=render;
 
-document.getElementById('cont-refresh').onclick=()=>{
- setCurrentView(false);
- load();
-};
 
 document.getElementById('cont-month').onchange=()=>{
  setCurrentView(false);
