@@ -420,5 +420,23 @@ document.querySelector('.month-picker-shell')?.addEventListener('click',event=>{
  openContingencyMonthPicker();
 });
 
+
+const contingencyLogoutButton=document.getElementById('sair');
+if(contingencyLogoutButton){
+ contingencyLogoutButton.onclick=async()=>{
+  contingencyLogoutButton.disabled=true;
+
+  try{
+   await window.PlenitudeAuth.signOut();
+  }catch(error){
+   console.warn('Falha ao encerrar a sessão pelo Supabase.',error);
+  }finally{
+   sessionStorage.clear();
+   localStorage.removeItem('plenitude-employee-session');
+   location.replace('index.html');
+  }
+ };
+}
+
 })();
 
