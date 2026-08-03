@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#2c2324">
+<title>Diagnóstico | Plenitude Ponto</title>
+<link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc5.64">
+</head>
+<body>
+<div class="app-shell">
+<aside class="sidebar"><div class="sidebar-brand"><img class="logo" src="assets/img/logo-plenitude.png" alt="Plenitude"></div><p class="sidebar-label">CONTROLE DE PONTO</p><nav>
+<a data-page="admin" href="admin.html"><span>▦</span><b>Painel</b></a><a data-page="ponto" href="ponto.html" target="_blank" rel="noopener noreferrer"><span>◷</span><b>Registrar ponto</b></a><a data-page="funcionarios" href="funcionarios.html"><span>♙</span><b>Funcionário</b></a><a data-page="jornada" href="jornada.html"><span>▤</span><b>Jornada</b></a><a data-page="calendario" href="calendario.html"><span>▣</span><b>Calendário</b></a><a data-page="ajustes" href="ajustes.html"><span>✓</span><b>Ajustes</b></a><a data-page="contingencia" href="contingencia.html"><span>☁</span><b>Contingência</b></a><a data-page="marcacoes" href="marcacoes.html"><span>✎</span><b>Marcações</b></a><a data-page="relatorios" href="relatorios.html"><span>▥</span><b>Relatórios</b></a><a data-page="fechamento" href="fechamento.html"><span>🔒</span><b>Fechamento</b></a><a data-page="auditoria"  href="auditoria.html"><span>⌕</span><b>Auditoria</b></a><a data-page="backup" href="backup.html"><span>⇩</span><b>Backup</b></a><a data-page="dispositivos" href="dispositivos.html"><span>▣</span><b>Dispositivo</b></a>
+    <a data-page="homologacao" href="homologacao.html"><span>🧪</span><b>Homologação</b></a><a data-page="configuracoes" href="configuracoes.html"><span>⚙</span><b>Configurações</b></a>
+</nav><button id="sair" class="link-button">↪ Sair do sistema</button></aside>
+<main class="content">
+<header class="topbar">
+  <div>
+    <p class="eyebrow">SUPORTE E HOMOLOGAÇÃO</p>
+    <h1>Painel de diagnóstico</h1>
+    <p class="muted">Compare o relógio do computador, o horário oficial do Supabase e o estado do Service Worker.</p>
+  </div>
+  <button id="diag-refresh" class="btn primary" type="button">Atualizar diagnóstico</button>
+</header>
+
+<section id="diag-status-banner" class="notice">
+  Verificando o sistema...
+</section>
+
+<section class="diagnostic-grid">
+  <article class="diagnostic-card">
+    <small>Hora do computador</small>
+    <strong id="diag-local-time">—</strong>
+    <span id="diag-local-date">—</span>
+  </article>
+
+  <article class="diagnostic-card">
+    <small>Hora oficial do Supabase</small>
+    <strong id="diag-server-time">—</strong>
+    <span id="diag-server-date">—</span>
+  </article>
+
+  <article class="diagnostic-card">
+    <small>Diferença detectada</small>
+    <strong id="diag-offset">—</strong>
+    <span id="diag-offset-detail">—</span>
+  </article>
+
+  <article class="diagnostic-card">
+    <small>Fonte usada pelo sistema</small>
+    <strong id="diag-source">—</strong>
+    <span id="diag-last-sync">—</span>
+  </article>
+</section>
+
+<section class="panel">
+  <div class="diagnostic-section-head">
+    <div>
+      <p class="eyebrow">RELÓGIO OFICIAL</p>
+      <h2>Sincronização de horário</h2>
+    </div>
+    <button id="diag-sync-clock" class="btn outline" type="button">Sincronizar agora</button>
+  </div>
+
+  <div class="diagnostic-details">
+    <div><span>Timezone do Supabase</span><strong id="diag-timezone">—</strong></div>
+    <div><span>Última sincronização</span><strong id="diag-sync-at">—</strong></div>
+    <div><span>Offset em milissegundos</span><strong id="diag-offset-ms">—</strong></div>
+    <div><span>Conexão do navegador</span><strong id="diag-online">—</strong></div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="diagnostic-section-head">
+    <div>
+      <p class="eyebrow">CACHE E ATUALIZAÇÃO</p>
+      <h2>Service Worker</h2>
+    </div>
+    <button id="diag-update-sw" class="btn outline" type="button">Procurar atualização</button>
+  </div>
+
+  <div class="diagnostic-details">
+    <div><span>Status</span><strong id="diag-sw-status">—</strong></div>
+    <div><span>Script ativo</span><strong id="diag-sw-script">—</strong></div>
+    <div><span>Escopo</span><strong id="diag-sw-scope">—</strong></div>
+    <div><span>Controlando esta página</span><strong id="diag-sw-controller">—</strong></div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="diagnostic-section-head">
+    <div>
+      <p class="eyebrow">VERSÃO</p>
+      <h2>Arquivos carregados</h2>
+    </div>
+  </div>
+
+  <div class="diagnostic-details">
+    <div><span>Versão esperada</span><strong>RC5.64</strong></div>
+    <div><span>CSS carregado</span><strong id="diag-css-version">—</strong></div>
+    <div><span>JavaScript carregado</span><strong id="diag-js-version">—</strong></div>
+    <div><span>Navegador</span><strong id="diag-browser">—</strong></div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="diagnostic-section-head">
+    <div>
+      <p class="eyebrow">TESTE RÁPIDO</p>
+      <h2>Resultado geral</h2>
+    </div>
+  </div>
+  <div id="diag-checks" class="diagnostic-checks"></div>
+</section>
+</main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-config.js?v=1.0.0-rc5.64"></script>
+<script src="assets/js/auth.js?v=1.0.0-rc5.64"></script>
+<script src="assets/js/official-clock.js?v=1.0.0-rc5.64"></script>
+<script src="assets/js/database.js?v=1.0.0-rc5.64"></script>
+<script src="assets/js/app.js?v=1.0.0-rc5.64"></script>
+<script src="assets/js/diagnostico.js?v=1.0.0-rc5.64"></script>
+<script src="assets/js/version-guard.js?v=1.0.0-rc5.64"></script>
+</body>
+</html>

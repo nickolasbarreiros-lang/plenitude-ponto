@@ -1,4 +1,4 @@
-const CACHE='plenitude-ponto-rc5-63';
+const CACHE='plenitude-ponto-rc5-64';
 const CORE=[
  './',
  './index.html',
@@ -15,6 +15,7 @@ const CORE=[
  './assets/js/access-status.js',
  './assets/js/version-guard.js',
  './assets/js/official-clock.js',
+ './assets/js/diagnostico.js',
  './assets/js/marcacoes-admin.js',
  './assets/img/logo-plenitude.png',
  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
