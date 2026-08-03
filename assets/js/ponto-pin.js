@@ -1,4 +1,6 @@
 (function(){'use strict';
+let pointRegistrationInFlight=false;
+
  const client=window.PlenitudeAuth.client;
  function stored(){try{return JSON.parse(sessionStorage.getItem('plenitude-employee-session')||localStorage.getItem('plenitude-offline-employee-session')||'null')}catch{return null}}
  const sess=stored();

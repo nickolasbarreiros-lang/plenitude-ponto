@@ -3215,3 +3215,30 @@ body.administrator-point-mode #ponto-funcionario-select{
   outline-offset:1px;
   border-radius:10px;
 }
+
+
+/* RC5.60 — atualização automática de versão */
+#system-update-notice{
+  position:fixed;
+  top:16px;
+  left:50%;
+  z-index:100000;
+  transform:translateX(-50%);
+  display:flex;
+  gap:12px;
+  align-items:center;
+  padding:13px 18px;
+  border:1px solid #79c894;
+  border-radius:12px;
+  background:#eaf9ef;
+  box-shadow:0 12px 35px rgba(0,0,0,.16);
+  color:#146b35;
+}
+#system-update-notice strong,
+#system-update-notice span{
+  white-space:nowrap;
+}
+button[aria-busy="true"]{
+  cursor:wait!important;
+  pointer-events:none!important;
+}

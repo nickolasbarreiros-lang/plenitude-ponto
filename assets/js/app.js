@@ -667,9 +667,29 @@ async function initPonto(){
     if(!DB_STATE.employee){document.getElementById('clock-employee').textContent=profile.papel==='funcionario'?'Conta ainda não vinculada a um funcionário':'Nenhum funcionário cadastrado';document.getElementById('clock-status').textContent='Acesso pendente';document.getElementById('registrar').disabled=true;renderRealPunches([]);return}
     renderClockEmployee(DB_STATE.employee);
     await loadRealPunches();
+    let adminPointRegistrationInFlight=false;
     document.getElementById('registrar').onclick=async()=>{
-      const button=document.getElementById('registrar');button.disabled=true;button.classList.add('loading');
-      try{const mark=await window.PlenitudeDB.registerPoint(DB_STATE.employee.id);await loadRealPunches();const label=labelForMarkType(mark?.tipo);const time=formatDbTime(mark?.registrado_em);toast(`${label} registrada às ${time}.`)}catch(error){toast(errorText(error),'warn');console.error(error)}finally{button.classList.remove('loading');}
+      if(adminPointRegistrationInFlight)return;
+      adminPointRegistrationInFlight=true;
+      const button=document.getElementById('registrar');
+      button.disabled=true;
+      button.classList.add('loading');
+      button.setAttribute('aria-busy','true');
+      try{
+        const mark=await window.PlenitudeDB.registerPoint(DB_STATE.employee.id);
+        await loadRealPunches();
+        const label=labelForMarkType(mark?.tipo);
+        const time=formatDbTime(mark?.registrado_em);
+        toast(`${label} registrada às ${time}.`);
+      }catch(error){
+        toast(errorText(error),'warn');
+        console.error(error);
+      }finally{
+        adminPointRegistrationInFlight=false;
+        button.classList.remove('loading');
+        button.removeAttribute('aria-busy');
+        await loadRealPunches();
+      }
     };
     window.PlenitudeDB.subscribeMarks(async()=>{if(document.visibilityState==='visible')await loadRealPunches()});
   }catch(error){toast(errorText(error),'warn');console.error(error)}
