@@ -75,7 +75,12 @@ async function sync(){
    return info();
   }catch(error){
    console.warn('Falha ao sincronizar o horário oficial.',error);
-   source='local';
+
+   /*
+    * Online sem resposta do relógio oficial não deve fingir que a hora local
+    * é oficial. Mantemos a origem como indisponível para sinalização visual.
+    */
+   source=navigator.onLine?'unavailable':'local';
    offsetMs=0;
    emit();
    return info();

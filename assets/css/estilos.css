@@ -3419,3 +3419,11 @@ button[aria-busy="true"]{
   background:#fff4d8;
   color:#8b5a00;
 }
+
+
+/* RC5.63 — falha de sincronização do relógio */
+.clock-source-status.unavailable{
+  border:1px solid #e06c72;
+  background:#fff0f0;
+  color:#a51f28;
+}

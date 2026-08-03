@@ -496,7 +496,7 @@ let pointRegistrationInFlight=false;
 
   const marks=currentJourneyMarks||[];
   const journeyComplete=marks.length>=4;
-  const cooldownActive=Date.now()<punchCooldownUntil;
+  const cooldownActive=officialNowMs()<punchCooldownUntil;
   const offlineAllowed=
    contingencyMode&&
    offlineDayStateReady;
@@ -871,7 +871,20 @@ let pointRegistrationInFlight=false;
   });
  });
 
- function clock(){const d=new Date();document.getElementById('clock-date').textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(d);document.getElementById('clock-time').textContent=d.toLocaleTimeString('pt-BR')}
+ function clock(){
+  const d=window.PlenitudeClock?.now?.()||new Date();
+  document.getElementById('clock-date').textContent=
+   window.PlenitudeClock?.formatDate?.(d,{dateStyle:'full'})||
+   new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(d);
+  document.getElementById('clock-time').textContent=
+   window.PlenitudeClock?.formatTime?.(d)||
+   d.toLocaleTimeString('pt-BR');
+  updatePointClockSource();
+ }
+ function officialNowMs(){
+  return (window.PlenitudeClock?.now?.()||new Date()).getTime();
+ }
+
  function successSound(){try{const C=window.AudioContext||window.webkitAudioContext,ctx=new C();[523.25,659.25,783.99].forEach((f,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(.0001,ctx.currentTime+i*.11);g.gain.exponentialRampToValueAtTime(.16,ctx.currentTime+i*.11+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+i*.11+.18);o.connect(g);g.connect(ctx.destination);o.start(ctx.currentTime+i*.11);o.stop(ctx.currentTime+i*.11+.2)});setTimeout(()=>ctx.close(),800)}catch{}}
  function showSuccess(message){const b=document.getElementById('success-banner');b.querySelector('strong').textContent=message;b.hidden=false;b.classList.remove('show');void b.offsetWidth;b.classList.add('show');successSound();setTimeout(()=>{b.classList.remove('show');setTimeout(()=>b.hidden=true,250)},3200)}
  function applyLunchMinimumRule(marks,button,actionLabels){
@@ -886,12 +899,12 @@ let pointRegistrationInFlight=false;
   const unlockAt=lunchStart+(30*60*1000);
 
   const update=()=>{
-   const remainingMs=unlockAt-Date.now();
+   const remainingMs=unlockAt-officialNowMs();
 
    if(remainingMs<=0){
     clearInterval(lunchMinimumTimer);
     lunchMinimumTimer=null;
-    button.disabled=punchInFlight||Date.now()<punchCooldownUntil;
+    button.disabled=punchInFlight||officialNowMs()<punchCooldownUntil;
     button.classList.remove('lunch-wait');
     button.innerHTML=`<span>◷</span> ${actionLabels[2]}`;
     button.setAttribute('aria-label',actionLabels[2]);
@@ -939,7 +952,7 @@ let pointRegistrationInFlight=false;
    year:'numeric',
    month:'2-digit',
    day:'2-digit'
-  }).format(new Date());
+  }).format(window.PlenitudeClock?.now?.()||new Date());
 
   /*
    * Defesa visual: pendências só podem aparecer para dias já encerrados.
@@ -1271,7 +1284,7 @@ let pointRegistrationInFlight=false;
   refreshPunchAvailability();
   unlockOnlinePunchButton();
 
-  if(Date.now()>=punchCooldownUntil){
+  if(officialNowMs()>=punchCooldownUntil){
    punchButton.classList.remove('cooldown');
   }
   document.body.classList.toggle('homologation-employee',isHomologation);
@@ -1279,6 +1292,10 @@ let pointRegistrationInFlight=false;
  }
  async function init(){
   clearTimeout(window.__plenitudePointBootTimeout);
+
+  if(navigator.onLine){
+   await window.PlenitudeClock?.sync?.();
+  }
 
   document.body.classList.add(
    'employee-mode',
@@ -1389,7 +1406,7 @@ let pointRegistrationInFlight=false;
 
    if('serviceWorker' in navigator&&serverReachable===true){
     navigator.serviceWorker
-     .register('./sw.js?v=1.0.0-rc5.28')
+     .register('./sw.js?v=1.0.0-rc5.63')
      .catch(error=>
       console.warn('Service Worker indisponível',error)
      );
@@ -1436,7 +1453,7 @@ let pointRegistrationInFlight=false;
   }
  }
  function startPunchCooldown(button, seconds=5){
-  punchCooldownUntil=Date.now()+(seconds*1000);
+  punchCooldownUntil=officialNowMs()+(seconds*1000);
   clearInterval(punchCooldownTimer);
 
   const update=()=>{
@@ -1953,9 +1970,12 @@ document.getElementById('registrar').onclick=async()=>{
    target.innerHTML=warning
     ?`<strong>● Horário oficial do servidor</strong><small>${warning.message}</small>`
     :'<strong>● Horário oficial do servidor</strong>';
-  }else{
+  }else if(info.source==='local'){
    target.className='clock-source-status local';
    target.innerHTML='<strong>● Contingência — horário local do dispositivo</strong>';
+  }else{
+   target.className='clock-source-status unavailable';
+   target.innerHTML='<strong>⚠ Horário oficial indisponível</strong><small>Não registre o ponto até a sincronização.</small>';
   }
  }
 

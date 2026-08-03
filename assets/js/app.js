@@ -720,9 +720,12 @@ function renderOfficialClockStatus(){
     target.innerHTML=warning
       ?`<strong>● Horário oficial do servidor</strong><small>${warning.message}</small>`
       :'<strong>● Horário oficial do servidor</strong>';
-  }else{
+  }else if(info.source==='local'){
     target.className='clock-source-status local';
     target.innerHTML='<strong>● Contingência — horário local do dispositivo</strong>';
+  }else{
+    target.className='clock-source-status unavailable';
+    target.innerHTML='<strong>⚠ Horário oficial indisponível</strong><small>Não registre o ponto até a sincronização.</small>';
   }
 }
 
