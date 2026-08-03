@@ -610,7 +610,21 @@ function updateTotals(){let weekly=0;document.querySelectorAll('#jornada-body tr
 
 async function initPonto(){
   const context=await initCommon(['administrador','funcionario']);if(!context)return;const session=context.session;
-  const clock=()=>{const d=new Date();document.getElementById('clock-date').textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(d);document.getElementById('clock-time').textContent=d.toLocaleTimeString('pt-BR')};clock();setInterval(clock,1000);
+  await window.PlenitudeClock?.sync?.();
+
+  const clock=()=>{
+    const d=window.PlenitudeClock?.now?.()||new Date();
+    document.getElementById('clock-date').textContent=
+      window.PlenitudeClock?.formatDate?.(d,{dateStyle:'full'})||
+      new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(d);
+    document.getElementById('clock-time').textContent=
+      window.PlenitudeClock?.formatTime?.(d)||
+      d.toLocaleTimeString('pt-BR');
+    renderOfficialClockStatus();
+  };
+
+  clock();
+  setInterval(clock,1000);
   try{
     const profile=await window.PlenitudeDB.profile();
     const employees=profile.papel==='administrador'?await window.PlenitudeDB.employees():[];
@@ -694,13 +708,31 @@ async function initPonto(){
     window.PlenitudeDB.subscribeMarks(async()=>{if(document.visibilityState==='visible')await loadRealPunches()});
   }catch(error){toast(errorText(error),'warn');console.error(error)}
 }
+function renderOfficialClockStatus(){
+  const target=document.getElementById('clock-source-status');
+  if(!target||!window.PlenitudeClock)return;
+
+  const info=window.PlenitudeClock.info();
+  const warning=window.PlenitudeClock.differenceWarning();
+
+  if(info.source==='server'){
+    target.className='clock-source-status server';
+    target.innerHTML=warning
+      ?`<strong>● Horário oficial do servidor</strong><small>${warning.message}</small>`
+      :'<strong>● Horário oficial do servidor</strong>';
+  }else{
+    target.className='clock-source-status local';
+    target.innerHTML='<strong>● Contingência — horário local do dispositivo</strong>';
+  }
+}
+
 function renderClockEmployee(f){if(!f)return;document.getElementById('clock-employee').textContent=f.nome;const status=document.getElementById('clock-status');if(status){status.textContent=employeeStatusLabel(f.status||'ativo');status.className=`${f.status||'ativo'}`};const avatar=document.getElementById('clock-avatar'),photo=employeePhoto(f);if(avatar)avatar.innerHTML=photo?`<img src="${photo}" alt="Foto de ${f.nome}">`:`<span>${employeeInitials(f.nome)}</span>`}
 function labelForMarkType(type){return({entrada:'Entrada',inicio_intervalo:'Início do almoço',fim_intervalo:'Retorno do almoço',saida:'Saída'})[type]||'Marcação'}
 function formatDbTime(value){return value?new Date(value).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—'}
 async function loadRealPunches(){
   if(!DB_STATE.employee)return renderRealPunches([]);
   renderClockEmployee(DB_STATE.employee);
-  const today=localDateKey(),marks=(await window.PlenitudeDB.marksForRange(today,today)).filter(m=>m.funcionario_id===DB_STATE.employee.id);
+  const today=localDateKey(window.PlenitudeClock?.now?.()||new Date()),marks=(await window.PlenitudeDB.marksForRange(today,today)).filter(m=>m.funcionario_id===DB_STATE.employee.id);
   renderRealPunches(marks);
   if(DB_STATE.profile?.papel==='funcionario') await renderEmployeeSummary(marks);
 }

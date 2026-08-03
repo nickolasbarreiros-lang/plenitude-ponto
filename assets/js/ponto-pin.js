@@ -382,7 +382,7 @@ let pointRegistrationInFlight=false;
  async function localTodayMarks(){
   if(!employee||!window.PlenitudeOffline)return [];
 
-  const today=dateKey(new Date());
+  const today=dateKey(window.PlenitudeClock?.now?.()||new Date());
 
   return (await window.PlenitudeOffline.pending())
    .filter(record=>
@@ -402,7 +402,7 @@ let pointRegistrationInFlight=false;
    }));
  }
 
- function dayStateKey(day=dateKey(new Date())){
+ function dayStateKey(day=dateKey(window.PlenitudeClock?.now?.()||new Date())){
   return `day-state:${employee?.id||'unknown'}:${day}`;
  }
 
@@ -775,6 +775,7 @@ let pointRegistrationInFlight=false;
   if(connectionTransition)return connectionTransition;
 
   connectionTransition=(async()=>{
+ await window.PlenitudeClock?.sync?.();
    const banner=document.getElementById('sync-restored-banner');
    const text=document.getElementById('sync-restored-text');
 
@@ -1101,7 +1102,7 @@ let pointRegistrationInFlight=false;
  }
 
  async function load(){
-  const now=new Date();
+  const now=window.PlenitudeClock?.now?.()||new Date();
   const today=dateKey(now);
   const monday=new Date(now);
   monday.setDate(now.getDate()-((now.getDay()+6)%7));
@@ -1560,7 +1561,7 @@ document.getElementById('registrar').onclick=async()=>{
 
 
  async function loadMovements(){
-  const today=dateKey(new Date());
+  const today=dateKey(window.PlenitudeClock?.now?.()||new Date());
 
   let rows=[];
   let status=null;
@@ -1881,7 +1882,7 @@ document.getElementById('registrar').onclick=async()=>{
   adjustmentHelp.hidden=open;
 
   if(open){
-   document.getElementById('ajuste-data').value=dateKey(new Date());
+   document.getElementById('ajuste-data').value=dateKey(window.PlenitudeClock?.now?.()||new Date());
    requestAnimationFrame(()=>document.getElementById('ajuste-data').focus());
   }else{
    adjustmentForm.reset();
@@ -1940,4 +1941,25 @@ document.getElementById('registrar').onclick=async()=>{
 
   const a=document.getElementById('pin-atual').value,n=document.getElementById('pin-novo').value,c=document.getElementById('pin-confirmar').value;if(!/^\d{4}$/.test(n)||n!==c)return toast('O novo PIN deve ter 4 números e coincidir com a confirmação.','warn');try{await rpc('alterar_proprio_pin',{p_token:token,p_pin_atual:a,p_novo_pin:n});toast('PIN alterado com sucesso.');document.getElementById('change-pin-panel').hidden=true}catch(e){toast(e.message,'warn')}};
  init();
+ function updatePointClockSource(){
+  const target=document.getElementById('clock-source-status');
+  if(!target||!window.PlenitudeClock)return;
+
+  const info=window.PlenitudeClock.info();
+  const warning=window.PlenitudeClock.differenceWarning();
+
+  if(info.source==='server'){
+   target.className='clock-source-status server';
+   target.innerHTML=warning
+    ?`<strong>● Horário oficial do servidor</strong><small>${warning.message}</small>`
+    :'<strong>● Horário oficial do servidor</strong>';
+  }else{
+   target.className='clock-source-status local';
+   target.innerHTML='<strong>● Contingência — horário local do dispositivo</strong>';
+  }
+ }
+
+ window.PlenitudeClock?.subscribe?.(()=>updatePointClockSource());
+ updatePointClockSource();
+
 })();
