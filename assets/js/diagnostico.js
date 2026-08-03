@@ -37,6 +37,106 @@ function renderCheck(ok,title,detail){
  </article>`;
 }
 
+
+function formatDuration(ms){
+ const absolute=Math.abs(Number(ms)||0);
+ const totalSeconds=Math.round(absolute/1000);
+ const minutes=Math.floor(totalSeconds/60);
+ const seconds=totalSeconds%60;
+
+ if(minutes>0){
+  return `${minutes} minuto(s) e ${seconds} segundo(s)`;
+ }
+
+ return `${seconds} segundo(s)`;
+}
+
+function showSyncResult({
+ ok,
+ title,
+ serverDate=null,
+ localDate=null,
+ offsetMs=null,
+ latencyMs=null,
+ source=null,
+ message=''
+}){
+ const dialog=$('diag-sync-dialog');
+ const body=$('diag-sync-body');
+
+ $('diag-sync-title').textContent=title;
+ dialog.classList.toggle('success',Boolean(ok));
+ dialog.classList.toggle('error',!ok);
+
+ if(ok){
+  const direction=
+   Number(offsetMs)>0
+    ?'atrasado'
+    :Number(offsetMs)<0
+      ?'adiantado'
+      :'sincronizado';
+
+  body.innerHTML=`
+   <article class="sync-result-status success">
+    <span>✓</span>
+    <div>
+     <strong>Sincronização concluída</strong>
+     <small>O sistema atualizou sua referência de tempo.</small>
+    </div>
+   </article>
+
+   <div class="sync-result-grid">
+    <div>
+     <span>Horário do Supabase</span>
+     <strong>${formatTime(serverDate)}</strong>
+    </div>
+    <div>
+     <span>Horário do computador</span>
+     <strong>${formatTime(localDate)}</strong>
+    </div>
+    <div>
+     <span>Diferença encontrada</span>
+     <strong>${formatDuration(offsetMs)}</strong>
+     <small>
+      ${direction==='sincronizado'
+       ?'Relógios sincronizados'
+       :`Computador ${direction} em relação ao servidor`}
+     </small>
+    </div>
+    <div>
+     <span>Fonte utilizada</span>
+     <strong>${source==='server'?'Supabase':'Indisponível'}</strong>
+    </div>
+    <div>
+     <span>Latência da consulta</span>
+     <strong>${Math.round(latencyMs||0)} ms</strong>
+    </div>
+    <div>
+     <span>Última sincronização</span>
+     <strong>${formatDateTime(new Date())}</strong>
+    </div>
+   </div>
+  `;
+ }else{
+  body.innerHTML=`
+   <article class="sync-result-status error">
+    <span>!</span>
+    <div>
+     <strong>Não foi possível sincronizar</strong>
+     <small>${message||'O horário oficial não pôde ser consultado.'}</small>
+    </div>
+   </article>
+
+   <div class="notice compact danger">
+    O sistema não tratará o horário local como oficial enquanto estiver online
+    sem resposta do Supabase. Verifique a conexão e tente novamente.
+   </div>
+  `;
+ }
+
+ dialog.showModal();
+}
+
 async function getServerTimeDirect(){
  const started=Date.now();
  const {data,error}=await window.PlenitudeAuth.client.rpc('horario_oficial_sistema');
@@ -209,8 +309,45 @@ async function refresh(){
 
 $('diag-refresh').onclick=refresh;
 $('diag-sync-clock').onclick=async()=>{
- await window.PlenitudeClock.sync();
- await refresh();
+ const button=$('diag-sync-clock');
+ button.disabled=true;
+ button.setAttribute('aria-busy','true');
+ button.textContent='Sincronizando...';
+
+ try{
+  const localDate=new Date();
+  const direct=await getServerTimeDirect();
+  await window.PlenitudeClock.sync();
+  const info=window.PlenitudeClock.info();
+
+  showSyncResult({
+   ok:info.source==='server',
+   title:info.source==='server'
+    ?'Sincronização concluída'
+    :'Sincronização incompleta',
+   serverDate:direct.serverDate,
+   localDate,
+   offsetMs:direct.offsetMs,
+   latencyMs:direct.latencyMs,
+   source:info.source
+  });
+
+  await refresh();
+ }catch(error){
+  console.error(error);
+
+  showSyncResult({
+   ok:false,
+   title:'Falha na sincronização',
+   message:error.message||'Não foi possível consultar o horário oficial.'
+  });
+
+  await refresh();
+ }finally{
+  button.disabled=false;
+  button.removeAttribute('aria-busy');
+  button.textContent='Sincronizar agora';
+ }
 };
 
 $('diag-update-sw').onclick=async()=>{
