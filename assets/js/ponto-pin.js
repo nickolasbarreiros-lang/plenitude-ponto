@@ -5,6 +5,7 @@ let pointRegistrationInFlight=false;
  function stored(){try{return JSON.parse(sessionStorage.getItem('plenitude-employee-session')||localStorage.getItem('plenitude-offline-employee-session')||'null')}catch{return null}}
  const sess=stored();
  if(!sess){ window.PlenitudeAuth.getSession().then(s=>s?initPonto():location.replace('index.html')); return; }
+ const CLICK_COOLDOWN_MS=5000;const LUNCH_MINIMUM_MS=30*60*1000;
  const token=sess.token;let employee=null;let onlineMarks=[];let currentJourneyMarks=[];let offlineDayStateReady=false;let contingencyMode=false;let syncInProgress=false;let pointReady=false;let serverReachable=null;let punchInFlight=false;let punchCooldownUntil=0;let punchCooldownTimer=null;let lunchMinimumTimer=null;
  const dateKey=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
  const label=t=>({entrada:'Entrada',inicio_intervalo:'Início do almoço',fim_intervalo:'Retorno do almoço',saida:'Saída'})[t]||'Marcação';
@@ -518,6 +519,8 @@ let pointRegistrationInFlight=false;
   button.dataset.syncInProgress=String(syncInProgress);
   button.dataset.punchInFlight=String(punchInFlight);
   button.dataset.marks=String(marks.length);
+  button.dataset.clickCooldownMs=String(CLICK_COOLDOWN_MS);
+  button.dataset.lunchMinimumMs=String(LUNCH_MINIMUM_MS);
 
   if(canRegister){
    button.removeAttribute('disabled');
@@ -896,7 +899,7 @@ let pointRegistrationInFlight=false;
   }
 
   const lunchStart=new Date(marks[1].registrado_em).getTime();
-  const unlockAt=lunchStart+(30*60*1000);
+  const unlockAt=lunchStart+LUNCH_MINIMUM_MS;
 
   const update=()=>{
    const remainingMs=unlockAt-officialNowMs();
@@ -1452,12 +1455,12 @@ let pointRegistrationInFlight=false;
    }
   }
  }
- function startPunchCooldown(button, seconds=5){
-  punchCooldownUntil=officialNowMs()+(seconds*1000);
+ function startPunchCooldown(button){
+  punchCooldownUntil=officialNowMs()+CLICK_COOLDOWN_MS;
   clearInterval(punchCooldownTimer);
 
   const update=()=>{
-    const remaining=Math.ceil((punchCooldownUntil-Date.now())/1000);
+    const remaining=Math.ceil((punchCooldownUntil-officialNowMs())/1000);
     if(remaining<=0){
       clearInterval(punchCooldownTimer);
       punchCooldownTimer=null;
@@ -1498,7 +1501,7 @@ document.getElementById('registrar').onclick=async()=>{
     return;
   }
 
-  const remaining=Math.ceil((punchCooldownUntil-Date.now())/1000);
+  const remaining=Math.ceil((punchCooldownUntil-officialNowMs())/1000);
   if(remaining>0){
     toast(`Aguarde ${remaining} segundo(s) antes de registrar novamente.`,'warn');
     return;
@@ -1527,7 +1530,7 @@ document.getElementById('registrar').onclick=async()=>{
     await load();
 
     // Mantém a interface protegida mesmo depois da resposta do servidor.
-    startPunchCooldown(b,5);
+    startPunchCooldown(b);
   }catch(e){
     if(isNetworkFailure(e)){
      try{
@@ -1543,7 +1546,7 @@ document.getElementById('registrar').onclick=async()=>{
        'warn'
       );
 
-      startPunchCooldown(b,5);
+      startPunchCooldown(b);
      }catch(offlineError){
       console.error('Falha após tentativa de registro offline',offlineError);
 
