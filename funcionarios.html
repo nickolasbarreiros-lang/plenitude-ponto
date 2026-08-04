@@ -1,4 +1,4 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#2c2324"><title>Funcionário | Plenitude Ponto</title><link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc5.66"></head><body>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#2c2324"><title>Funcionário | Plenitude Ponto</title><link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc5.67"></head><body>
 <div class="app-shell"><aside class="sidebar">
   <div class="sidebar-brand"><img class="logo" src="assets/img/logo-plenitude.png" alt="Plenitude"></div>
   <p class="sidebar-label">CONTROLE DE PONTO</p>
@@ -15,7 +15,12 @@
     <a data-page="homologacao" href="homologacao.html"><span>🧪</span><b>Homologação</b></a><a data-page="configuracoes" href="configuracoes.html"><span>⚙</span><b>Configurações</b></a>
   </nav>
   <button id="sair" class="link-button">↪ Sair do sistema</button>
-</aside><main class="content"><header class="topbar"><div><p class="eyebrow">CADASTRO</p><h1>Funcionário</h1><p class="muted">Mantenha os dados do colaborador atualizados.</p></div><span id="func-status-top" class="badge">1 funcionário</span></header><section class="panel-grid employee-module-grid">
+</aside><main class="content"><header class="topbar"><div><p class="eyebrow">CADASTRO</p><h1>Funcionário</h1><p class="muted">Mantenha os dados do colaborador atualizados.</p></div><div class="employee-top-actions">
+<label>Funcionário selecionado
+<select id="employee-selector" class="compact-select"></select>
+</label>
+<span id="func-status-top" class="badge">0 funcionários</span>
+</div></header><section class="panel-grid employee-module-grid">
 <article class="panel">
   <div class="panel-head"><div><p class="panel-kicker">DADOS</p><h2>Cadastro do funcionário</h2></div></div>
   <form id="func-form" class="form-grid">
@@ -64,6 +69,39 @@
     <div><p class="panel-kicker">IDENTIFICAÇÃO</p><strong id="func-qr-code">Aguardando cadastro</strong><small>O QR abre a tela de ponto com a identificação deste funcionário.</small><div class="qr-actions"><button id="baixar-qr" class="btn secondary" type="button">Baixar QR</button><button id="imprimir-qr" class="btn secondary" type="button">Imprimir</button></div></div>
   </div>
 </article>
-</section></main></div><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc5.66"></script><script src="assets/js/auth.js?v=1.0.0-rc5.66"></script><script src="assets/js/official-clock.js?v=1.0.0-rc5.66"></script>
-  <script src="assets/js/database.js?v=1.0.0-rc5.66"></script><script src="assets/js/app.js?v=1.0.0-rc5.66"></script><script>initFuncionarios()</script><script src="assets/js/version-guard.js?v=1.0.0-rc5.66"></script>
+</section><section class="panel employee-activity-management">
+<div class="panel-head">
+ <div><p class="panel-kicker">ATIVAÇÃO E HOMOLOGAÇÃO</p><h2>Controle de participação no sistema</h2></div>
+ <span id="employee-activity-badge" class="employee-status ativo">Ativo</span>
+</div>
+<p class="muted">Funcionários inativos deixam de participar dos cálculos, atrasos, ausências, pendências e alertas do painel.</p>
+<div class="activity-options">
+ <article>
+  <strong>Desativar e manter dados</strong>
+  <p>Preserva marcações, relatórios e espelhos mensais. O funcionário deixa de alimentar os indicadores.</p>
+  <button id="deactivate-keep" class="btn outline" type="button">Desativar mantendo histórico</button>
+ </article>
+ <article class="danger-zone">
+  <strong>Desativar e resetar dados</strong>
+  <p>Apaga marcações, ajustes, pendências, contingências e espelhos. Cadastro, PIN, foto e jornada semanal permanecem.</p>
+  <button id="deactivate-reset" class="btn danger" type="button">Desativar e resetar</button>
+ </article>
+</div>
+<button id="reactivate-employee" class="btn primary" type="button" hidden>Reativar funcionário</button>
+</section>
+
+<dialog id="employee-activity-dialog" class="management-dialog">
+<form method="dialog" id="employee-activity-form">
+<header><div><small id="activity-dialog-level">CONTROLE</small><h2 id="activity-dialog-title">Alterar funcionário</h2></div><button value="cancel" class="dialog-close">×</button></header>
+<div id="activity-selected-employee" class="selected-mark-box"></div>
+<label>Motivo<textarea id="activity-reason" required placeholder="Informe o motivo desta alteração."></textarea></label>
+<div id="activity-reset-fields" hidden>
+<label>Confirmação<input id="activity-confirmation" autocomplete="off" placeholder="Digite RESETAR"></label>
+<label>PIN Mestre<input id="activity-master-pin" type="password" inputmode="numeric" maxlength="6" placeholder="6 números"></label>
+<div class="notice compact danger"><strong>Atenção:</strong> os dados operacionais e mensais deste funcionário serão apagados.</div>
+</div>
+<footer><button id="activity-cancel" class="btn outline" type="button">Cancelar</button><button id="activity-submit" class="btn primary" type="submit">Confirmar</button></footer>
+</form>
+</dialog></main></div><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc5.67"></script><script src="assets/js/auth.js?v=1.0.0-rc5.67"></script><script src="assets/js/official-clock.js?v=1.0.0-rc5.67"></script>
+  <script src="assets/js/database.js?v=1.0.0-rc5.67"></script><script src="assets/js/app.js?v=1.0.0-rc5.67"></script><script>initFuncionarios()</script><script src="assets/js/version-guard.js?v=1.0.0-rc5.67"></script>
 </body></html>

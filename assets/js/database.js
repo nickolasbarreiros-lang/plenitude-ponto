@@ -92,6 +92,24 @@
     return attachPhoto(Array.isArray(data)?data[0]:data);
   }
 
+  async function changeEmployeeActivity({
+    employeeId,
+    action,
+    reason,
+    masterPin=null,
+    confirmation=null
+  }){
+    const {data,error}=await client.rpc('alterar_atividade_funcionario_admin',{
+      p_funcionario_id:employeeId,
+      p_acao:action,
+      p_motivo:reason,
+      p_master_pin:masterPin,
+      p_confirmacao:confirmation
+    });
+    if(error)throw error;
+    return Array.isArray(data)?data[0]:data;
+  }
+
   async function updateSettings(values){
     const p=await profile();
     const companyPayload={
@@ -458,5 +476,5 @@
     return Array.isArray(data)?data[0]:data;
   }
 
-  window.PlenitudeDB=Object.freeze({employeeMovements,registerEmployeeMovement,adminMovements,historicalReturnPendencies,journeyPendenciesAdmin,refreshJourneyPendenciesAdmin,createAdminMovement,analyzeMovement,regularizeMovementReturn,archiveMovement,masterPinStatus,setMasterPin,monthClosureAudit,monthlyMirrorStatuses,updateMonthlyMirrorStatus,monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,companyHolidays,saveCompanyHoliday,deleteCompanyHoliday,seedCompanyHolidays,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks,managedMarks,archiveMark,permanentlyDeleteMark});
+  window.PlenitudeDB=Object.freeze({employeeMovements,registerEmployeeMovement,adminMovements,historicalReturnPendencies,journeyPendenciesAdmin,refreshJourneyPendenciesAdmin,createAdminMovement,analyzeMovement,regularizeMovementReturn,archiveMovement,masterPinStatus,setMasterPin,monthClosureAudit,monthlyMirrorStatuses,updateMonthlyMirrorStatus,monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,companyHolidays,saveCompanyHoliday,deleteCompanyHoliday,seedCompanyHolidays,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks,managedMarks,archiveMark,permanentlyDeleteMark,changeEmployeeActivity});
 })();

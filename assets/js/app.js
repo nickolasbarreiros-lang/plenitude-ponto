@@ -570,8 +570,25 @@ async function initFuncionarios(){
   const form=document.getElementById('func-form'),photoInput=document.getElementById('func-foto');
   if(photoInput)photoInput.onchange=async()=>{const file=photoInput.files?.[0];if(!file)return;try{window.__employeePhotoData=await resizeEmployeePhoto(file);window.__employeePhotoFileSelected=true;renderAvatar(window.__employeePhotoData,document.getElementById('nome').value);document.getElementById('foto-status').textContent='Nova foto pronta para envio.'}catch(error){toast(errorText(error),'warn')}};
   try{
-    const employees=await window.PlenitudeDB.employees();DB_STATE.employees=employees;DB_STATE.employee=employees[0]||null;
-    fillEmployeeForm(DB_STATE.employee);await renderEmployee(DB_STATE.employee);
+    const employees=await window.PlenitudeDB.employees();
+    DB_STATE.employees=employees;
+    DB_STATE.employee=employees[0]||null;
+
+    const employeeSelector=document.getElementById('employee-selector');
+    employeeSelector.innerHTML=employees.map(item=>
+      `<option value="${item.id}">${item.nome} — ${item.matricula||'sem matrícula'}${item.ativo===false?' (inativo)':''}</option>`
+    ).join('');
+
+    employeeSelector.onchange=async()=>{
+      DB_STATE.employee=DB_STATE.employees.find(item=>item.id===employeeSelector.value)||null;
+      fillEmployeeForm(DB_STATE.employee);
+      await renderEmployee(DB_STATE.employee);
+      renderEmployeeActivity();
+    };
+
+    fillEmployeeForm(DB_STATE.employee);
+    await renderEmployee(DB_STATE.employee);
+    setupEmployeeActivityManagement();
     form.onsubmit=async e=>{e.preventDefault();const button=form.querySelector('button[type="submit"]');button.disabled=true;button.textContent='Salvando...';try{
       const values={nome:document.getElementById('nome').value.trim(),cpf:document.getElementById('cpf').value.replace(/\D/g,''),cargo:document.getElementById('cargo').value.trim(),admissao:document.getElementById('admissao').value,matricula:document.getElementById('matricula')?.value.trim()||null,status:document.getElementById('func-status').value,foto_url:DB_STATE.employee?.foto_url||null,codigo_qr:DB_STATE.employee?.codigo_qr||null};
       let saved=await window.PlenitudeDB.saveEmployee(values,DB_STATE.employee?.id||null);
@@ -583,12 +600,116 @@ async function initFuncionarios(){
     document.getElementById('imprimir-qr').onclick=printEmployeeQr;
   }catch(error){toast(errorText(error),'warn');console.error(error)}
 }
+
+function renderEmployeeActivity(){
+ const employee=DB_STATE.employee;
+ const badge=document.getElementById('employee-activity-badge');
+ const keep=document.getElementById('deactivate-keep');
+ const reset=document.getElementById('deactivate-reset');
+ const reactivate=document.getElementById('reactivate-employee');
+
+ if(!employee)return;
+ const inactive=employee.ativo===false||employee.status==='inativo';
+
+ badge.textContent=inactive?'Inativo':'Ativo';
+ badge.className=`employee-status ${inactive?'inativo':'ativo'}`;
+ keep.disabled=inactive;
+ reset.disabled=inactive;
+ reactivate.hidden=!inactive;
+}
+
+function setupEmployeeActivityManagement(){
+ const dialog=document.getElementById('employee-activity-dialog');
+ const form=document.getElementById('employee-activity-form');
+ let action='';
+
+ function openActivity(nextAction){
+  const employee=DB_STATE.employee;
+  if(!employee)return toast('Selecione um funcionário.','warn');
+  action=nextAction;
+  const reset=action==='desativar_resetar';
+  const reactivate=action==='reativar';
+
+  document.getElementById('activity-dialog-level').textContent=
+   reset?'DESATIVAÇÃO NÍVEL 2':reactivate?'REATIVAÇÃO':'DESATIVAÇÃO NÍVEL 1';
+  document.getElementById('activity-dialog-title').textContent=
+   reset?'Desativar e resetar dados':reactivate?'Reativar funcionário':'Desativar mantendo histórico';
+  document.getElementById('activity-reset-fields').hidden=!reset;
+  document.getElementById('activity-reason').value='';
+  document.getElementById('activity-confirmation').value='';
+  document.getElementById('activity-master-pin').value='';
+  document.getElementById('activity-selected-employee').innerHTML=
+   `<strong>${employee.nome}</strong><span>Matrícula ${employee.matricula||'—'}</span>`;
+  const submit=document.getElementById('activity-submit');
+  submit.textContent=reset?'Resetar e desativar':reactivate?'Reativar':'Desativar';
+  submit.className=reset?'btn danger':'btn primary';
+  dialog.showModal();
+ }
+
+ document.getElementById('deactivate-keep').onclick=()=>openActivity('desativar_manter');
+ document.getElementById('deactivate-reset').onclick=()=>openActivity('desativar_resetar');
+ document.getElementById('reactivate-employee').onclick=()=>openActivity('reativar');
+ document.getElementById('activity-cancel').onclick=()=>dialog.close();
+
+ form.onsubmit=async event=>{
+  event.preventDefault();
+  const employee=DB_STATE.employee;
+  const reason=document.getElementById('activity-reason').value.trim();
+  const submit=document.getElementById('activity-submit');
+
+  if(reason.length<8)return toast('Informe um motivo com pelo menos 8 caracteres.','warn');
+
+  submit.disabled=true;
+  submit.setAttribute('aria-busy','true');
+
+  try{
+   const result=await window.PlenitudeDB.changeEmployeeActivity({
+    employeeId:employee.id,
+    action,
+    reason,
+    masterPin:document.getElementById('activity-master-pin').value||null,
+    confirmation:document.getElementById('activity-confirmation').value||null
+   });
+
+   DB_STATE.employee={...employee,...result};
+   const index=DB_STATE.employees.findIndex(item=>item.id===employee.id);
+   DB_STATE.employees[index]=DB_STATE.employee;
+
+   dialog.close();
+   fillEmployeeForm(DB_STATE.employee);
+   await renderEmployee(DB_STATE.employee);
+   renderEmployeeActivity();
+
+   const option=document.querySelector(`#employee-selector option[value="${employee.id}"]`);
+   if(option)option.textContent=
+    `${DB_STATE.employee.nome} — ${DB_STATE.employee.matricula||'sem matrícula'}${DB_STATE.employee.ativo===false?' (inativo)':''}`;
+
+   toast(
+    action==='reativar'
+     ?'Funcionário reativado.'
+     :action==='desativar_resetar'
+       ?'Funcionário desativado e dados resetados.'
+       :'Funcionário desativado com histórico preservado.'
+   );
+  }catch(error){
+   console.error(error);
+   toast(errorText(error),'warn');
+  }finally{
+   submit.disabled=false;
+   submit.removeAttribute('aria-busy');
+  }
+ };
+
+ renderEmployeeActivity();
+}
+
 function fillEmployeeForm(f){['nome','cpf','cargo','admissao'].forEach(k=>{const el=document.getElementById(k);if(el)el.value=f?(k==='admissao'?f.data_admissao||'':f[k]||''):''});const matricula=document.getElementById('matricula');if(matricula)matricula.value=f?.matricula||'';const status=document.getElementById('func-status');if(status)status.value=f?.status||'ativo';const access=document.getElementById('acesso-pin-ativo');if(access)access.checked=f?.acesso_ponto_ativo!==false;const force=document.getElementById('exigir-troca-pin');if(force)force.checked=!!f?.exigir_troca_pin;window.__employeePhotoData=null;window.__employeePhotoFileSelected=false}
 function employeeStatusLabel(status){return({ativo:'Ativo',ferias:'Férias',afastado:'Afastado',inativo:'Inativo'})[status]||'Ativo'}
 function employeeInitials(name=''){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'P'}
 function employeePhoto(f){return f?.foto_resolvida||(/^https?:|^data:/i.test(f?.foto_url||'')?f.foto_url:null)}
 function renderAvatar(photo,name){const el=document.getElementById('func-avatar');if(!el)return;el.innerHTML=photo?`<img src="${photo}" alt="Foto de ${name||'funcionário'}">`:`<span>${employeeInitials(name)}</span>`}
-async function renderEmployee(f){document.getElementById('func-nome').textContent=f?.nome||'Nenhum funcionário cadastrado';const status=f?.status||'ativo',badge=document.getElementById('func-status-badge');if(badge){badge.className=`employee-status ${status}`;badge.innerHTML=`<i></i> ${employeeStatusLabel(status)}`};document.getElementById('func-status-top').textContent=f?`1 funcionário ${status==='ativo'?'ativo':'cadastrado'}`:'Nenhum funcionário';renderAvatar(employeePhoto(f),f?.nome);document.getElementById('foto-status').textContent=f?.foto_url?'Foto armazenada com segurança no Supabase.':'Nenhuma foto cadastrada.';const pinConfigured=!!(f&&(f.pin_hash||f.pin_configurado));document.getElementById('acesso-status').textContent=f?(pinConfigured?'PIN configurado. Use “Alterar PIN” para substituí-lo.':'PIN ainda não configurado. Clique em “Definir novo PIN”.'):'Salve primeiro os dados cadastrais.';const pinBadge=document.getElementById('pin-status-badge');if(pinBadge){pinBadge.className=`pin-status-badge ${pinConfigured?'configured':'pending'}`;pinBadge.textContent=pinConfigured?'PIN configurado':'Não configurado'}const pinMat=document.getElementById('pin-summary-matricula');if(pinMat)pinMat.textContent=f?.matricula||'—';const pinState=document.getElementById('pin-summary-status');if(pinState)pinState.textContent=pinConfigured?'Configurado':'Não configurado';const pinAccess=document.getElementById('pin-summary-access');if(pinAccess)pinAccess.textContent=f?(f.acesso_ponto_ativo===false?'Bloqueado':'Permitido'):'Aguardando cadastro';const editPin=document.getElementById('editar-pin');if(editPin){editPin.disabled=!f;editPin.textContent=pinConfigured?'Alterar PIN':'Definir novo PIN'};document.getElementById('func-detalhes').innerHTML=f?`<span><strong>Cargo:</strong> ${f.cargo||'—'}</span><span><strong>CPF:</strong> ${f.cpf||'—'}</span><span><strong>Matrícula:</strong> ${f.matricula||'—'}</span><span><strong>Admissão:</strong> ${f.data_admissao?new Intl.DateTimeFormat('pt-BR').format(new Date(f.data_admissao+'T12:00:00')):'—'}</span><span><strong>Carga semanal:</strong> ${fmtMinutes(f.carga_semanal_minutos||2640)}</span><span><strong>Acesso:</strong> ${f.acesso_ponto_ativo===false?'Bloqueado':'Matrícula + PIN'}</span>`:'<span>Preencha o formulário para cadastrar o primeiro funcionário.</span>';const code=f?.codigo_qr||'';document.getElementById('func-qr-code').textContent=code||'Será gerado ao salvar';const qr=document.getElementById('func-qrcode');if(qr){qr.innerHTML='';if(code&&window.QRCode)new QRCode(qr,{text:`${location.origin}${location.pathname.replace(/funcionarios\.html$/,'ponto.html')}?codigo=${encodeURIComponent(code)}`,width:112,height:112,colorDark:'#2a2526',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M})}}
+async function renderEmployee(f){
+  setTimeout(()=>renderEmployeeActivity(),0);document.getElementById('func-nome').textContent=f?.nome||'Nenhum funcionário cadastrado';const status=f?.status||'ativo',badge=document.getElementById('func-status-badge');if(badge){badge.className=`employee-status ${status}`;badge.innerHTML=`<i></i> ${employeeStatusLabel(status)}`};document.getElementById('func-status-top').textContent=f?`1 funcionário ${status==='ativo'?'ativo':'cadastrado'}`:'Nenhum funcionário';renderAvatar(employeePhoto(f),f?.nome);document.getElementById('foto-status').textContent=f?.foto_url?'Foto armazenada com segurança no Supabase.':'Nenhuma foto cadastrada.';const pinConfigured=!!(f&&(f.pin_hash||f.pin_configurado));document.getElementById('acesso-status').textContent=f?(pinConfigured?'PIN configurado. Use “Alterar PIN” para substituí-lo.':'PIN ainda não configurado. Clique em “Definir novo PIN”.'):'Salve primeiro os dados cadastrais.';const pinBadge=document.getElementById('pin-status-badge');if(pinBadge){pinBadge.className=`pin-status-badge ${pinConfigured?'configured':'pending'}`;pinBadge.textContent=pinConfigured?'PIN configurado':'Não configurado'}const pinMat=document.getElementById('pin-summary-matricula');if(pinMat)pinMat.textContent=f?.matricula||'—';const pinState=document.getElementById('pin-summary-status');if(pinState)pinState.textContent=pinConfigured?'Configurado':'Não configurado';const pinAccess=document.getElementById('pin-summary-access');if(pinAccess)pinAccess.textContent=f?(f.acesso_ponto_ativo===false?'Bloqueado':'Permitido'):'Aguardando cadastro';const editPin=document.getElementById('editar-pin');if(editPin){editPin.disabled=!f;editPin.textContent=pinConfigured?'Alterar PIN':'Definir novo PIN'};document.getElementById('func-detalhes').innerHTML=f?`<span><strong>Cargo:</strong> ${f.cargo||'—'}</span><span><strong>CPF:</strong> ${f.cpf||'—'}</span><span><strong>Matrícula:</strong> ${f.matricula||'—'}</span><span><strong>Admissão:</strong> ${f.data_admissao?new Intl.DateTimeFormat('pt-BR').format(new Date(f.data_admissao+'T12:00:00')):'—'}</span><span><strong>Carga semanal:</strong> ${fmtMinutes(f.carga_semanal_minutos||2640)}</span><span><strong>Acesso:</strong> ${f.acesso_ponto_ativo===false?'Bloqueado':'Matrícula + PIN'}</span>`:'<span>Preencha o formulário para cadastrar o primeiro funcionário.</span>';const code=f?.codigo_qr||'';document.getElementById('func-qr-code').textContent=code||'Será gerado ao salvar';const qr=document.getElementById('func-qrcode');if(qr){qr.innerHTML='';if(code&&window.QRCode)new QRCode(qr,{text:`${location.origin}${location.pathname.replace(/funcionarios\.html$/,'ponto.html')}?codigo=${encodeURIComponent(code)}`,width:112,height:112,colorDark:'#2a2526',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M})}}
 function qrCanvasOrImage(){const box=document.getElementById('func-qrcode');return box?.querySelector('canvas')||box?.querySelector('img')}
 function downloadEmployeeQr(){const source=qrCanvasOrImage();if(!source)return toast('Salve o funcionário para gerar o QR.','warn');const a=document.createElement('a');a.download=`qr-${(DB_STATE.employee?.nome||'funcionario').toLowerCase().replace(/[^a-z0-9]+/g,'-')}.png`;a.href=source.tagName==='CANVAS'?source.toDataURL('image/png'):source.src;a.click()}
 function printEmployeeQr(){if(!DB_STATE.employee||!qrCanvasOrImage())return toast('Salve o funcionário para gerar o QR.','warn');const src=qrCanvasOrImage().tagName==='CANVAS'?qrCanvasOrImage().toDataURL('image/png'):qrCanvasOrImage().src,w=open('','_blank','width=520,height=650');w.document.write(`<title>QR de ${DB_STATE.employee.nome}</title><style>body{font-family:Arial;text-align:center;padding:40px}img{width:280px;height:280px}h1{font-size:24px}p{font-size:14px}</style><h1>${DB_STATE.employee.nome}</h1><img src="${src}"><p>${DB_STATE.employee.codigo_qr||''}</p>`);w.document.close();w.onload=()=>w.print()}

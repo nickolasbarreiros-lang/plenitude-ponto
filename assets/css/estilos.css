@@ -3645,3 +3645,14 @@ button[aria-busy="true"]{
     grid-template-columns:1fr;
   }
 }
+
+/* RC5.67 — desativação de funcionário */
+.employee-top-actions{display:flex;align-items:end;gap:12px;flex-wrap:wrap}
+.employee-top-actions label{display:grid;gap:5px;min-width:300px}
+.employee-activity-management{margin-top:14px}
+.activity-options{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.activity-options article{display:grid;gap:9px;padding:15px;border:1px solid #ead9d1;border-radius:13px;background:#fffaf7}
+.activity-options article p{margin:0;color:#786761}
+.activity-options .danger-zone{border-color:#efaaaa;background:#fff5f5}
+.employee-status.inativo{background:#eee;color:#666}
+@media(max-width:750px){.activity-options{grid-template-columns:1fr}.employee-top-actions label{min-width:100%}}
