@@ -1,8 +1,11 @@
 (function(){'use strict';
+let pointRegistrationInFlight=false;
+
  const client=window.PlenitudeAuth.client;
  function stored(){try{return JSON.parse(sessionStorage.getItem('plenitude-employee-session')||localStorage.getItem('plenitude-offline-employee-session')||'null')}catch{return null}}
  const sess=stored();
  if(!sess){ window.PlenitudeAuth.getSession().then(s=>s?initPonto():location.replace('index.html')); return; }
+ const CLICK_COOLDOWN_MS=5000;const LUNCH_MINIMUM_MS=30*60*1000;
  const token=sess.token;let employee=null;let onlineMarks=[];let currentJourneyMarks=[];let offlineDayStateReady=false;let contingencyMode=false;let syncInProgress=false;let pointReady=false;let serverReachable=null;let punchInFlight=false;let punchCooldownUntil=0;let punchCooldownTimer=null;let lunchMinimumTimer=null;
  const dateKey=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
  const label=t=>({entrada:'Entrada',inicio_intervalo:'Início do almoço',fim_intervalo:'Retorno do almoço',saida:'Saída'})[t]||'Marcação';
@@ -380,7 +383,7 @@
  async function localTodayMarks(){
   if(!employee||!window.PlenitudeOffline)return [];
 
-  const today=dateKey(new Date());
+  const today=dateKey(window.PlenitudeClock?.now?.()||new Date());
 
   return (await window.PlenitudeOffline.pending())
    .filter(record=>
@@ -400,7 +403,7 @@
    }));
  }
 
- function dayStateKey(day=dateKey(new Date())){
+ function dayStateKey(day=dateKey(window.PlenitudeClock?.now?.()||new Date())){
   return `day-state:${employee?.id||'unknown'}:${day}`;
  }
 
@@ -494,7 +497,7 @@
 
   const marks=currentJourneyMarks||[];
   const journeyComplete=marks.length>=4;
-  const cooldownActive=Date.now()<punchCooldownUntil;
+  const cooldownActive=officialNowMs()<punchCooldownUntil;
   const offlineAllowed=
    contingencyMode&&
    offlineDayStateReady;
@@ -516,6 +519,8 @@
   button.dataset.syncInProgress=String(syncInProgress);
   button.dataset.punchInFlight=String(punchInFlight);
   button.dataset.marks=String(marks.length);
+  button.dataset.clickCooldownMs=String(CLICK_COOLDOWN_MS);
+  button.dataset.lunchMinimumMs=String(LUNCH_MINIMUM_MS);
 
   if(canRegister){
    button.removeAttribute('disabled');
@@ -773,6 +778,7 @@
   if(connectionTransition)return connectionTransition;
 
   connectionTransition=(async()=>{
+ await window.PlenitudeClock?.sync?.();
    const banner=document.getElementById('sync-restored-banner');
    const text=document.getElementById('sync-restored-text');
 
@@ -868,7 +874,20 @@
   });
  });
 
- function clock(){const d=new Date();document.getElementById('clock-date').textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(d);document.getElementById('clock-time').textContent=d.toLocaleTimeString('pt-BR')}
+ function clock(){
+  const d=window.PlenitudeClock?.now?.()||new Date();
+  document.getElementById('clock-date').textContent=
+   window.PlenitudeClock?.formatDate?.(d,{dateStyle:'full'})||
+   new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(d);
+  document.getElementById('clock-time').textContent=
+   window.PlenitudeClock?.formatTime?.(d)||
+   d.toLocaleTimeString('pt-BR');
+  updatePointClockSource();
+ }
+ function officialNowMs(){
+  return (window.PlenitudeClock?.now?.()||new Date()).getTime();
+ }
+
  function successSound(){try{const C=window.AudioContext||window.webkitAudioContext,ctx=new C();[523.25,659.25,783.99].forEach((f,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(.0001,ctx.currentTime+i*.11);g.gain.exponentialRampToValueAtTime(.16,ctx.currentTime+i*.11+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+i*.11+.18);o.connect(g);g.connect(ctx.destination);o.start(ctx.currentTime+i*.11);o.stop(ctx.currentTime+i*.11+.2)});setTimeout(()=>ctx.close(),800)}catch{}}
  function showSuccess(message){const b=document.getElementById('success-banner');b.querySelector('strong').textContent=message;b.hidden=false;b.classList.remove('show');void b.offsetWidth;b.classList.add('show');successSound();setTimeout(()=>{b.classList.remove('show');setTimeout(()=>b.hidden=true,250)},3200)}
  function applyLunchMinimumRule(marks,button,actionLabels){
@@ -880,15 +899,15 @@
   }
 
   const lunchStart=new Date(marks[1].registrado_em).getTime();
-  const unlockAt=lunchStart+(30*60*1000);
+  const unlockAt=lunchStart+LUNCH_MINIMUM_MS;
 
   const update=()=>{
-   const remainingMs=unlockAt-Date.now();
+   const remainingMs=unlockAt-officialNowMs();
 
    if(remainingMs<=0){
     clearInterval(lunchMinimumTimer);
     lunchMinimumTimer=null;
-    button.disabled=punchInFlight||Date.now()<punchCooldownUntil;
+    button.disabled=punchInFlight||officialNowMs()<punchCooldownUntil;
     button.classList.remove('lunch-wait');
     button.innerHTML=`<span>◷</span> ${actionLabels[2]}`;
     button.setAttribute('aria-label',actionLabels[2]);
@@ -936,7 +955,7 @@
    year:'numeric',
    month:'2-digit',
    day:'2-digit'
-  }).format(new Date());
+  }).format(window.PlenitudeClock?.now?.()||new Date());
 
   /*
    * Defesa visual: pendências só podem aparecer para dias já encerrados.
@@ -1099,7 +1118,7 @@
  }
 
  async function load(){
-  const now=new Date();
+  const now=window.PlenitudeClock?.now?.()||new Date();
   const today=dateKey(now);
   const monday=new Date(now);
   monday.setDate(now.getDate()-((now.getDay()+6)%7));
@@ -1268,7 +1287,7 @@
   refreshPunchAvailability();
   unlockOnlinePunchButton();
 
-  if(Date.now()>=punchCooldownUntil){
+  if(officialNowMs()>=punchCooldownUntil){
    punchButton.classList.remove('cooldown');
   }
   document.body.classList.toggle('homologation-employee',isHomologation);
@@ -1276,6 +1295,10 @@
  }
  async function init(){
   clearTimeout(window.__plenitudePointBootTimeout);
+
+  if(navigator.onLine){
+   await window.PlenitudeClock?.sync?.();
+  }
 
   document.body.classList.add(
    'employee-mode',
@@ -1386,7 +1409,7 @@
 
    if('serviceWorker' in navigator&&serverReachable===true){
     navigator.serviceWorker
-     .register('./sw.js?v=1.0.0-rc5.28')
+     .register('./sw.js?v=1.0.0-rc5.63')
      .catch(error=>
       console.warn('Service Worker indisponível',error)
      );
@@ -1432,12 +1455,12 @@
    }
   }
  }
- function startPunchCooldown(button, seconds=5){
-  punchCooldownUntil=Date.now()+(seconds*1000);
+ function startPunchCooldown(button){
+  punchCooldownUntil=officialNowMs()+CLICK_COOLDOWN_MS;
   clearInterval(punchCooldownTimer);
 
   const update=()=>{
-    const remaining=Math.ceil((punchCooldownUntil-Date.now())/1000);
+    const remaining=Math.ceil((punchCooldownUntil-officialNowMs())/1000);
     if(remaining<=0){
       clearInterval(punchCooldownTimer);
       punchCooldownTimer=null;
@@ -1478,7 +1501,7 @@ document.getElementById('registrar').onclick=async()=>{
     return;
   }
 
-  const remaining=Math.ceil((punchCooldownUntil-Date.now())/1000);
+  const remaining=Math.ceil((punchCooldownUntil-officialNowMs())/1000);
   if(remaining>0){
     toast(`Aguarde ${remaining} segundo(s) antes de registrar novamente.`,'warn');
     return;
@@ -1507,7 +1530,7 @@ document.getElementById('registrar').onclick=async()=>{
     await load();
 
     // Mantém a interface protegida mesmo depois da resposta do servidor.
-    startPunchCooldown(b,5);
+    startPunchCooldown(b);
   }catch(e){
     if(isNetworkFailure(e)){
      try{
@@ -1523,7 +1546,7 @@ document.getElementById('registrar').onclick=async()=>{
        'warn'
       );
 
-      startPunchCooldown(b,5);
+      startPunchCooldown(b);
      }catch(offlineError){
       console.error('Falha após tentativa de registro offline',offlineError);
 
@@ -1558,7 +1581,7 @@ document.getElementById('registrar').onclick=async()=>{
 
 
  async function loadMovements(){
-  const today=dateKey(new Date());
+  const today=dateKey(window.PlenitudeClock?.now?.()||new Date());
 
   let rows=[];
   let status=null;
@@ -1879,7 +1902,7 @@ document.getElementById('registrar').onclick=async()=>{
   adjustmentHelp.hidden=open;
 
   if(open){
-   document.getElementById('ajuste-data').value=dateKey(new Date());
+   document.getElementById('ajuste-data').value=dateKey(window.PlenitudeClock?.now?.()||new Date());
    requestAnimationFrame(()=>document.getElementById('ajuste-data').focus());
   }else{
    adjustmentForm.reset();
@@ -1938,4 +1961,28 @@ document.getElementById('registrar').onclick=async()=>{
 
   const a=document.getElementById('pin-atual').value,n=document.getElementById('pin-novo').value,c=document.getElementById('pin-confirmar').value;if(!/^\d{4}$/.test(n)||n!==c)return toast('O novo PIN deve ter 4 números e coincidir com a confirmação.','warn');try{await rpc('alterar_proprio_pin',{p_token:token,p_pin_atual:a,p_novo_pin:n});toast('PIN alterado com sucesso.');document.getElementById('change-pin-panel').hidden=true}catch(e){toast(e.message,'warn')}};
  init();
+ function updatePointClockSource(){
+  const target=document.getElementById('clock-source-status');
+  if(!target||!window.PlenitudeClock)return;
+
+  const info=window.PlenitudeClock.info();
+  const warning=window.PlenitudeClock.differenceWarning();
+
+  if(info.source==='server'){
+   target.className='clock-source-status server';
+   target.innerHTML=warning
+    ?`<strong>● Horário oficial do servidor</strong><small>${warning.message}</small>`
+    :'<strong>● Horário oficial do servidor</strong>';
+  }else if(info.source==='local'){
+   target.className='clock-source-status local';
+   target.innerHTML='<strong>● Contingência — horário local do dispositivo</strong>';
+  }else{
+   target.className='clock-source-status unavailable';
+   target.innerHTML='<strong>⚠ Horário oficial indisponível</strong><small>Não registre o ponto até a sincronização.</small>';
+  }
+ }
+
+ window.PlenitudeClock?.subscribe?.(()=>updatePointClockSource());
+ updatePointClockSource();
+
 })();

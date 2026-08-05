@@ -1,4 +1,4 @@
-const CACHE='plenitude-ponto-rc5-59';
+const CACHE='plenitude-ponto-rc5-76';
 const CORE=[
  './',
  './index.html',
@@ -13,6 +13,10 @@ const CORE=[
  './assets/js/ponto-pin.js',
  './assets/js/employee-login.js',
  './assets/js/access-status.js',
+ './assets/js/version-guard.js',
+ './assets/js/official-clock.js',
+ './assets/js/diagnostico.js',
+ './assets/js/marcacoes-admin.js',
  './assets/img/logo-plenitude.png',
  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
 ];
@@ -53,6 +57,11 @@ self.addEventListener('activate',event=>{
 });
 
 self.addEventListener('message',event=>{
+ if(event.data?.type==='SKIP_WAITING'){
+  self.skipWaiting();
+  return;
+ }
+
  if(event.data?.type==='CACHE_OFFLINE_CORE'){
   event.waitUntil(
    cacheCore().then(results=>{

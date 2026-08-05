@@ -92,6 +92,24 @@
     return attachPhoto(Array.isArray(data)?data[0]:data);
   }
 
+  async function changeEmployeeActivity({
+    employeeId,
+    action,
+    reason,
+    masterPin=null,
+    confirmation=null
+  }){
+    const {data,error}=await client.rpc('alterar_atividade_funcionario_admin',{
+      p_funcionario_id:employeeId,
+      p_acao:action,
+      p_motivo:reason,
+      p_master_pin:masterPin,
+      p_confirmacao:confirmation
+    });
+    if(error)throw error;
+    return Array.isArray(data)?data[0]:data;
+  }
+
   async function updateSettings(values){
     const p=await profile();
     const companyPayload={
@@ -419,5 +437,44 @@
     if(error) throw error;
   }
 
-  window.PlenitudeDB=Object.freeze({employeeMovements,registerEmployeeMovement,adminMovements,historicalReturnPendencies,journeyPendenciesAdmin,refreshJourneyPendenciesAdmin,createAdminMovement,analyzeMovement,regularizeMovementReturn,archiveMovement,masterPinStatus,setMasterPin,monthClosureAudit,monthlyMirrorStatuses,updateMonthlyMirrorStatus,monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,companyHolidays,saveCompanyHoliday,deleteCompanyHoliday,seedCompanyHolidays,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks});
+
+  async function managedMarks(employeeId,start,end,includeArchived=true){
+    const {data,error}=await client.rpc('listar_marcacoes_gerenciamento_admin',{
+      p_funcionario_id:employeeId||null,
+      p_inicio:start||null,
+      p_fim:end||null,
+      p_incluir_arquivadas:Boolean(includeArchived)
+    });
+    if(error)throw error;
+    return data||[];
+  }
+
+  async function archiveMark(markId,reason){
+    const {data,error}=await client.rpc('excluir_marcacao_logica_admin',{
+      p_marcacao_id:Number(markId),
+      p_motivo:reason
+    });
+    if(error)throw error;
+    return Array.isArray(data)?data[0]:data;
+  }
+
+  async function permanentlyDeleteMark({
+    markId=null,
+    archiveId=null,
+    reason,
+    confirmation,
+    masterPin
+  }){
+    const {data,error}=await client.rpc('excluir_marcacao_definitiva_admin',{
+      p_marcacao_id:markId?Number(markId):null,
+      p_arquivo_id:archiveId||null,
+      p_motivo:reason,
+      p_confirmacao:confirmation,
+      p_master_pin:masterPin
+    });
+    if(error)throw error;
+    return Array.isArray(data)?data[0]:data;
+  }
+
+  window.PlenitudeDB=Object.freeze({employeeMovements,registerEmployeeMovement,adminMovements,historicalReturnPendencies,journeyPendenciesAdmin,refreshJourneyPendenciesAdmin,createAdminMovement,analyzeMovement,regularizeMovementReturn,archiveMovement,masterPinStatus,setMasterPin,monthClosureAudit,monthlyMirrorStatuses,updateMonthlyMirrorStatus,monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,companyHolidays,saveCompanyHoliday,deleteCompanyHoliday,seedCompanyHolidays,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks,managedMarks,archiveMark,permanentlyDeleteMark,changeEmployeeActivity});
 })();

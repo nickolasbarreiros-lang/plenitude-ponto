@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#2c2324">
+<title>Gerenciar marcações | Plenitude Ponto</title>
+<link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc5.76">
+</head>
+<body>
+<div class="app-shell">
+<aside class="sidebar">
+  <div class="sidebar-brand"><img class="logo" src="assets/img/logo-plenitude.png" alt="Plenitude"></div>
+  <p class="sidebar-label">CONTROLE DE PONTO</p>
+  <nav>
+    <a data-page="admin" href="admin.html"><span>▦</span><b>Painel</b></a>
+    <a data-page="ponto" href="ponto.html" target="_blank" rel="noopener noreferrer"><span>◷</span><b>Registrar ponto</b></a>
+    <a data-page="funcionarios" href="funcionarios.html"><span>♙</span><b>Funcionário</b></a>
+    <a data-page="jornada" href="jornada.html"><span>▤</span><b>Jornada</b></a>
+    <a data-page="calendario" href="calendario.html"><span>▣</span><b>Calendário</b></a>
+    <a data-page="ajustes" href="ajustes.html"><span>✓</span><b>Ajustes</b></a>
+    <a data-page="contingencia" href="contingencia.html"><span>☁</span><b>Contingência</b></a><a data-page="relatorios"  href="relatorios.html"><span>▥</span><b>Relatórios</b></a><a data-page="fechamento" href="fechamento.html"><span>🔒</span><b>Fechamento</b></a>
+    <a data-page="diagnostico" href="diagnostico.html"><span>◉</span><b>Diagnóstico</b></a><a data-page="auditoria" href="auditoria.html"><span>⌕</span><b>Auditoria</b></a><a data-page="backup" href="backup.html"><span>⇩</span><b>Backup</b></a>
+    <a data-page="dispositivos" href="dispositivos.html"><span>▣</span><b>Dispositivo</b></a>
+    <a data-page="homologacao" href="homologacao.html"><span>🧪</span><b>Homologação</b></a><a data-page="configuracoes" href="configuracoes.html"><span>⚙</span><b>Configurações</b></a>
+  </nav>
+  <button id="sair" class="link-button">↪ Sair do sistema</button>
+</aside>
+<main class="content">
+<header class="topbar">
+ <div>
+  <p class="eyebrow">ADMINISTRAÇÃO DO PONTO</p>
+  <h1>Gerenciar marcações</h1>
+  <p class="muted">Remova marcações incorretas com segurança e rastreabilidade.</p>
+ </div>
+ <div class="welcome-box danger-outline">
+  <small>Operação sensível</small>
+  <strong>Auditoria obrigatória</strong>
+ </div>
+</header>
+
+<section class="panel marks-management-help">
+ <article>
+  <span class="level-number">1</span>
+  <div><strong>Remover do sistema</strong><p>A marcação sai da jornada oficial, mas uma cópia completa permanece arquivada para auditoria.</p></div>
+ </article>
+ <article>
+  <span class="level-number critical">2</span>
+  <div><strong>Excluir definitivamente</strong><p>Apaga a marcação ativa ou arquivada. Exige PIN Mestre e confirmação escrita.</p></div>
+ </article>
+</section>
+
+<section class="panel">
+ <div class="marks-filter-grid">
+  <label>Funcionário<select id="gm-employee"><option value="">Todos</option></select></label>
+  <label>Início<input id="gm-start" type="date"></label>
+  <label>Fim<input id="gm-end" type="date"></label>
+  <label class="check-control"><input id="gm-archived" type="checkbox" checked> Mostrar arquivadas</label>
+  <button id="gm-search" class="btn primary" type="button">Buscar marcações</button>
+ </div>
+</section>
+
+<div id="gm-summary" class="management-summary"></div>
+<section id="gm-list" class="marks-management-list">
+ <div class="panel mini-empty">Carregando...</div>
+</section>
+</main>
+</div>
+
+<dialog id="gm-dialog" class="management-dialog">
+ <form method="dialog" id="gm-form">
+  <header>
+   <div><small id="gm-dialog-level">NÍVEL</small><h2 id="gm-dialog-title">Excluir marcação</h2></div>
+   <button value="cancel" class="dialog-close" aria-label="Fechar">×</button>
+  </header>
+  <div id="gm-dialog-mark" class="selected-mark-box"></div>
+  <label>Motivo da exclusão<textarea id="gm-reason" required placeholder="Explique claramente por que esta marcação está incorreta."></textarea></label>
+  <div id="gm-hard-fields" hidden>
+   <label>Confirmação<input id="gm-confirmation" autocomplete="off" placeholder="Digite EXCLUIR"></label>
+   <label>PIN Mestre<input id="gm-master-pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="6 números"></label>
+   <div class="notice compact danger"><strong>Atenção:</strong> esta operação não poderá ser desfeita.</div>
+  </div>
+  <footer>
+   <button value="cancel" class="btn outline" type="button" id="gm-cancel">Cancelar</button>
+   <button class="btn primary" type="submit" id="gm-submit">Confirmar</button>
+  </footer>
+ </form>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-config.js?v=1.0.0-rc5.76"></script>
+<script src="assets/js/auth.js?v=1.0.0-rc5.76"></script><script src="assets/js/official-clock.js?v=1.0.0-rc5.76"></script>
+<script src="assets/js/database.js?v=1.0.0-rc5.76"></script>
+<script src="assets/js/app.js?v=1.0.0-rc5.76"></script>
+<script src="assets/js/marcacoes-admin.js?v=1.0.0-rc5.76"></script>
+<script src="assets/js/version-guard.js?v=1.0.0-rc5.76"></script>
+</body>
+</html>
