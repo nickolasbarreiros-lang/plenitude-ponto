@@ -31,6 +31,12 @@ function toast(message,type='ok'){let box=document.querySelector('.toast');if(!b
 function applyTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem(STORAGE.theme,theme);const btn=document.getElementById('theme-toggle');if(btn)btn.textContent=theme==='dark'?'☀':'◐'}
 async function initCommon(roles=null){const context=await requireAuth(roles);if(!context)return null;const session=context.session;const theme=localStorage.getItem(STORAGE.theme)||'light';applyTheme(theme);const logout=document.getElementById('sair');if(logout)logout.onclick=async()=>{logout.disabled=true;try{await window.PlenitudeAuth.signOut()}catch(error){logout.disabled=false;toast('Não foi possível sair do sistema.','warn')}};if(!document.getElementById('theme-toggle')){const b=document.createElement('button');b.id='theme-toggle';b.className='theme-toggle';b.type='button';b.title='Alternar tema';b.onclick=()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');document.body.appendChild(b)} return context; }
 
+function addMinutesToClock(clock,minutes){
+  const [hour,minute]=String(clock||'00:00').split(':').map(Number);
+  const total=((hour*60+minute+Number(minutes||0))%(24*60)+(24*60))%(24*60);
+  return `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;
+}
+
 function initDashboardShortcuts(){
   document.querySelectorAll('.dashboard-shortcut[data-href]').forEach(card=>{
     const open=()=>{
@@ -54,7 +60,10 @@ async function initAdmin(){
   initDashboardShortcuts();
 
   try{
-    const profile=await window.PlenitudeDB.profile();
+    const [profile,companyPolicies]=await Promise.all([
+      window.PlenitudeDB.profile(),
+      window.PlenitudeDB.companyPolicies()
+    ]);
     const employees=profile.papel==='administrador'?await window.PlenitudeDB.employees():[];
     const activeEmployees=employees.filter(f=>f.ativo!==false&&f.status!=='inativo');
 
@@ -70,7 +79,8 @@ async function initAdmin(){
 
     const today=localDateKey();
     const allTodayMarks=await window.PlenitudeDB.marksForRange(today,today);
-    const tolerance=Number(profile.tolerancia_entrada_minutos||15);
+    window.__plenitudeTodayMarks=allTodayMarks;
+    const tolerance=Number(companyPolicies.tolerancia_entrada_minutos??0);
 
     let presentCount=0,lunchCount=0,lateCount=0;
     for(const employee of activeEmployees){
@@ -341,7 +351,62 @@ async function renderSmartDashboard(activeEmployees,lateCount,tolerance){
     notes.push({type:'danger',icon:'↩',title:`${returnPendencies.length} retorno${returnPendencies.length===1?'':'s'} temporário${returnPendencies.length===1?'':'s'} pendente${returnPendencies.length===1?'':'s'}`,text:`Pendência mais antiga: ${oldest.funcionario_nome}, ${new Date(oldest.data_local+'T12:00:00').toLocaleDateString('pt-BR')}.`,href:'movimentacoes.html?pendentes=1',label:'Regularizar'});
   }
   if(pendingCount)notes.push({type:'warn',icon:'✓',title:`${pendingCount} ajuste${pendingCount===1?'':'s'} pendente${pendingCount===1?'':'s'}`,text:'Solicitações aguardando aprovação ou rejeição.',href:'ajustes.html?status=pendente&fila=1',label:'Analisar'});
-  if(lateCount)notes.push({type:'danger',icon:'⏱',title:`${lateCount} atraso${lateCount===1?'':'s'} hoje`,text:`Entrada após a tolerância configurada de ${tolerance} minutos.`,href:'relatorios.html',label:'Detalhes'});
+  if(lateCount){
+    const delayedEmployees=[];
+
+    for(const employee of activeEmployees){
+      const employeeMarks=(window.__plenitudeTodayMarks||[])
+        .filter(mark=>String(mark.funcionario_id)===String(employee.id))
+        .sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em));
+
+      if(!employeeMarks.length)continue;
+
+      try{
+        const scheduleRows=await window.PlenitudeDB.schedules(employee.id);
+        const schedule=dbScheduleToUi(scheduleRows);
+        const planned=scheduleForDateFrom(schedule,new Date());
+        if(!planned?.entrada)continue;
+
+        const actual=new Date(employeeMarks[0].registrado_em);
+        const [hour,minute]=planned.entrada.split(':').map(Number);
+        const plannedDate=new Date(actual);
+        plannedDate.setHours(hour,minute,0,0);
+
+        const considered=Math.max(
+          0,
+          Math.floor((actual.getTime()-plannedDate.getTime())/60000)-tolerance
+        );
+
+        if(considered>0){
+          delayedEmployees.push({
+            name:employee.nome,
+            planned:planned.entrada,
+            limit:addMinutesToClock(planned.entrada,tolerance),
+            actual:new Intl.DateTimeFormat('pt-BR',{
+              hour:'2-digit',
+              minute:'2-digit',
+              hour12:false
+            }).format(actual),
+            considered
+          });
+        }
+      }catch(error){
+        console.warn('Detalhes do atraso indisponíveis',error);
+      }
+    }
+
+    const first=delayedEmployees[0];
+    notes.push({
+      type:'danger',
+      icon:'⏱',
+      title:`${lateCount} atraso${lateCount===1?'':'s'} hoje`,
+      text:first
+        ?`${first.name}: prevista ${first.planned}, tolerância até ${first.limit}, registrada ${first.actual}. Atraso considerado: ${first.considered} minuto(s).`
+        :`Entrada após a tolerância configurada de ${tolerance} minuto(s).`,
+      href:'relatorios.html',
+      label:'Detalhes'
+    });
+  }
   const absent=activeEmployees.filter(e=>{const n=document.getElementById('ausentes-hoje');return Number(n?.textContent||0)>0}).length?Number(document.getElementById('ausentes-hoje')?.textContent||0):0;
   if(absent)notes.push({type:'warn',icon:'○',title:`${absent} ausência${absent===1?'':'s'} hoje`,text:'Funcionários ativos ainda sem registro de entrada.',href:'ponto.html',label:'Ver ponto'});
   if(!notes.length)notes.push({type:'ok',icon:'●',title:'Tudo em ordem',text:'Nenhuma pendência operacional identificada neste momento.',href:'relatorios.html',label:'Relatórios'});
