@@ -1,4 +1,4 @@
-const CACHE='plenitude-ponto-rc5-82';
+const CACHE='plenitude-ponto-rc5-83';
 const CORE=[
  './',
  './index.html',
@@ -106,7 +106,10 @@ self.addEventListener('fetch',event=>{
  event.respondWith((async()=>{
   try{
    // Em modo online, a rede continua sendo a fonte principal.
-   const response=await fetch(event.request);
+   const networkRequest=sameOrigin
+     ? new Request(event.request,{cache:'no-store'})
+     : event.request;
+   const response=await fetch(networkRequest);
 
    if(response.ok){
     const cache=await caches.open(CACHE);

@@ -1,4 +1,4 @@
-console.info('[Plenitude Ponto RC5.74] Painel de pendências filtrando somente funcionários ativos.');
+console.info('[Plenitude Ponto RC5.83] app.js carregado; políticas centralizadas ativas.');
 const defaultSchedule=[
   {dia:'Segunda',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'19:00'},
   {dia:'Terça',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'19:00'},
