@@ -1021,6 +1021,33 @@ async function renderRelatorio(){
   }catch(error){toast(errorText(error),'warn');console.error(error)}
 }
 
+
+function updateExtrasAutomaticasSwitch(){
+  const input=document.getElementById('extras-auto');
+  if(!input)return;
+
+  const control=input.closest('.switch-control');
+  const row=input.closest('.settings-switch-row');
+  const state=control?.querySelector('.switch-state');
+  const description=document.getElementById('extras-auto-description');
+  const enabled=Boolean(input.checked);
+
+  if(state){
+    state.textContent=enabled?'Ativado':'Desativado';
+    state.setAttribute('aria-label',enabled?'Ativado':'Desativado');
+  }
+
+  if(description){
+    description.textContent=enabled
+      ?'Quando ativado, todo tempo trabalhado além da jornada prevista é creditado automaticamente no banco de horas.'
+      :'Quando desativado, créditos positivos somente entram no banco após autorização do gestor.';
+  }
+
+  row?.classList.toggle('is-enabled',enabled);
+  row?.classList.toggle('is-disabled',!enabled);
+  input.setAttribute('aria-checked',String(enabled));
+}
+
 async function initConfiguracoes(){
   const context=await initCommon(['administrador']);if(!context)return;const session=context.session;
   try{
@@ -1031,7 +1058,9 @@ async function initConfiguracoes(){
     document.getElementById('admin-nome').value=profile.nome||'Administrador';
     document.getElementById('admin-email').value=profile.email||session.user.email||'';
     document.getElementById('admin-email').readOnly=true;
-    document.getElementById('tol-entrada').value=company.tolerancia_entrada_minutos??15;document.getElementById('tol-saida').value=company.tolerancia_saida_minutos??10;document.getElementById('int-min').value=Math.max(30,company.intervalo_minimo_minutos??30);document.getElementById('int-max').value=company.intervalo_maximo_minutos??120;document.getElementById('extras-auto').checked=company.horas_extras_automaticas!==false;document.getElementById('limite-banco').value=Math.round((company.limite_banco_horas_minutos??2400)/60);
+    document.getElementById('tol-entrada').value=company.tolerancia_entrada_minutos??15;document.getElementById('tol-saida').value=company.tolerancia_saida_minutos??10;document.getElementById('int-min').value=Math.max(30,company.intervalo_minimo_minutos??30);document.getElementById('int-max').value=company.intervalo_maximo_minutos??120;document.getElementById('extras-auto').checked=company.horas_extras_automaticas!==false;
+    updateExtrasAutomaticasSwitch();
+    document.getElementById('extras-auto').addEventListener('change',updateExtrasAutomaticasSwitch);document.getElementById('limite-banco').value=Math.round((company.limite_banco_horas_minutos??2400)/60);
     document.getElementById('config-form').onsubmit=async e=>{
       e.preventDefault();
       const button=e.submitter; if(button)button.disabled=true;
@@ -1044,7 +1073,7 @@ async function initConfiguracoes(){
         toast('Configurações salvas no Supabase.');
       }catch(error){toast(errorText(error),'warn');console.error(error)}finally{if(button)button.disabled=false}
     };
-    document.getElementById('politicas-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter;if(b)b.disabled=true;try{await window.PlenitudeDB.savePointPolicies({entrada:Number(document.getElementById('tol-entrada').value),saida:Number(document.getElementById('tol-saida').value),intervaloMinimo:Number(document.getElementById('int-min').value),intervaloMaximo:Number(document.getElementById('int-max').value),extrasAutomaticas:document.getElementById('extras-auto').checked,limiteBanco:Number(document.getElementById('limite-banco').value)*60});toast('Políticas de ponto salvas.');}catch(error){toast(errorText(error),'warn')}finally{if(b)b.disabled=false}};
+    document.getElementById('politicas-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter;if(b)b.disabled=true;try{await window.PlenitudeDB.savePointPolicies({entrada:Number(document.getElementById('tol-entrada').value),saida:Number(document.getElementById('tol-saida').value),intervaloMinimo:Number(document.getElementById('int-min').value),intervaloMaximo:Number(document.getElementById('int-max').value),extrasAutomaticas:document.getElementById('extras-auto').checked,limiteBanco:Number(document.getElementById('limite-banco').value)*60});updateExtrasAutomaticasSwitch();toast('Políticas de ponto salvas.');}catch(error){toast(errorText(error),'warn')}finally{if(b)b.disabled=false}};
     const masterForm=document.getElementById('master-pin-form');
     const masterBadge=document.getElementById('master-pin-badge');
     const masterCurrentWrap=document.getElementById('master-current-wrap');

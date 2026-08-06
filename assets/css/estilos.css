@@ -3800,3 +3800,26 @@ button[aria-busy="true"]{
     grid-template-columns:1fr;
   }
 }
+
+
+/* RC5.81 — estado correto e semântico do switch */
+.settings-switch-row.is-enabled{
+  border-color:#9fd7b1;
+  background:#f3fbf6;
+}
+.settings-switch-row.is-disabled{
+  border-color:#dfd4cf;
+  background:#fffaf7;
+}
+.settings-switch-row.is-enabled .switch-track{
+  background:linear-gradient(90deg,#28a95f,#1b8d4e);
+}
+.settings-switch-row.is-disabled .switch-track{
+  background:#cfc4bf;
+}
+.settings-switch-row.is-enabled .switch-state{
+  color:#137a40;
+}
+.settings-switch-row.is-disabled .switch-state{
+  color:#776b67;
+}
