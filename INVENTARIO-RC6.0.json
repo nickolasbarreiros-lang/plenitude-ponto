@@ -1,0 +1,15 @@
+{
+  "build": "RC6.0",
+  "html_files": 20,
+  "js_files": 24,
+  "sql_files": 53,
+  "duplicate_sql_function_names": 24,
+  "implemented_fixes": [
+    "strict_active_employee_filter",
+    "single_source_delay_details",
+    "no_duplicate_schedule_queries_for_alerts",
+    "safe_dashboard_notification_html",
+    "simplified_absence_count",
+    "version_guard_rc6"
+  ]
+}

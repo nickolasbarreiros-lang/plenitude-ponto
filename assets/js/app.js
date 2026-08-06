@@ -31,6 +31,15 @@ function toast(message,type='ok'){let box=document.querySelector('.toast');if(!b
 function applyTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem(STORAGE.theme,theme);const btn=document.getElementById('theme-toggle');if(btn)btn.textContent=theme==='dark'?'☀':'◐'}
 async function initCommon(roles=null){const context=await requireAuth(roles);if(!context)return null;const session=context.session;const theme=localStorage.getItem(STORAGE.theme)||'light';applyTheme(theme);const logout=document.getElementById('sair');if(logout)logout.onclick=async()=>{logout.disabled=true;try{await window.PlenitudeAuth.signOut()}catch(error){logout.disabled=false;toast('Não foi possível sair do sistema.','warn')}};if(!document.getElementById('theme-toggle')){const b=document.createElement('button');b.id='theme-toggle';b.className='theme-toggle';b.type='button';b.title='Alternar tema';b.onclick=()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');document.body.appendChild(b)} return context; }
 
+function escapeHtml(value){
+  return String(value??'')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#039;');
+}
+
 function addMinutesToClock(clock,minutes){
   const [hour,minute]=String(clock||'00:00').split(':').map(Number);
   const total=((hour*60+minute+Number(minutes||0))%(24*60)+(24*60))%(24*60);
@@ -65,7 +74,12 @@ async function initAdmin(){
       window.PlenitudeDB.companyPolicies()
     ]);
     const employees=profile.papel==='administrador'?await window.PlenitudeDB.employees():[];
-    const activeEmployees=employees.filter(f=>f.ativo!==false&&f.status!=='inativo');
+    const activeEmployees=employees.filter(employee=>
+      employee &&
+      employee.ativo===true &&
+      String(employee.status||'ativo').toLowerCase()==='ativo' &&
+      employee.acesso_ponto_ativo!==false
+    );
 
     DB_STATE.profile=profile;
     DB_STATE.employees=employees;
@@ -82,32 +96,55 @@ async function initAdmin(){
     window.__plenitudeTodayMarks=allTodayMarks;
     const tolerance=Number(companyPolicies.tolerancia_entrada_minutos??0);
 
-    let presentCount=0,lunchCount=0,lateCount=0;
+    let presentCount=0,lunchCount=0;
+    const lateDetails=[];
+
     for(const employee of activeEmployees){
       const employeeMarks=allTodayMarks
-        .filter(m=>m.funcionario_id===employee.id)
+        .filter(mark=>String(mark.funcionario_id)===String(employee.id))
         .sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em));
 
       if(employeeMarks.length)presentCount++;
       if(employeeMarks.length===2)lunchCount++;
 
-      if(employeeMarks.length){
-        try{
-          const rows=await window.PlenitudeDB.schedules(employee.id);
-          const schedule=dbScheduleToUi(rows);
-          const planned=scheduleForDateFrom(schedule,new Date());
-          if(planned?.entrada){
-            const actual=new Date(employeeMarks[0].registrado_em);
-            const [h,m]=planned.entrada.split(':').map(Number);
-            const plannedDate=new Date(actual);
-            plannedDate.setHours(h,m,0,0);
-            if((actual-plannedDate)/60000>tolerance)lateCount++;
-          }
-        }catch(error){
-          console.warn('Não foi possível calcular atraso de',employee.nome,error);
+      if(!employeeMarks.length)continue;
+
+      try{
+        const rows=await window.PlenitudeDB.schedules(employee.id);
+        const schedule=dbScheduleToUi(rows);
+        const planned=scheduleForDateFrom(schedule,new Date());
+        if(!planned?.entrada)continue;
+
+        const actual=new Date(employeeMarks[0].registrado_em);
+        const [hour,minute]=planned.entrada.split(':').map(Number);
+        const plannedDate=new Date(actual);
+        plannedDate.setHours(hour,minute,0,0);
+
+        const delayMinutes=Math.max(
+          0,
+          Math.floor((actual.getTime()-plannedDate.getTime())/60000)-tolerance
+        );
+
+        if(delayMinutes>0){
+          lateDetails.push({
+            employeeId:employee.id,
+            name:employee.nome,
+            planned:planned.entrada,
+            limit:addMinutesToClock(planned.entrada,tolerance),
+            actual:new Intl.DateTimeFormat('pt-BR',{
+              hour:'2-digit',
+              minute:'2-digit',
+              hour12:false
+            }).format(actual),
+            considered:delayMinutes
+          });
         }
+      }catch(error){
+        console.warn('Não foi possível calcular atraso de',employee.nome,error);
       }
     }
+
+    const lateCount=lateDetails.length;
 
     document.getElementById('presentes-hoje').textContent=String(presentCount);
     document.getElementById('em-almoco').textContent=String(lunchCount);
@@ -116,7 +153,7 @@ async function initAdmin(){
 
     const select=document.getElementById('dashboard-employee-global');
     select.innerHTML=activeEmployees.map(employee=>
-      `<option value="${employee.id}" ${DB_STATE.employee?.id===employee.id?'selected':''}>${employee.nome}</option>`
+      `<option value="${escapeHtml(employee.id)}" ${DB_STATE.employee?.id===employee.id?'selected':''}>${escapeHtml(employee.nome)}</option>`
     ).join('');
 
     select.onchange=async()=>{
@@ -125,7 +162,7 @@ async function initAdmin(){
       await refreshSelectedEmployeeDashboard();
     };
 
-    await renderSmartDashboard(activeEmployees,lateCount,tolerance);
+    await renderSmartDashboard(activeEmployees,lateDetails,tolerance);
     await refreshSelectedEmployeeDashboard();
   }catch(error){
     toast(errorText(error),'warn');
@@ -250,7 +287,8 @@ async function refreshSelectedEmployeeDashboard(){
 
 function setOperationalCardState(id,value,state='normal',options={}){const card=document.getElementById(id);if(!card)return;card.classList.remove('metric-state-normal','metric-state-ok','metric-state-info','metric-state-warning','metric-state-danger','metric-state-critical','metric-state-pulse');const numeric=Number(value||0);const resolved=typeof state==='function'?state(numeric):state;card.classList.add(`metric-state-${resolved}`);if(options.pulse&&numeric>0)card.classList.add('metric-state-pulse');}
 function updateOperationalDashboardCards({presentCount,lunchCount,absentCount,lateCount,adjustmentCount,journeyCount,returnCount}){setOperationalCardState('metric-presentes',presentCount,presentCount>0?'ok':'normal');setOperationalCardState('metric-almoco',lunchCount,lunchCount>0?'info':'normal');setOperationalCardState('metric-ausentes',absentCount,absentCount>=2?'danger':absentCount===1?'warning':'normal',{pulse:absentCount>0});setOperationalCardState('metric-atrasos',lateCount,lateCount>=2?'danger':lateCount===1?'warning':'normal',{pulse:lateCount>0});const actionable=Number(adjustmentCount||0)+Number(journeyCount||0)+Number(returnCount||0);const card=document.getElementById('metric-ajustes');const val=document.getElementById('ajustes-pendentes');if(val)val.textContent=String(actionable);if(card?.querySelector('span'))card.querySelector('span').textContent='Pendências';if(card?.querySelector('small'))card.querySelector('small').textContent=actionable?'Exigem atenção do gestor':'Nenhuma ação pendente';setOperationalCardState('metric-ajustes',actionable,actionable>=3?'critical':actionable>0?'danger':'normal',{pulse:actionable>0});const badge=document.getElementById('sidebar-ajustes-badge');if(badge){badge.textContent=String(actionable);badge.hidden=actionable===0;}return actionable;}
-async function renderSmartDashboard(activeEmployees,lateCount,tolerance){
+async function renderSmartDashboard(activeEmployees,lateDetails,tolerance){
+  const lateCount=Array.isArray(lateDetails)?lateDetails.length:0;
   /*
    * RC5.74 — fonte operacional restrita aos funcionários ativos.
    *
@@ -352,50 +390,7 @@ async function renderSmartDashboard(activeEmployees,lateCount,tolerance){
   }
   if(pendingCount)notes.push({type:'warn',icon:'✓',title:`${pendingCount} ajuste${pendingCount===1?'':'s'} pendente${pendingCount===1?'':'s'}`,text:'Solicitações aguardando aprovação ou rejeição.',href:'ajustes.html?status=pendente&fila=1',label:'Analisar'});
   if(lateCount){
-    const delayedEmployees=[];
-
-    for(const employee of activeEmployees){
-      const employeeMarks=(window.__plenitudeTodayMarks||[])
-        .filter(mark=>String(mark.funcionario_id)===String(employee.id))
-        .sort((a,b)=>new Date(a.registrado_em)-new Date(b.registrado_em));
-
-      if(!employeeMarks.length)continue;
-
-      try{
-        const scheduleRows=await window.PlenitudeDB.schedules(employee.id);
-        const schedule=dbScheduleToUi(scheduleRows);
-        const planned=scheduleForDateFrom(schedule,new Date());
-        if(!planned?.entrada)continue;
-
-        const actual=new Date(employeeMarks[0].registrado_em);
-        const [hour,minute]=planned.entrada.split(':').map(Number);
-        const plannedDate=new Date(actual);
-        plannedDate.setHours(hour,minute,0,0);
-
-        const considered=Math.max(
-          0,
-          Math.floor((actual.getTime()-plannedDate.getTime())/60000)-tolerance
-        );
-
-        if(considered>0){
-          delayedEmployees.push({
-            name:employee.nome,
-            planned:planned.entrada,
-            limit:addMinutesToClock(planned.entrada,tolerance),
-            actual:new Intl.DateTimeFormat('pt-BR',{
-              hour:'2-digit',
-              minute:'2-digit',
-              hour12:false
-            }).format(actual),
-            considered
-          });
-        }
-      }catch(error){
-        console.warn('Detalhes do atraso indisponíveis',error);
-      }
-    }
-
-    const first=delayedEmployees[0];
+    const first=lateDetails[0];
     notes.push({
       type:'danger',
       icon:'⏱',
@@ -407,14 +402,26 @@ async function renderSmartDashboard(activeEmployees,lateCount,tolerance){
       label:'Detalhes'
     });
   }
-  const absent=activeEmployees.filter(e=>{const n=document.getElementById('ausentes-hoje');return Number(n?.textContent||0)>0}).length?Number(document.getElementById('ausentes-hoje')?.textContent||0):0;
+  const absent=Math.max(
+    0,
+    Number(document.getElementById('ausentes-hoje')?.textContent||0)
+  );
   if(absent)notes.push({type:'warn',icon:'○',title:`${absent} ausência${absent===1?'':'s'} hoje`,text:'Funcionários ativos ainda sem registro de entrada.',href:'ponto.html',label:'Ver ponto'});
   if(!notes.length)notes.push({type:'ok',icon:'●',title:'Tudo em ordem',text:'Nenhuma pendência operacional identificada neste momento.',href:'relatorios.html',label:'Relatórios'});
   const severityOrder={danger:0,warn:1,ok:2};notes.sort((a,b)=>(severityOrder[a.type]??9)-(severityOrder[b.type]??9));
   const alertCount=notes.filter(note=>note.type!=='ok').length;
   const actionableCount=updateOperationalDashboardCards({presentCount:Number(document.getElementById('presentes-hoje')?.textContent||0),lunchCount:Number(document.getElementById('em-almoco')?.textContent||0),absentCount:absent,lateCount,adjustmentCount:pendingCount,journeyCount:journeyPendencies.length,returnCount:returnPendencies.length});
   const box=document.getElementById('dashboard-notifications');const panel=box?.closest('.alert-panel');
-  if(box)box.innerHTML=notes.map(note=>`<article class="dashboard-note ${note.type}"><span class="note-icon">${note.icon}</span><div><strong>${note.title}</strong><small>${note.text}</small></div><a href="${note.href}">${note.label}</a></article>`).join('');
+  if(box)box.innerHTML=notes.map(note=>`
+    <article class="dashboard-note ${escapeHtml(note.type)}">
+      <span class="note-icon">${escapeHtml(note.icon)}</span>
+      <div>
+        <strong>${escapeHtml(note.title)}</strong>
+        <small>${escapeHtml(note.text)}</small>
+      </div>
+      <a href="${escapeHtml(note.href)}">${escapeHtml(note.label)}</a>
+    </article>
+  `).join('');
   if(panel){panel.classList.toggle('has-operational-alerts',alertCount>0);panel.classList.toggle('has-critical-alerts',notes.some(note=>note.type==='danger'));}
   const count=document.getElementById('notification-count');if(count){count.textContent=String(alertCount);count.classList.toggle('has-alerts',alertCount>0);count.classList.toggle('is-critical',notes.some(note=>note.type==='danger'));count.title=alertCount?`${alertCount} grupo(s) de alerta e ${actionableCount} ação(ões) pendente(s)`:'Nenhuma notificação operacional';}
 }

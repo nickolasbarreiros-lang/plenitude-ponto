@@ -3823,3 +3823,20 @@ button[aria-busy="true"]{
 .settings-switch-row.is-disabled .switch-state{
   color:#776b67;
 }
+
+/* RC6.0 — identificação discreta da versão auditada */
+.system-build-badge{
+  position:fixed;
+  right:14px;
+  bottom:14px;
+  z-index:60;
+  padding:6px 9px;
+  border:1px solid #ead7cd;
+  border-radius:999px;
+  background:rgba(255,255,255,.92);
+  color:#8a6f65;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.08em;
+  box-shadow:0 4px 18px rgba(60,30,20,.08);
+}
