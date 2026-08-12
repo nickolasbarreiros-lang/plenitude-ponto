@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 
-const EXPECTED_BUILD='RC6.1';
+const EXPECTED_BUILD='RC6.2';
 const reloadKey='plenitude-version-reload';
 let reloading=false;
 
@@ -27,7 +27,7 @@ async function clearLegacyCaches(){
  const keys=await caches.keys();
  await Promise.all(
   keys
-   .filter(key=>key.startsWith('plenitude-ponto-')&&key!=='plenitude-ponto-rc6-1')
+   .filter(key=>key.startsWith('plenitude-ponto-')&&key!=='plenitude-ponto-rc6-2')
    .map(key=>caches.delete(key))
  );
 }

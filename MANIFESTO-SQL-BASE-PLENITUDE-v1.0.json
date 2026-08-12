@@ -1,0 +1,311 @@
+{
+  "baseline": "supabase-baseline-plenitude-ponto-v1.0.sql",
+  "base_funcional": "RC6.1",
+  "uso": "somente instalação nova",
+  "fontes": [
+    {
+      "ordem": 1,
+      "secao": "CORE-LOTE-1",
+      "arquivo_origem": "plenitude-ponto-lote-1.sql"
+    },
+    {
+      "ordem": 2,
+      "secao": "V10",
+      "arquivo_origem": "supabase-v10-registro-ponto.sql"
+    },
+    {
+      "ordem": 3,
+      "secao": "V11",
+      "arquivo_origem": "supabase-v11-perfil-funcionario.sql"
+    },
+    {
+      "ordem": 4,
+      "secao": "V12",
+      "arquivo_origem": "supabase-v12-storage-acesso.sql"
+    },
+    {
+      "ordem": 5,
+      "secao": "V15",
+      "arquivo_origem": "supabase-v15-matricula-pin.sql"
+    },
+    {
+      "ordem": 6,
+      "secao": "CORRECAO-LOGIN-MATRICULA",
+      "arquivo_origem": "supabase-correcao-login-matricula-pin.sql"
+    },
+    {
+      "ordem": 7,
+      "secao": "CORRECAO-LOGIN-STATUS",
+      "arquivo_origem": "supabase-correcao-status-ambiguo-login-funcionario.sql"
+    },
+    {
+      "ordem": 8,
+      "secao": "V17",
+      "arquivo_origem": "supabase-v17-banco-horas.sql"
+    },
+    {
+      "ordem": 9,
+      "secao": "V18",
+      "arquivo_origem": "supabase-v18-ajustes-ponto.sql"
+    },
+    {
+      "ordem": 10,
+      "secao": "V19",
+      "arquivo_origem": "supabase-v19-politicas-ponto.sql"
+    },
+    {
+      "ordem": 11,
+      "secao": "V22",
+      "arquivo_origem": "supabase-v22-auditoria-seguranca.sql"
+    },
+    {
+      "ordem": 12,
+      "secao": "V24",
+      "arquivo_origem": "supabase-v24-fechamento-mensal.sql"
+    },
+    {
+      "ordem": 13,
+      "secao": "V26",
+      "arquivo_origem": "supabase-v26-dispositivo-autorizado.sql"
+    },
+    {
+      "ordem": 14,
+      "secao": "V26-V27-CORRECAO-ATIVO",
+      "arquivo_origem": "supabase-v26-v27-correcao-ativo-ambiguo.sql"
+    },
+    {
+      "ordem": 15,
+      "secao": "V27",
+      "arquivo_origem": "supabase-v27-pin-mestre.sql"
+    },
+    {
+      "ordem": 16,
+      "secao": "V28",
+      "arquivo_origem": "supabase-v28-movimentacoes-jornada.sql"
+    },
+    {
+      "ordem": 17,
+      "secao": "V29",
+      "arquivo_origem": "supabase-v29-correcao-pin-funcionario.sql"
+    },
+    {
+      "ordem": 18,
+      "secao": "V29-CORRECAO-RETORNO",
+      "arquivo_origem": "supabase-v29-correcao-tipo-retorno-pin.sql"
+    },
+    {
+      "ordem": 19,
+      "secao": "V30.3",
+      "arquivo_origem": "supabase-v30-3-criar-listar-meus-ajustes.sql"
+    },
+    {
+      "ordem": 20,
+      "secao": "V31",
+      "arquivo_origem": "supabase-v31-homologacao.sql"
+    },
+    {
+      "ordem": 21,
+      "secao": "RC1.1",
+      "arquivo_origem": "supabase-rc1-1-atualizacao.sql"
+    },
+    {
+      "ordem": 22,
+      "secao": "RC1-CORRECOES",
+      "arquivo_origem": "supabase-rc1-correcoes-consolidadas.sql"
+    },
+    {
+      "ordem": 23,
+      "secao": "RC2.3",
+      "arquivo_origem": "supabase-rc2-3-protecao-multiplos-cliques.sql"
+    },
+    {
+      "ordem": 24,
+      "secao": "RC3-VALIDACAO-CORRIGIDA",
+      "arquivo_origem": "supabase-rc3-1-correcao-validacao-automatica.sql"
+    },
+    {
+      "ordem": 25,
+      "secao": "RC3.2-AJUSTE",
+      "arquivo_origem": "supabase-rc3-2-correcao-solicitacao-ajuste.sql"
+    },
+    {
+      "ordem": 26,
+      "secao": "RC4.4",
+      "arquivo_origem": "supabase-rc4-4-pendencias-retorno.sql"
+    },
+    {
+      "ordem": 27,
+      "secao": "RC4.5",
+      "arquivo_origem": "supabase-rc4-5-status-movimentacao.sql"
+    },
+    {
+      "ordem": 28,
+      "secao": "RC4.6",
+      "arquivo_origem": "supabase-rc4-6-verificar-status-saida.sql"
+    },
+    {
+      "ordem": 29,
+      "secao": "RC4.8",
+      "arquivo_origem": "supabase-rc4-8-correcao-auditoria-jsonb.sql"
+    },
+    {
+      "ordem": 30,
+      "secao": "RC4.10",
+      "arquivo_origem": "supabase-rc4-10-backup-seguro.sql"
+    },
+    {
+      "ordem": 31,
+      "secao": "RC4.13",
+      "arquivo_origem": "supabase-rc4-13-regularizar-retorno.sql"
+    },
+    {
+      "ordem": 32,
+      "secao": "RC4.16",
+      "arquivo_origem": "supabase-rc4-16-multiplos-dispositivos.sql"
+    },
+    {
+      "ordem": 33,
+      "secao": "RC4.17",
+      "arquivo_origem": "supabase-rc4-17-foto-no-ponto.sql"
+    },
+    {
+      "ordem": 34,
+      "secao": "RC4.18",
+      "arquivo_origem": "supabase-rc4-18-intervalo-minimo-30-min.sql"
+    },
+    {
+      "ordem": 35,
+      "secao": "RC5.0",
+      "arquivo_origem": "supabase-rc5-0-contingencia-offline.sql"
+    },
+    {
+      "ordem": 36,
+      "secao": "RC5.22",
+      "arquivo_origem": "supabase-rc5-22-importacao-automatica-contingencia.sql"
+    },
+    {
+      "ordem": 37,
+      "secao": "RC5.24",
+      "arquivo_origem": "supabase-rc5-24-permissao-sincronizacao-anon.sql"
+    },
+    {
+      "ordem": 38,
+      "secao": "RC5.25",
+      "arquivo_origem": "supabase-rc5-25-pendencia-jornada-incompleta.sql"
+    },
+    {
+      "ordem": 39,
+      "secao": "RC5.26B",
+      "arquivo_origem": "supabase-rc5-26b-corrige-pendencia-funcionario.sql"
+    },
+    {
+      "ordem": 40,
+      "secao": "RC5.30",
+      "arquivo_origem": "supabase-rc5-30-assistente-fechamento-mensal.sql"
+    },
+    {
+      "ordem": 41,
+      "secao": "RC5.32",
+      "arquivo_origem": "supabase-rc5-32-corrige-analise-contingencia.sql"
+    },
+    {
+      "ordem": 42,
+      "secao": "RC5.33",
+      "arquivo_origem": "supabase-rc5-33-rpc-contingencia-v2.sql"
+    },
+    {
+      "ordem": 43,
+      "secao": "RC5.39",
+      "arquivo_origem": "supabase-rc5-39-controle-espelhos-assinados.sql"
+    },
+    {
+      "ordem": 44,
+      "secao": "RC5.40",
+      "arquivo_origem": "supabase-rc5-40-corrige-ambiguidade-espelhos.sql"
+    },
+    {
+      "ordem": 45,
+      "secao": "RC5.43",
+      "arquivo_origem": "supabase-rc5-43-calendario-feriados.sql"
+    },
+    {
+      "ordem": 46,
+      "secao": "RC5.49",
+      "arquivo_origem": "supabase-rc5-49-corrige-pendencia-dia-atual.sql"
+    },
+    {
+      "ordem": 47,
+      "secao": "RC5.60",
+      "arquivo_origem": "supabase-rc5-60-protecao-registro-ponto.sql"
+    },
+    {
+      "ordem": 48,
+      "secao": "RC5.61",
+      "arquivo_origem": "supabase-rc5-61-gerenciar-exclusao-marcacoes.sql"
+    },
+    {
+      "ordem": 49,
+      "secao": "RC5.62",
+      "arquivo_origem": "supabase-rc5-62-tempo-oficial.sql"
+    },
+    {
+      "ordem": 50,
+      "secao": "RC5.63",
+      "arquivo_origem": "supabase-rc5-63-corrige-hora-oficial-funcionario.sql"
+    },
+    {
+      "ordem": 51,
+      "secao": "RC5.67",
+      "arquivo_origem": "supabase-rc5-67-desativacao-funcionario.sql"
+    },
+    {
+      "ordem": 52,
+      "secao": "RC5.68",
+      "arquivo_origem": "supabase-rc5-68-corrige-desativacao-funcionario.sql"
+    },
+    {
+      "ordem": 53,
+      "secao": "RC5.75",
+      "arquivo_origem": "supabase-rc5-75-corrige-tolerancia-entrada.sql"
+    },
+    {
+      "ordem": 54,
+      "secao": "RC5.76",
+      "arquivo_origem": "supabase-rc5-76-corrige-banco-horas-400.sql"
+    },
+    {
+      "ordem": 55,
+      "secao": "RC5.77",
+      "arquivo_origem": "supabase-rc5-77-corrige-creditos-banco-horas.sql"
+    },
+    {
+      "ordem": 56,
+      "secao": "RC5.78",
+      "arquivo_origem": "supabase-rc5-78-corrige-creditos-positivos.sql"
+    },
+    {
+      "ordem": 57,
+      "secao": "RC5.79",
+      "arquivo_origem": "supabase-rc5-79-corrige-status-ambiguo-banco-horas.sql"
+    },
+    {
+      "ordem": 58,
+      "secao": "RC5.82",
+      "arquivo_origem": "supabase-rc5-82-politicas-empresa.sql"
+    },
+    {
+      "ordem": 59,
+      "secao": "RC6.1",
+      "arquivo_origem": "supabase-rc6-1-banco-horas-acumulado.sql"
+    }
+  ],
+  "auditoria_estatica": {
+    "baseline_bytes": 392353,
+    "sections": 59,
+    "frontend_rpcs": 38,
+    "functions_defined": 99,
+    "frontend_rpcs_missing_in_baseline": [],
+    "dollar_quote_count": 310,
+    "dollar_quote_even": true
+  }
+}
