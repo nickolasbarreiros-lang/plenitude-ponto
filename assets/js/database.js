@@ -254,6 +254,17 @@
     return data||{resumo:{},dias:[]};
   }
 
+  async function accumulatedBankHours(employeeId,year,month){
+    if(!employeeId) throw new Error('Selecione um funcionário.');
+    const {data,error}=await client.rpc('banco_horas_acumulado_admin',{
+      p_funcionario_id:employeeId,
+      p_ano:Number(year),
+      p_mes:Number(month)
+    });
+    if(error) throw error;
+    return data||{};
+  }
+
   async function marksForRange(start,end){
     const {data,error}=await client.from('marcacoes').select('*').gte('data_local',start).lte('data_local',end).order('registrado_em');
     if(error) throw error;
@@ -482,5 +493,5 @@
     return Array.isArray(data)?data[0]:data;
   }
 
-  window.PlenitudeDB=Object.freeze({employeeMovements,registerEmployeeMovement,adminMovements,historicalReturnPendencies,journeyPendenciesAdmin,refreshJourneyPendenciesAdmin,createAdminMovement,analyzeMovement,regularizeMovementReturn,archiveMovement,masterPinStatus,setMasterPin,monthClosureAudit,monthlyMirrorStatuses,updateMonthlyMirrorStatus,monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,companyHolidays,saveCompanyHoliday,deleteCompanyHoliday,seedCompanyHolidays,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks,managedMarks,archiveMark,permanentlyDeleteMark,changeEmployeeActivity,companyPolicies});
+  window.PlenitudeDB=Object.freeze({employeeMovements,registerEmployeeMovement,adminMovements,historicalReturnPendencies,journeyPendenciesAdmin,refreshJourneyPendenciesAdmin,createAdminMovement,analyzeMovement,regularizeMovementReturn,archiveMovement,masterPinStatus,setMasterPin,monthClosureAudit,monthlyMirrorStatuses,updateMonthlyMirrorStatus,monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,companyHolidays,saveCompanyHoliday,deleteCompanyHoliday,seedCompanyHolidays,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks,managedMarks,archiveMark,permanentlyDeleteMark,changeEmployeeActivity,companyPolicies,accumulatedBankHours});
 })();

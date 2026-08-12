@@ -3840,3 +3840,15 @@ button[aria-busy="true"]{
   letter-spacing:.08em;
   box-shadow:0 4px 18px rgba(60,30,20,.08);
 }
+
+
+/* RC6.1 — banco de horas acumulado */
+.bank-total-card{
+  --metric-accent:#7c4dff;
+}
+.bank-total-card strong{
+  color:#6538c8!important;
+}
+.bank-carry-notice{
+  margin-bottom:18px;
+}

@@ -186,6 +186,8 @@ async function refreshSelectedEmployeeDashboard(){
     document.getElementById('grafico-semana').innerHTML='';
     document.getElementById('grafico-mensal').innerHTML='';
     document.getElementById('saldo-mes').textContent='+00:00';
+    const accumulatedEmpty=document.getElementById('saldo-acumulado');
+    if(accumulatedEmpty)accumulatedEmpty.textContent='+00:00';
     if(indicators)indicators.innerHTML='';
     return;
   }
@@ -270,14 +272,41 @@ async function refreshSelectedEmployeeDashboard(){
   const monthStart=`${today.slice(0,7)}-01`;
   const monthEnd=new Date(new Date().getFullYear(),new Date().getMonth()+1,0);
   let monthBalance=0;
+  let accumulatedBalance=0;
   try{
-    const bank=await window.PlenitudeDB.bankHours(selectedId,monthStart,localDateKey(monthEnd));
+    const [bank,accumulated]=await Promise.all([
+      window.PlenitudeDB.bankHours(
+        selectedId,
+        monthStart,
+        localDateKey(monthEnd)
+      ),
+      window.PlenitudeDB.accumulatedBankHours(
+        selectedId,
+        Number(today.slice(0,4)),
+        Number(today.slice(5,7))
+      )
+    ]);
+
     monthBalance=Number(bank?.resumo?.saldo_minutos||0);
+    accumulatedBalance=Number(
+      accumulated?.saldo_acumulado_minutos??monthBalance
+    );
+
+    const accumulatedCard=document.getElementById('saldo-acumulado');
+    if(accumulatedCard){
+      accumulatedCard.title=
+        `Saldo anterior consolidado: ${signedMinutes(Number(accumulated?.saldo_anterior_minutos||0))} | `+
+        `Competência atual: ${signedMinutes(Number(accumulated?.saldo_competencia_minutos||0))}`;
+    }
   }catch(error){
-    console.warn('Saldo mensal indisponível',error);
+    console.warn('Banco de horas acumulado indisponível',error);
+    accumulatedBalance=monthBalance;
   }
+
   if(DB_STATE.employee?.id!==selectedId)return;
   document.getElementById('saldo-mes').textContent=signedMinutes(monthBalance);
+  const accumulatedCard=document.getElementById('saldo-acumulado');
+  if(accumulatedCard)accumulatedCard.textContent=signedMinutes(accumulatedBalance);
 
   await Promise.all([
     renderWeekChartDB(selectedId,selectedSchedule),
@@ -1070,7 +1099,11 @@ async function renderRelatorio(){
     document.getElementById('espelho-cargo').textContent=employee.cargo||'—';
     document.getElementById('espelho-admissao').textContent=employee.data_admissao?new Intl.DateTimeFormat('pt-BR').format(dateFromKey(employee.data_admissao)):'—';
     document.title=`Espelho de Ponto - ${employee.nome||'Funcionário'} - ${selected}`;
-    const result=await window.PlenitudeDB.bankHours(employeeId,start,end),summary=result.resumo||{},days=result.dias||[];
+    const [result,accumulated]=await Promise.all([
+      window.PlenitudeDB.bankHours(employeeId,start,end),
+      window.PlenitudeDB.accumulatedBankHours(employeeId,year,month)
+    ]);
+    const summary=result.resumo||{},days=result.dias||[];
     document.getElementById('rel-dias').textContent=summary.dias_trabalhados||0;
     const plannedMinutes=days.reduce(
       (total,day)=>total+Number(day.previsto_minutos||0),
@@ -1079,6 +1112,15 @@ async function renderRelatorio(){
     document.getElementById('rel-previsto').textContent=fmtMinutes(plannedMinutes);
     document.getElementById('rel-horas').textContent=fmtMinutes(summary.trabalhado_minutos||0);
     document.getElementById('rel-saldo').textContent=signedMinutes(summary.saldo_minutos||0);
+    const accumulatedElement=document.getElementById('rel-banco-acumulado');
+    if(accumulatedElement){
+      accumulatedElement.textContent=signedMinutes(
+        Number(accumulated?.saldo_acumulado_minutos||0)
+      );
+      accumulatedElement.title=
+        `Saldo anterior: ${signedMinutes(Number(accumulated?.saldo_anterior_minutos||0))} | `+
+        `Competência: ${signedMinutes(Number(accumulated?.saldo_competencia_minutos||0))}`;
+    }
     document.getElementById('rel-creditos').textContent=`+${fmtMinutes(summary.credito_minutos||0)}`;
     document.getElementById('rel-debitos').textContent=`−${fmtMinutes(summary.debito_minutos||0)}`;
     document.getElementById('rel-pendencias').textContent=String((summary.pendencias||0)+(summary.faltas||0));
