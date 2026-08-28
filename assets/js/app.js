@@ -1,4 +1,4 @@
-console.info('[Plenitude Ponto RC6.5.3] app.js carregado; políticas centralizadas ativas.');
+console.info('[Plenitude Ponto RC6.5.4] app.js carregado; políticas centralizadas ativas.');
 const defaultSchedule=[
   {dia:'Segunda',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'19:00'},
   {dia:'Terça',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'19:00'},
@@ -1103,7 +1103,7 @@ function initAdminPointSelfService(){
   setAdminAdjustmentEditing(false);
   refreshAdminPointMovements();
   refreshAdminPointAdjustments();
-  console.info('[Plenitude Ponto RC6.5.3] autoatendimento administrativo do ponto inicializado');
+  console.info('[Plenitude Ponto RC6.5.4] autoatendimento administrativo do ponto inicializado');
 }
 
 async function initPonto(){
@@ -1924,9 +1924,8 @@ async function initAjustes(){
     const decision=button.dataset.decision;
     const id=button.dataset.id;
     const response=document.getElementById(`response-${id}`)?.value||'';
-    if(!confirm(decision==='aprovada'?(card?.querySelector('.request-kind.correcao')?'Aprovar a correção do horário desta marcação?':'Aprovar e criar esta marcação?'):'Rejeitar esta solicitação?'))return;
-
     const card=button.closest('.adjustment-admin-card');
+    if(!confirm(decision==='aprovada'?(card?.querySelector('.request-kind.correcao')?'Aprovar a correção do horário desta marcação?':'Aprovar e criar esta marcação?'):'Rejeitar esta solicitação?'))return;
     card?.querySelectorAll('button').forEach(item=>item.disabled=true);
     try{
      await window.PlenitudeDB.decideAdjustment(id,decision,response);
