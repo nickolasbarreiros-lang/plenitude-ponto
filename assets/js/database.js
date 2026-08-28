@@ -393,6 +393,30 @@
     const {data,error}=await client.rpc('registrar_movimentacao_dispositivo',{p_token:token,p_dispositivo_token:deviceToken,p_acao:action,p_motivo:reason||null,p_user_agent:navigator.userAgent});
     if(error) throw error; return Array.isArray(data)?data[0]:data;
   }
+
+  async function registerAdminMovementNow(employeeId,action,reason=''){
+    const {data,error}=await client.rpc('registrar_movimentacao_admin_agora',{
+      p_funcionario_id:employeeId,
+      p_acao:action,
+      p_motivo:reason||null
+    });
+    if(error) throw error;
+    return Array.isArray(data)?data[0]:data;
+  }
+
+  async function createAdminAdjustmentRequest(employeeId,mode,date,type,time,justification){
+    const {data,error}=await client.rpc('solicitar_ajuste_admin_em_nome_funcionario',{
+      p_funcionario_id:employeeId,
+      p_modalidade:mode,
+      p_data:date,
+      p_tipo:type,
+      p_horario:time,
+      p_justificativa:justification
+    });
+    if(error) throw error;
+    return Array.isArray(data)?data[0]:data;
+  }
+
   async function adminMovements(start,end,employeeId=null,pendingOnly=false){
     const {data,error}=await client.rpc('listar_movimentacoes_admin',{p_inicio:start,p_fim:end,p_funcionario_id:employeeId||null,p_pendentes:pendingOnly});
     if(error) throw error; return data||[];
@@ -493,5 +517,5 @@
     return Array.isArray(data)?data[0]:data;
   }
 
-  window.PlenitudeDB=Object.freeze({employeeMovements,registerEmployeeMovement,adminMovements,historicalReturnPendencies,journeyPendenciesAdmin,refreshJourneyPendenciesAdmin,createAdminMovement,analyzeMovement,regularizeMovementReturn,archiveMovement,masterPinStatus,setMasterPin,monthClosureAudit,monthlyMirrorStatuses,updateMonthlyMirrorStatus,monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,companyHolidays,saveCompanyHoliday,deleteCompanyHoliday,seedCompanyHolidays,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks,managedMarks,archiveMark,permanentlyDeleteMark,changeEmployeeActivity,companyPolicies,accumulatedBankHours});
+  window.PlenitudeDB=Object.freeze({employeeMovements,registerEmployeeMovement,registerAdminMovementNow,createAdminAdjustmentRequest,adminMovements,historicalReturnPendencies,journeyPendenciesAdmin,refreshJourneyPendenciesAdmin,createAdminMovement,analyzeMovement,regularizeMovementReturn,archiveMovement,masterPinStatus,setMasterPin,monthClosureAudit,monthlyMirrorStatuses,updateMonthlyMirrorStatus,monthClosures,closeMonth,reopenMonth,auditLogs,securitySummary,recordAuditEvent,profile,ownEmployee,employees,saveEmployee,uploadEmployeePhoto,removeEmployeePhoto,employeePhotoUrl,linkEmployeeAccess,defineEmployeePin,setEmployeePinAccess,updateSettings,savePointPolicies,companyHolidays,saveCompanyHoliday,deleteCompanyHoliday,seedCompanyHolidays,occurrencesForRange,saveOccurrence,backupData,schedules,saveSchedules,marksForRange,bankHours,adminAdjustmentRequests,decideAdjustment,registerPoint,subscribeMarks,managedMarks,archiveMark,permanentlyDeleteMark,changeEmployeeActivity,companyPolicies,accumulatedBankHours});
 })();

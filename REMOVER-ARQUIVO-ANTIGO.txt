@@ -1,0 +1,5 @@
+Após substituir os arquivos, remova do repositório:
+- supabase-baseline-plenitude-ponto-v1.2-rc6.5.sql
+
+Ele foi substituído pela baseline consolidada:
+- supabase-baseline-plenitude-ponto-v1.3-rc6.5.3.sql

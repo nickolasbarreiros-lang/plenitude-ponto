@@ -1,4 +1,4 @@
-console.info('[Plenitude Ponto RC5.83] app.js carregado; políticas centralizadas ativas.');
+console.info('[Plenitude Ponto RC6.5.3] app.js carregado; políticas centralizadas ativas.');
 const defaultSchedule=[
   {dia:'Segunda',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'19:00'},
   {dia:'Terça',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'19:00'},
@@ -865,6 +865,247 @@ async function initJornada(){
 }
 function updateTotals(){let weekly=0;document.querySelectorAll('#jornada-body tr').forEach(tr=>{if(!tr.querySelector('[name=entrada]'))return;const g=n=>tr.querySelector(`[name=${n}]`).value,s={entrada:g('entrada'),almoco:g('almoco'),retorno:g('retorno'),saida:g('saida')},t=totalDay(s);weekly+=t;tr.querySelector('.total-dia').textContent=fmtMinutes(t)});const total=document.getElementById('total-semanal');if(total)total.textContent=fmtMinutes(weekly)}
 
+
+async function refreshAdminPointMovements(){
+  if(DB_STATE.profile?.papel!=='administrador'||!DB_STATE.employee)return;
+  const today=localDateKey(window.PlenitudeClock?.now?.()||new Date());
+  const state=document.getElementById('movement-state');
+  const trigger=document.getElementById('temporary-exit');
+  const form=document.getElementById('movement-exit-form');
+  const reason=document.getElementById('movement-reason');
+  const returnButton=document.getElementById('temporary-return');
+  const box=document.getElementById('my-movements');
+
+  try{
+    const rows=await window.PlenitudeDB.adminMovements(today,today,DB_STATE.employee.id,false);
+    const own=(rows||[]).filter(r=>r.funcionario_id===DB_STATE.employee.id);
+    const open=own.find(r=>r.status==='aberta')||null;
+
+    if(state){
+      state.textContent=open?'Fora da loja':'Dentro da loja';
+      state.className=`badge ${open?'warn':''}`;
+    }
+    if(open){
+      if(form){form.hidden=true;form.style.display='none';}
+      if(reason){reason.disabled=true;reason.value='';}
+      if(trigger){trigger.hidden=true;trigger.style.display='none';trigger.setAttribute('aria-expanded','false');}
+      if(returnButton){returnButton.hidden=false;returnButton.style.display='';}
+    }else{
+      if(returnButton){returnButton.hidden=true;returnButton.style.display='none';}
+      if(trigger){trigger.hidden=false;trigger.style.display='';}
+    }
+
+    if(box){
+      box.innerHTML=own.length
+        ?own.map(r=>`<div class="movement-item"><div><strong>${r.status==='aberta'?'Saída temporária em andamento':'Saída temporária'}</strong><small>${formatDbTime(r.inicio_em)}${r.fim_em?` → ${formatDbTime(r.fim_em)}`:' → aguardando retorno'}${r.motivo_informado?` · ${escapeHtml(r.motivo_informado)}`:''}</small></div><span class="request-status ${r.status==='aberta'?'pendente':r.aprovado?'aprovada':'pendente'}">${r.status==='aberta'?'fora da loja':r.aprovado?(escapeHtml(r.classificacao||'analisada')):'aguardando análise'}</span></div>`).join('')
+        :'<div class="mini-empty">Nenhuma saída temporária hoje.</div>';
+    }
+  }catch(error){
+    console.error('Falha ao carregar movimentações no modo administrativo.',error);
+    if(box)box.innerHTML='<div class="mini-empty">Não foi possível carregar as movimentações.</div>';
+  }
+}
+
+function setAdminTemporaryExitEditing(open){
+  const trigger=document.getElementById('temporary-exit');
+  const form=document.getElementById('movement-exit-form');
+  const reason=document.getElementById('movement-reason');
+  if(!trigger||!form||!reason)return;
+  const isOpen=Boolean(open);
+  form.hidden=!isOpen;
+  form.style.display=isOpen?'grid':'none';
+  reason.disabled=!isOpen;
+  trigger.hidden=isOpen;
+  trigger.style.display=isOpen?'none':'';
+  trigger.setAttribute('aria-expanded',String(isOpen));
+  if(isOpen)requestAnimationFrame(()=>reason.focus());
+  else reason.value='';
+}
+
+async function refreshAdminPointAdjustments(){
+  if(DB_STATE.profile?.papel!=='administrador'||!DB_STATE.employee)return;
+  const box=document.getElementById('my-adjustments');
+  if(!box)return;
+  try{
+    const rows=(await window.PlenitudeDB.adminAdjustmentRequests(null))
+      .filter(r=>r.funcionario_id===DB_STATE.employee.id)
+      .sort((a,b)=>new Date(b.criado_em||0)-new Date(a.criado_em||0))
+      .slice(0,5);
+    box.innerHTML=rows.length
+      ?rows.map(r=>`<div class="adjustment-item"><div><strong>${new Date(r.data_marcacao+'T12:00:00').toLocaleDateString('pt-BR')} · ${labelForMarkType(r.tipo_marcacao)}</strong><small>${String(r.horario_solicitado||'').slice(0,5)} — ${escapeHtml(r.justificativa||'')}</small></div><span class="request-status ${escapeHtml(String(r.status||''))}">${escapeHtml(String(r.status||''))}</span></div>`).join('')
+      :'<div class="mini-empty">Nenhuma solicitação de ajuste.</div>';
+  }catch(error){
+    console.error('Falha ao carregar ajustes no modo administrativo.',error);
+    box.innerHTML='<div class="mini-empty">Não foi possível carregar as solicitações.</div>';
+  }
+}
+
+async function refreshAdminAdjustmentCurrentMark(){
+  if(DB_STATE.profile?.papel!=='administrador'||!DB_STATE.employee)return;
+  const mode=document.getElementById('ajuste-modalidade');
+  const current=document.getElementById('ajuste-current');
+  const note=document.getElementById('ajuste-mode-note');
+  const date=document.getElementById('ajuste-data')?.value||'';
+  const type=document.getElementById('ajuste-tipo')?.value||'';
+  if(!mode||!current||!note)return;
+
+  current.hidden=true;
+  current.textContent='';
+  current.className='adjustment-current wide';
+
+  if(mode.value!=='correcao'){
+    note.textContent='O gestor poderá incluir a marcação ausente após analisar a justificativa.';
+    return;
+  }
+
+  note.textContent='Correção de horário: o sistema confere a marcação já gravada antes de permitir o envio.';
+  if(!date||!type)return;
+
+  current.hidden=false;
+  current.textContent='Consultando horário atualmente registrado...';
+  try{
+    const rows=(await window.PlenitudeDB.marksForRange(date,date))
+      .filter(m=>m.funcionario_id===DB_STATE.employee.id);
+    const mark=rows.find(m=>String(m.tipo)===String(type));
+    if(!mark){
+      current.className='adjustment-current wide warn';
+      current.textContent='Essa marcação não existe nessa data. Use a opção de marcação não registrada.';
+      return;
+    }
+    current.className='adjustment-current wide ok';
+    current.innerHTML=`<b>Horário atualmente registrado:</b> ${formatDbTime(mark.registrado_em)}. Informe abaixo o horário correto.`;
+  }catch(error){
+    current.className='adjustment-current wide warn';
+    current.textContent='Não foi possível consultar o horário atualmente registrado.';
+    console.error(error);
+  }
+}
+
+function setAdminAdjustmentEditing(open){
+  const toggle=document.getElementById('toggle-adjustment');
+  const form=document.getElementById('adjustment-form');
+  const help=document.getElementById('adjustment-help');
+  const current=document.getElementById('ajuste-current');
+  if(!toggle||!form||!help)return;
+  const isOpen=Boolean(open);
+  form.hidden=!isOpen;
+  form.style.display=isOpen?'grid':'none';
+  form.classList.toggle('is-open',isOpen);
+  toggle.textContent=isOpen?'Fechar solicitação':'Abrir nova solicitação';
+  toggle.setAttribute('aria-expanded',String(isOpen));
+  help.hidden=isOpen;
+  if(isOpen){
+    form.reset();
+    document.getElementById('ajuste-modalidade').value='inclusao';
+    document.getElementById('ajuste-data').value=localDateKey(window.PlenitudeClock?.now?.()||new Date());
+    refreshAdminAdjustmentCurrentMark();
+    requestAnimationFrame(()=>document.getElementById('ajuste-data')?.focus());
+  }else{
+    form.reset();
+    if(current){current.hidden=true;current.textContent='';}
+  }
+}
+
+function initAdminPointSelfService(){
+  if(DB_STATE.profile?.papel!=='administrador')return;
+
+  const exit=document.getElementById('temporary-exit');
+  const cancel=document.getElementById('temporary-exit-cancel');
+  const send=document.getElementById('temporary-exit-send');
+  const ret=document.getElementById('temporary-return');
+  const toggle=document.getElementById('toggle-adjustment');
+  const form=document.getElementById('adjustment-form');
+  const mode=document.getElementById('ajuste-modalidade');
+  const date=document.getElementById('ajuste-data');
+  const type=document.getElementById('ajuste-tipo');
+
+  if(exit&&!exit.dataset.adminBound){
+    exit.dataset.adminBound='1';
+    exit.addEventListener('click',e=>{e.preventDefault();setAdminTemporaryExitEditing(true);});
+  }
+  if(cancel&&!cancel.dataset.adminBound){
+    cancel.dataset.adminBound='1';
+    cancel.addEventListener('click',e=>{e.preventDefault();setAdminTemporaryExitEditing(false);});
+  }
+  if(send&&!send.dataset.adminBound){
+    send.dataset.adminBound='1';
+    send.addEventListener('click',async e=>{
+      e.preventDefault();
+      if(!DB_STATE.employee)return;
+      const reason=document.getElementById('movement-reason').value.trim();
+      if(reason.length<3)return toast('Informe resumidamente o motivo da saída.','warn');
+      const previous=send.textContent;
+      send.disabled=true;send.textContent='Enviando...';
+      try{
+        const movement=await window.PlenitudeDB.registerAdminMovementNow(DB_STATE.employee.id,'saida',reason);
+        toast(`Saída temporária registrada às ${formatDbTime(movement.inicio_em)}.`);
+        setAdminTemporaryExitEditing(false);
+        await refreshAdminPointMovements();
+      }catch(error){toast(errorText(error),'warn');console.error(error);}
+      finally{send.disabled=false;send.textContent=previous;}
+    });
+  }
+  if(ret&&!ret.dataset.adminBound){
+    ret.dataset.adminBound='1';
+    ret.addEventListener('click',async e=>{
+      e.preventDefault();
+      if(!DB_STATE.employee)return;
+      const previous=ret.textContent;
+      ret.disabled=true;ret.textContent='Registrando retorno...';
+      try{
+        const movement=await window.PlenitudeDB.registerAdminMovementNow(DB_STATE.employee.id,'retorno','');
+        toast(`Retorno registrado às ${formatDbTime(movement.fim_em)}.`);
+        await refreshAdminPointMovements();
+      }catch(error){toast(errorText(error),'warn');console.error(error);}
+      finally{ret.disabled=false;ret.textContent=previous;}
+    });
+  }
+
+  if(toggle&&!toggle.dataset.adminBound){
+    toggle.dataset.adminBound='1';
+    toggle.addEventListener('click',e=>{
+      e.preventDefault();
+      setAdminAdjustmentEditing(toggle.getAttribute('aria-expanded')!=='true');
+    });
+  }
+  [mode,date,type].forEach(el=>{
+    if(el&&!el.dataset.adminBound){
+      el.dataset.adminBound='1';
+      el.addEventListener('change',refreshAdminAdjustmentCurrentMark);
+    }
+  });
+  if(form&&!form.dataset.adminBound){
+    form.dataset.adminBound='1';
+    form.addEventListener('submit',async e=>{
+      e.preventDefault();
+      if(!DB_STATE.employee)return;
+      const submit=e.submitter||form.querySelector('button[type="submit"]');
+      if(submit?.disabled)return;
+      if(submit){submit.disabled=true;submit.textContent='Enviando...';}
+      try{
+        await window.PlenitudeDB.createAdminAdjustmentRequest(
+          DB_STATE.employee.id,
+          document.getElementById('ajuste-modalidade').value,
+          document.getElementById('ajuste-data').value,
+          document.getElementById('ajuste-tipo').value,
+          document.getElementById('ajuste-horario').value,
+          document.getElementById('ajuste-justificativa').value
+        );
+        toast('Solicitação enviada para análise.');
+        setAdminAdjustmentEditing(false);
+        await refreshAdminPointAdjustments();
+      }catch(error){toast(errorText(error),'warn');console.error(error);}
+      finally{if(submit){submit.disabled=false;submit.textContent='Enviar solicitação';}}
+    });
+  }
+
+  setAdminTemporaryExitEditing(false);
+  setAdminAdjustmentEditing(false);
+  refreshAdminPointMovements();
+  refreshAdminPointAdjustments();
+  console.info('[Plenitude Ponto RC6.5.3] autoatendimento administrativo do ponto inicializado');
+}
+
 async function initPonto(){
   const context=await initCommon(['administrador','funcionario']);if(!context)return;const session=context.session;
   await window.PlenitudeClock?.sync?.();
@@ -928,6 +1169,8 @@ async function initPonto(){
 
         renderClockEmployee(DB_STATE.employee);
         await loadRealPunches();
+        await refreshAdminPointMovements();
+        await refreshAdminPointAdjustments();
       };
     }else{
       DB_STATE.employee=await window.PlenitudeDB.ownEmployee();
@@ -938,6 +1181,7 @@ async function initPonto(){
     if(!DB_STATE.employee){document.getElementById('clock-employee').textContent=profile.papel==='funcionario'?'Conta ainda não vinculada a um funcionário':'Nenhum funcionário cadastrado';document.getElementById('clock-status').textContent='Acesso pendente';document.getElementById('registrar').disabled=true;renderRealPunches([]);return}
     renderClockEmployee(DB_STATE.employee);
     await loadRealPunches();
+    if(profile.papel==='administrador')initAdminPointSelfService();
     let adminPointRegistrationInFlight=false;
     document.getElementById('registrar').onclick=async()=>{
       if(adminPointRegistrationInFlight)return;

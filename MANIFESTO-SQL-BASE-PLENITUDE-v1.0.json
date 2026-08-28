@@ -1,6 +1,6 @@
 {
-  "baseline": "supabase-baseline-plenitude-ponto-v1.0.sql",
-  "base_funcional": "RC6.1",
+  "baseline": "supabase-baseline-plenitude-ponto-v1.3-rc6.5.3.sql",
+  "base_funcional": "RC6.5.3",
   "uso": "somente instalação nova",
   "fontes": [
     {
@@ -307,5 +307,7 @@
     "frontend_rpcs_missing_in_baseline": [],
     "dollar_quote_count": 310,
     "dollar_quote_even": true
-  }
+  },
+  "atualizado_em": "2026-08-28",
+  "observacao": "Baseline consolidada para instalação nova; inclui RC6.5.3."
 }
