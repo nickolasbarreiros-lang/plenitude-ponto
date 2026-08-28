@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 
 <html lang="pt-BR">
-<head><meta name="plenitude-build" content="RC6.5">
+<head><meta name="plenitude-build" content="RC6.5.1">
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="#ff6500" name="theme-color"/>
 <title>Registrar ponto | Plenitude</title>
-<link href="assets/css/estilos.css?v=1.0.0-rc6.5" rel="stylesheet"/>
+<link href="assets/css/estilos.css?v=1.0.0-rc6.5.1" rel="stylesheet"/>
 </head>
 <body>
 <div class="sync-restored-banner" id="sync-restored-banner" hidden>
@@ -65,7 +65,7 @@
 <div class="movement-history" id="my-movements"></div>
 </section><section class="adjustment-panel" id="adjustment-panel">
 <div class="panel-head"><div><small>CORREÇÃO DE PONTO</small><h3>Solicitar correção de ponto</h3></div><button class="btn outline" id="toggle-adjustment" type="button">Abrir nova solicitação</button></div>
-<p class="adjustment-help" id="adjustment-help">Use para informar uma marcação que não foi registrada ou para solicitar a correção do horário de uma marcação existente.</p><form class="adjustment-form" hidden="" id="adjustment-form">
+<p class="adjustment-help" id="adjustment-help">Clique em <b>Abrir nova solicitação</b> somente quando precisar informar uma marcação não registrada ou corrigir o horário de uma marcação existente.</p><form class="adjustment-form" hidden="" id="adjustment-form">
 <label class="wide">O que aconteceu?
 <select id="ajuste-modalidade" required>
 <option value="inclusao">Não consegui registrar uma marcação</option>
@@ -101,17 +101,17 @@
   },20000);
 })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc6.5"></script><script src="assets/js/auth.js?v=1.0.0-rc6.5"></script><script src="assets/js/official-clock.js?v=1.0.0-rc6.5"></script>
-<script src="assets/js/database.js?v=1.0.0-rc6.5"></script>
-<script src="assets/js/offline-contingencia.js?v=1.0.0-rc6.5"></script>
-<script src="assets/js/app.js?v=1.0.0-rc6.5"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc6.5.1"></script><script src="assets/js/auth.js?v=1.0.0-rc6.5.1"></script><script src="assets/js/official-clock.js?v=1.0.0-rc6.5.1"></script>
+<script src="assets/js/database.js?v=1.0.0-rc6.5.1"></script>
+<script src="assets/js/offline-contingencia.js?v=1.0.0-rc6.5.1"></script>
+<script src="assets/js/app.js?v=1.0.0-rc6.5.1"></script>
 <script>
 (async function iniciarPontoPorContexto(){
   'use strict';
 
   function carregarModuloFuncionario(){
     const script=document.createElement('script');
-    script.src='assets/js/ponto-pin.js?v=1.0.0-rc6.5';
+    script.src='assets/js/ponto-pin.js?v=1.0.0-rc6.5.1';
     script.async=false;
     script.onerror=function(){
       const message=document.getElementById('point-loading-message');
@@ -143,6 +143,6 @@
   carregarModuloFuncionario();
 })();
 </script>
-<script src="assets/js/version-guard.js?v=1.0.0-rc6.5"></script>
+<script src="assets/js/version-guard.js?v=1.0.0-rc6.5.1"></script>
 </body>
 </html>

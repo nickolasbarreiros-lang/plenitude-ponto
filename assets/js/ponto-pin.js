@@ -1902,70 +1902,156 @@ document.getElementById('registrar').onclick=async()=>{
  }
 
  async function refreshAdjustmentCurrentMark(){
-  if(!adjustmentCurrent||!adjustmentMode)return;
+  if(!adjustmentCurrent||!adjustmentMode||!adjustmentModeNote)return;
+
+  const mode=adjustmentMode.value;
+  const dateInput=document.getElementById('ajuste-data');
+  const typeInput=document.getElementById('ajuste-tipo');
+  const correctTimeInput=document.getElementById('ajuste-horario');
+  const date=dateInput?.value||'';
+  const type=typeInput?.value||'';
+
   adjustmentCurrent.hidden=true;
   adjustmentCurrent.textContent='';
-  const mode=adjustmentMode.value;
-  const date=document.getElementById('ajuste-data').value;
-  const type=document.getElementById('ajuste-tipo').value;
+  adjustmentCurrent.className='adjustment-current wide';
 
   if(mode!=='correcao'){
    adjustmentModeNote.textContent='O gestor poderá incluir a marcação ausente após analisar sua justificativa.';
    return;
   }
 
-  adjustmentModeNote.textContent='Selecione a data e a marcação. O horário atualmente registrado será conferido antes do envio.';
-  if(!date||!type||contingencyMode||!navigator.onLine)return;
+  adjustmentModeNote.textContent='Correção de horário: o sistema confere a marcação já gravada antes de permitir o envio.';
+
+  if(!date||!type){
+   adjustmentCurrent.hidden=false;
+   adjustmentCurrent.className='adjustment-current wide warn';
+   adjustmentCurrent.textContent='Selecione a data e a marcação que deseja corrigir.';
+   return;
+  }
+
+  if(contingencyMode||navigator.onLine===false||serverReachable===false){
+   adjustmentCurrent.hidden=false;
+   adjustmentCurrent.className='adjustment-current wide warn';
+   adjustmentCurrent.textContent='A conferência do horário atual exige conexão com o servidor.';
+   return;
+  }
+
+  adjustmentCurrent.hidden=false;
+  adjustmentCurrent.className='adjustment-current wide';
+  adjustmentCurrent.textContent='Consultando horário atualmente registrado...';
 
   try{
-   const rows=await rpc('marcacoes_funcionario_token',{p_token:token,p_inicio:date,p_fim:date});
-   const mark=(rows||[]).find(item=>item.tipo===type);
+   const rows=await rpc(
+    'marcacoes_funcionario_token',
+    {p_token:token,p_inicio:date,p_fim:date}
+   );
+
+   // O banco retorna o enum como texto. Normalizamos por segurança.
+   const mark=(rows||[]).find(
+    item=>String(item?.tipo||'').trim()===String(type).trim()
+   );
+
    if(!mark){
-    adjustmentCurrent.hidden=false;
     adjustmentCurrent.className='adjustment-current wide warn';
-    adjustmentCurrent.textContent=`Não existe ${markLabel(type)} registrada nessa data. Para esse caso, escolha “Não consegui registrar uma marcação”.`;
+    adjustmentCurrent.textContent=
+     `Não existe ${markLabel(type)} registrada nessa data. `+
+     'Para esse caso, escolha “Não consegui registrar uma marcação”.';
     return;
    }
+
    const instant=new Date(mark.registrado_em);
-   const hhmm=instant.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'America/Sao_Paulo'});
-   adjustmentCurrent.hidden=false;
+   if(Number.isNaN(instant.getTime())){
+    throw new Error('Horário atual inválido.');
+   }
+
+   const hhmm=instant.toLocaleTimeString(
+    'pt-BR',
+    {
+     hour:'2-digit',
+     minute:'2-digit',
+     hour12:false,
+     timeZone:'America/Sao_Paulo'
+    }
+   );
+
    adjustmentCurrent.className='adjustment-current wide ok';
-   adjustmentCurrent.innerHTML=`<b>Horário atualmente registrado:</b> ${hhmm}. Informe acima o horário que considera correto.`;
+   adjustmentCurrent.innerHTML=
+    `<b>Horário atualmente registrado:</b> ${hhmm}. `+
+    'Informe no campo “Horário correto” o horário que deseja solicitar.';
+
+   // Evita deixar um valor herdado de uma solicitação anterior.
+   if(correctTimeInput && !correctTimeInput.dataset.userEdited){
+    correctTimeInput.value='';
+   }
   }catch(err){
-   console.warn('Não foi possível consultar a marcação atual para a correção.',err);
+   adjustmentCurrent.className='adjustment-current wide warn';
+   adjustmentCurrent.textContent=
+    'Não foi possível consultar o horário atualmente registrado. '+
+    'Atualize a página e tente novamente.';
+   console.warn('Falha ao consultar marcação atual para correção.',err);
   }
  }
-
  function setAdjustmentEditing(open){
-  adjustmentForm.hidden=!open;
-  adjustmentToggle.textContent=open?'Cancelar solicitação':'Abrir nova solicitação';
-  adjustmentToggle.classList.toggle('danger-soft',open);
-  adjustmentToggle.setAttribute('aria-expanded',String(open));
-  adjustmentHelp.hidden=open;
+  const isOpen=Boolean(open);
 
-  if(open){
-   document.getElementById('ajuste-data').value=dateKey(window.PlenitudeClock?.now?.()||new Date());
+  adjustmentForm.hidden=!isOpen;
+  adjustmentForm.classList.toggle('is-open',isOpen);
+  adjustmentToggle.textContent=isOpen?'Fechar solicitação':'Abrir nova solicitação';
+  adjustmentToggle.classList.toggle('danger-soft',isOpen);
+  adjustmentToggle.setAttribute('aria-expanded',String(isOpen));
+  adjustmentHelp.hidden=isOpen;
+
+  if(isOpen){
+   adjustmentForm.reset();
    adjustmentMode.value='inclusao';
+   const dateInput=document.getElementById('ajuste-data');
+   if(dateInput){
+    dateInput.value=dateKey(window.PlenitudeClock?.now?.()||new Date());
+   }
+
+   const correctTimeInput=document.getElementById('ajuste-horario');
+   if(correctTimeInput){
+    correctTimeInput.dataset.userEdited='';
+   }
+
    refreshAdjustmentCurrentMark();
-   requestAnimationFrame(()=>document.getElementById('ajuste-data').focus());
+   requestAnimationFrame(()=>dateInput?.focus());
   }else{
    adjustmentForm.reset();
+   adjustmentForm.classList.remove('is-open');
    adjustmentCurrent.hidden=true;
    adjustmentCurrent.textContent='';
+   adjustmentModeNote.textContent=
+    'O gestor poderá incluir a marcação ausente após analisar sua justificativa.';
   }
  }
+ const adjustmentDate=document.getElementById('ajuste-data');
+ const adjustmentType=document.getElementById('ajuste-tipo');
+ const adjustmentCorrectTime=document.getElementById('ajuste-horario');
 
- adjustmentMode?.addEventListener('change',refreshAdjustmentCurrentMark);
- document.getElementById('ajuste-data')?.addEventListener('change',refreshAdjustmentCurrentMark);
- document.getElementById('ajuste-tipo')?.addEventListener('change',refreshAdjustmentCurrentMark);
+ adjustmentMode?.addEventListener('change',()=>{
+  if(adjustmentMode.value==='correcao' && adjustmentCorrectTime){
+   adjustmentCorrectTime.value='';
+   adjustmentCorrectTime.dataset.userEdited='';
+  }
+  refreshAdjustmentCurrentMark();
+ });
+ adjustmentDate?.addEventListener('change',refreshAdjustmentCurrentMark);
+ adjustmentType?.addEventListener('change',refreshAdjustmentCurrentMark);
+ adjustmentCorrectTime?.addEventListener('input',()=>{
+  adjustmentCorrectTime.dataset.userEdited='1';
+ });
 
  adjustmentToggle.onclick=()=>{
   if(contingencyMode||!navigator.onLine){
    return toast('Solicitações de ajuste ficam indisponíveis no modo offline.','warn');
   }
 
-  setAdjustmentEditing(adjustmentForm.hidden);
+  const isOpen=adjustmentToggle.getAttribute('aria-expanded')==='true';
+  setAdjustmentEditing(!isOpen);
  };
+
+ setAdjustmentEditing(false);
 
  adjustmentForm.onsubmit=async e=>{
   e.preventDefault();

@@ -3859,3 +3859,9 @@ button[aria-busy="true"]{
 .adjustment-current.warn{border-color:#f2c98d;background:#fff9ed}
 .request-kind{display:inline-flex;margin:8px 0 2px;padding:5px 8px;border-radius:999px;font-size:.7rem;font-weight:800;letter-spacing:.06em;background:#f3eee9;color:#6c5a53}
 .request-kind.correcao{background:#fff1dc;color:#9a5200}
+
+/* RC6.5.1 — estado confiável do formulário de correção */
+#adjustment-form[hidden]{display:none!important}
+#adjustment-form:not([hidden]){display:grid}
+#adjustment-panel #adjustment-help[hidden]{display:none!important}
+#adjustment-current[hidden]{display:none!important}
