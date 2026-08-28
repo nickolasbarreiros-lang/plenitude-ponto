@@ -3852,3 +3852,10 @@ button[aria-busy="true"]{
 .bank-carry-notice{
   margin-bottom:18px;
 }
+
+/* RC6.5 — solicitação de correção de marcação existente */
+.adjustment-mode-note,.adjustment-current{padding:10px 12px;border:1px solid #ead8ce;border-radius:12px;background:#fffaf7;font-size:.86rem;line-height:1.35}
+.adjustment-current.ok{border-color:#a9dfbf;background:#f2fbf6}
+.adjustment-current.warn{border-color:#f2c98d;background:#fff9ed}
+.request-kind{display:inline-flex;margin:8px 0 2px;padding:5px 8px;border-radius:999px;font-size:.7rem;font-weight:800;letter-spacing:.06em;background:#f3eee9;color:#6c5a53}
+.request-kind.correcao{background:#fff1dc;color:#9a5200}

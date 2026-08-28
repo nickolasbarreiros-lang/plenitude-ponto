@@ -1656,10 +1656,13 @@ async function initAjustes(){
        <span class="request-status ${r.status}">${r.status}</span>
       </div>
       ${queueMode&&r.status==='pendente'?`<div class="queue-position">Ajuste ${queueIndex+1} de ${pendingRows.length}</div>`:''}
+      <div class="request-kind ${r.modalidade||'inclusao'}">${r.modalidade==='correcao'?'CORREÇÃO DE HORÁRIO':'MARCAÇÃO NÃO REGISTRADA'}</div>
       <div class="request-facts">
        <span><b>Data</b>${new Date(r.data_marcacao+'T12:00:00').toLocaleDateString('pt-BR')}</span>
        <span><b>Marcação</b>${labelForMarkType(r.tipo_marcacao)}</span>
-       <span><b>Horário</b>${String(r.horario_solicitado).slice(0,5)}</span>
+       ${r.modalidade==='correcao'
+         ?`<span><b>Horário atual</b>${String(r.horario_original||'—').slice(0,5)}</span><span><b>Solicitado</b>${String(r.horario_solicitado).slice(0,5)}</span>`
+         :`<span><b>Horário solicitado</b>${String(r.horario_solicitado).slice(0,5)}</span>`}
       </div>
       <p>${r.justificativa}</p>
       ${r.resposta_administrador?`<div class="admin-response"><b>Resposta:</b> ${r.resposta_administrador}</div>`:''}
@@ -1667,7 +1670,7 @@ async function initAjustes(){
      ${r.status==='pendente'?`
       <div class="request-actions">
        <textarea id="response-${r.id}" placeholder="Resposta opcional para a funcionária"></textarea>
-       <button class="btn primary" data-decision="aprovada" data-id="${r.id}">Aprovar e incluir ponto</button>
+       <button class="btn primary" data-decision="aprovada" data-id="${r.id}">${r.modalidade==='correcao'?'Aprovar correção':'Aprovar e incluir ponto'}</button>
        <button class="btn outline danger" data-decision="rejeitada" data-id="${r.id}">Rejeitar</button>
       </div>`:''}
     </article>`;
@@ -1677,13 +1680,13 @@ async function initAjustes(){
     const decision=button.dataset.decision;
     const id=button.dataset.id;
     const response=document.getElementById(`response-${id}`)?.value||'';
-    if(!confirm(decision==='aprovada'?'Aprovar e criar esta marcação?':'Rejeitar esta solicitação?'))return;
+    if(!confirm(decision==='aprovada'?(card?.querySelector('.request-kind.correcao')?'Aprovar a correção do horário desta marcação?':'Aprovar e criar esta marcação?'):'Rejeitar esta solicitação?'))return;
 
     const card=button.closest('.adjustment-admin-card');
     card?.querySelectorAll('button').forEach(item=>item.disabled=true);
     try{
      await window.PlenitudeDB.decideAdjustment(id,decision,response);
-     toast(decision==='aprovada'?'Ajuste aprovado e ponto incluído.':'Solicitação rejeitada.');
+     toast(decision==='aprovada'?(card?.querySelector('.request-kind.correcao')?'Correção aprovada e horário atualizado.':'Ajuste aprovado e ponto incluído.'):'Solicitação rejeitada.');
      await render();
     }catch(error){
      toast(errorText(error),'warn');

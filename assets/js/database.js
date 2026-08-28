@@ -303,7 +303,7 @@
   }
 
   async function adminAdjustmentRequests(status=null){
-    const {data,error}=await client.rpc('listar_ajustes_admin',{p_status:status||null});
+    const {data,error}=await client.rpc('listar_ajustes_admin_v2',{p_status:status||null});
     if(error) throw error; return data||[];
   }
   async function decideAdjustment(id,decision,response=''){

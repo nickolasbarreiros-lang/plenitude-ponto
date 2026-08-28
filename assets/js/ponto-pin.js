@@ -1893,6 +1893,48 @@ document.getElementById('registrar').onclick=async()=>{
  const adjustmentToggle=document.getElementById('toggle-adjustment');
  const adjustmentForm=document.getElementById('adjustment-form');
  const adjustmentHelp=document.getElementById('adjustment-help');
+ const adjustmentMode=document.getElementById('ajuste-modalidade');
+ const adjustmentModeNote=document.getElementById('ajuste-mode-note');
+ const adjustmentCurrent=document.getElementById('ajuste-current');
+
+ function markLabel(type){
+  return ({entrada:'Entrada',inicio_intervalo:'Início do almoço',fim_intervalo:'Retorno do almoço',saida:'Saída'})[type]||type;
+ }
+
+ async function refreshAdjustmentCurrentMark(){
+  if(!adjustmentCurrent||!adjustmentMode)return;
+  adjustmentCurrent.hidden=true;
+  adjustmentCurrent.textContent='';
+  const mode=adjustmentMode.value;
+  const date=document.getElementById('ajuste-data').value;
+  const type=document.getElementById('ajuste-tipo').value;
+
+  if(mode!=='correcao'){
+   adjustmentModeNote.textContent='O gestor poderá incluir a marcação ausente após analisar sua justificativa.';
+   return;
+  }
+
+  adjustmentModeNote.textContent='Selecione a data e a marcação. O horário atualmente registrado será conferido antes do envio.';
+  if(!date||!type||contingencyMode||!navigator.onLine)return;
+
+  try{
+   const rows=await rpc('marcacoes_funcionario_token',{p_token:token,p_inicio:date,p_fim:date});
+   const mark=(rows||[]).find(item=>item.tipo===type);
+   if(!mark){
+    adjustmentCurrent.hidden=false;
+    adjustmentCurrent.className='adjustment-current wide warn';
+    adjustmentCurrent.textContent=`Não existe ${markLabel(type)} registrada nessa data. Para esse caso, escolha “Não consegui registrar uma marcação”.`;
+    return;
+   }
+   const instant=new Date(mark.registrado_em);
+   const hhmm=instant.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'America/Sao_Paulo'});
+   adjustmentCurrent.hidden=false;
+   adjustmentCurrent.className='adjustment-current wide ok';
+   adjustmentCurrent.innerHTML=`<b>Horário atualmente registrado:</b> ${hhmm}. Informe acima o horário que considera correto.`;
+  }catch(err){
+   console.warn('Não foi possível consultar a marcação atual para a correção.',err);
+  }
+ }
 
  function setAdjustmentEditing(open){
   adjustmentForm.hidden=!open;
@@ -1903,11 +1945,19 @@ document.getElementById('registrar').onclick=async()=>{
 
   if(open){
    document.getElementById('ajuste-data').value=dateKey(window.PlenitudeClock?.now?.()||new Date());
+   adjustmentMode.value='inclusao';
+   refreshAdjustmentCurrentMark();
    requestAnimationFrame(()=>document.getElementById('ajuste-data').focus());
   }else{
    adjustmentForm.reset();
+   adjustmentCurrent.hidden=true;
+   adjustmentCurrent.textContent='';
   }
  }
+
+ adjustmentMode?.addEventListener('change',refreshAdjustmentCurrentMark);
+ document.getElementById('ajuste-data')?.addEventListener('change',refreshAdjustmentCurrentMark);
+ document.getElementById('ajuste-tipo')?.addEventListener('change',refreshAdjustmentCurrentMark);
 
  adjustmentToggle.onclick=()=>{
   if(contingencyMode||!navigator.onLine){
@@ -1931,13 +1981,18 @@ document.getElementById('registrar').onclick=async()=>{
   b.textContent='Enviando...';
 
   try{
-   await rpc('solicitar_ajuste_ponto',{
+   const payload={
     p_token:token,
     p_data:document.getElementById('ajuste-data').value,
     p_tipo:document.getElementById('ajuste-tipo').value,
     p_horario:document.getElementById('ajuste-horario').value,
     p_justificativa:document.getElementById('ajuste-justificativa').value
-   });
+   };
+   if(adjustmentMode.value==='correcao'){
+    await rpc('solicitar_correcao_ponto',payload);
+   }else{
+    await rpc('solicitar_ajuste_ponto',payload);
+   }
 
    toast('Solicitação enviada para análise.');
    setAdjustmentEditing(false);
