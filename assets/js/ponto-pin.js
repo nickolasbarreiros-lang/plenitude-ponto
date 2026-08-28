@@ -1703,13 +1703,19 @@ document.getElementById('registrar').onclick=async()=>{
   const trigger=document.getElementById('temporary-exit');
   const form=document.getElementById('movement-exit-form');
   const reason=document.getElementById('movement-reason');
+  if(!trigger||!form||!reason)return;
 
-  form.hidden=!open;
-  reason.disabled=!open;
-  trigger.hidden=open;
-  trigger.setAttribute('aria-expanded',String(open));
+  const isOpen=Boolean(open);
 
-  if(open){
+  form.hidden=!isOpen;
+  form.style.display=isOpen?'grid':'none';
+  reason.disabled=!isOpen;
+
+  trigger.hidden=isOpen;
+  trigger.style.display=isOpen?'none':'';
+  trigger.setAttribute('aria-expanded',String(isOpen));
+
+  if(isOpen){
    requestAnimationFrame(()=>reason.focus());
   }else{
    reason.value='';
@@ -1781,10 +1787,34 @@ document.getElementById('registrar').onclick=async()=>{
   }
  }
 
- document.getElementById('temporary-exit').onclick=()=>setTemporaryExitEditing(true);
- document.getElementById('temporary-exit-cancel').onclick=()=>setTemporaryExitEditing(false);
- document.getElementById('temporary-exit-send').onclick=()=>registerMovement('saida');
- document.getElementById('temporary-return').onclick=()=>registerMovement('retorno');
+ const temporaryExitButton=document.getElementById('temporary-exit');
+ const temporaryExitCancel=document.getElementById('temporary-exit-cancel');
+ const temporaryExitSend=document.getElementById('temporary-exit-send');
+ const temporaryReturnButton=document.getElementById('temporary-return');
+
+ temporaryExitButton?.addEventListener('click',e=>{
+  e.preventDefault();
+  if(contingencyMode||navigator.onLine===false){
+   toast('Saída temporária indisponível enquanto o sistema estiver em contingência/offline.','warn');
+   return;
+  }
+  setTemporaryExitEditing(true);
+ });
+ temporaryExitCancel?.addEventListener('click',e=>{
+  e.preventDefault();
+  setTemporaryExitEditing(false);
+ });
+ temporaryExitSend?.addEventListener('click',e=>{
+  e.preventDefault();
+  registerMovement('saida');
+ });
+ temporaryReturnButton?.addEventListener('click',e=>{
+  e.preventDefault();
+  registerMovement('retorno');
+ });
+
+ // O formulário deve iniciar efetivamente fechado.
+ setTemporaryExitEditing(false);
 
  let showAllAdjustments=false;
 
@@ -1992,9 +2022,11 @@ document.getElementById('registrar').onclick=async()=>{
   }
  }
  function setAdjustmentEditing(open){
+  if(!adjustmentForm||!adjustmentToggle||!adjustmentHelp)return;
   const isOpen=Boolean(open);
 
   adjustmentForm.hidden=!isOpen;
+  adjustmentForm.style.display=isOpen?'grid':'none';
   adjustmentForm.classList.toggle('is-open',isOpen);
   adjustmentToggle.textContent=isOpen?'Fechar solicitação':'Abrir nova solicitação';
   adjustmentToggle.classList.toggle('danger-soft',isOpen);
@@ -2042,14 +2074,17 @@ document.getElementById('registrar').onclick=async()=>{
   adjustmentCorrectTime.dataset.userEdited='1';
  });
 
- adjustmentToggle.onclick=()=>{
-  if(contingencyMode||!navigator.onLine){
-   return toast('Solicitações de ajuste ficam indisponíveis no modo offline.','warn');
+ adjustmentToggle?.addEventListener('click',e=>{
+  e.preventDefault();
+
+  if(contingencyMode||navigator.onLine===false){
+   toast('Solicitações de ajuste ficam indisponíveis no modo offline.','warn');
+   return;
   }
 
   const isOpen=adjustmentToggle.getAttribute('aria-expanded')==='true';
   setAdjustmentEditing(!isOpen);
- };
+ });
 
  setAdjustmentEditing(false);
 
@@ -2101,6 +2136,7 @@ document.getElementById('registrar').onclick=async()=>{
   }
 
   const a=document.getElementById('pin-atual').value,n=document.getElementById('pin-novo').value,c=document.getElementById('pin-confirmar').value;if(!/^\d{4}$/.test(n)||n!==c)return toast('O novo PIN deve ter 4 números e coincidir com a confirmação.','warn');try{await rpc('alterar_proprio_pin',{p_token:token,p_pin_atual:a,p_novo_pin:n});toast('PIN alterado com sucesso.');document.getElementById('change-pin-panel').hidden=true}catch(e){toast(e.message,'warn')}};
+ console.info('[Plenitude Ponto RC6.5.2] controles do funcionário inicializados');
  init();
  function updatePointClockSource(){
   const target=document.getElementById('clock-source-status');

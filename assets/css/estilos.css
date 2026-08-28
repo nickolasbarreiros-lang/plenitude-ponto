@@ -3865,3 +3865,19 @@ button[aria-busy="true"]{
 #adjustment-form:not([hidden]){display:grid}
 #adjustment-panel #adjustment-help[hidden]{display:none!important}
 #adjustment-current[hidden]{display:none!important}
+
+/* RC6.5.2 — correção dos controles laterais do funcionário */
+#movement-exit-form[hidden],
+#temporary-exit[hidden],
+#temporary-return[hidden],
+#adjustment-form[hidden],
+#adjustment-current[hidden],
+#adjustment-help[hidden]{
+  display:none!important;
+}
+#movement-exit-form:not([hidden]){
+  display:grid!important;
+}
+#adjustment-form:not([hidden]){
+  display:grid!important;
+}
