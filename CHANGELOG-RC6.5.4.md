@@ -1,4 +1,4 @@
-# Plenitude Ponto RC6.5.4
+# Plenitude Ponto RC6.5.5
 
 Correção do fluxo administrativo de aprovação/rejeição de solicitações de ajuste.
 

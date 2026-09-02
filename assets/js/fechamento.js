@@ -79,6 +79,53 @@
   return Number(state.audit?.[name]||0);
  }
 
+
+ function auditJourneyDetails(){
+  return Array.isArray(state.audit?.jornadas_detalhes)
+   ?state.audit.jornadas_detalhes
+   :[];
+ }
+
+ function html(value){
+  return String(value??'')
+   .replaceAll('&','&amp;')
+   .replaceAll('<','&lt;')
+   .replaceAll('>','&gt;')
+   .replaceAll('\"','&quot;')
+   .replaceAll("'",'&#039;');
+ }
+
+ function brDate(value){
+  return value
+   ?new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR')
+   :'—';
+ }
+
+ function regularizationUrl(detail){
+  const params=new URLSearchParams({
+   funcionario:String(detail?.funcionario_id||''),
+   ajuste:'1',
+   modalidade:'inclusao',
+   data:String(detail?.data_local||''),
+   tipo:String(detail?.marcacao_faltante||'')
+  });
+  return `ponto.html?${params.toString()}`;
+ }
+
+ function firstCorrectionTarget(){
+  const journey=auditJourneyDetails()[0];
+  if(auditCount('jornadas_incompletas')>0&&journey){
+   return {
+    href:regularizationUrl(journey),
+    label:auditCount('jornadas_incompletas')===1?'Regularizar jornada':'Regularizar jornadas'
+   };
+  }
+  if(auditCount('ajustes_pendentes')>0)return {href:'ajustes.html?status=pendente&fila=1',label:'Analisar solicitações'};
+  if(auditCount('contingencias_pendentes')>0)return {href:'contingencia.html',label:'Analisar contingências'};
+  if(auditCount('movimentacoes_abertas')>0)return {href:'movimentacoes.html?pendentes=1',label:'Regularizar saídas'};
+  return {href:'admin.html',label:'Corrigir pendências'};
+ }
+
  function blockingCount(){
   return Number(state.audit?.total_bloqueios||0);
  }
@@ -89,7 +136,7 @@
     key:'jornadas_incompletas',
     label:'Jornadas incompletas',
     detail:'Dias anteriores com menos de quatro marcações',
-    href:'admin.html'
+    href:'relatorios.html'
    },
    {
     key:'ajustes_pendentes',
@@ -179,6 +226,31 @@
    const count=auditCount(item.key);
    const ok=count===0;
 
+   if(item.key==='jornadas_incompletas'&&!ok){
+    const details=auditJourneyDetails();
+    const detailHtml=details.length
+     ?`<div class="closure-journey-list">${details.map(detail=>`
+       <div class="closure-journey-row">
+        <span>
+         <strong>${html(detail.funcionario_nome||'Funcionário')}</strong>
+         <small>${html(detail.matricula||'Sem matrícula')} · ${brDate(detail.data_local)} · ${Number(detail.quantidade_marcacoes||0)}/4 marcações · falta ${html(String(detail.marcacao_faltante_label||'marcação').toLowerCase())}</small>
+        </span>
+        <a class="btn warning compact" href="${html(regularizationUrl(detail))}">Regularizar</a>
+       </div>`).join('')}</div>`
+     :'<div class="closure-journey-list"><small>Detalhes indisponíveis. Execute o SQL da RC6.5.5 para habilitar a identificação nominal.</small></div>';
+
+    return `
+     <div class="closure-audit-item closure-audit-journeys problem">
+      <span class="closure-audit-icon">!</span>
+      <span>
+       <strong>${item.label}</strong>
+       <small>${count} ocorrência${count===1?'':'s'} — ${item.detail}</small>
+      </span>
+      <b>${count}</b>
+      ${detailHtml}
+     </div>`;
+   }
+
    return `
     <a class="closure-audit-item ${ok?'ok':'problem'}"
       href="${item.href}">
@@ -197,6 +269,9 @@
    badge.textContent=`${blockers} PENDÊNCIA${blockers===1?'':'S'}`;
    summary.textContent=
     'Resolva todas as pendências antes de fechar a competência.';
+   const target=firstCorrectionTarget();
+   correction.href=target.href;
+   correction.textContent=target.label;
    correction.hidden=false;
    closeButton.disabled=true;
    closeButton.textContent='Fechamento bloqueado';

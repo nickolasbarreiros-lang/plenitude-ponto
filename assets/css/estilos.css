@@ -3881,3 +3881,14 @@ button[aria-busy="true"]{
 #adjustment-form:not([hidden]){
   display:grid!important;
 }
+
+
+/* RC6.5.5 — detalhe nominal das jornadas que bloqueiam o fechamento */
+.closure-audit-journeys{grid-column:1/-1;}
+.closure-journey-list{grid-column:1/-1;display:grid;gap:8px;margin-top:2px;padding-top:10px;border-top:1px dashed #e5a09a;}
+.closure-journey-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 11px;border:1px solid #efb4ae;border-radius:10px;background:#fff;}
+.closure-journey-row>span{display:grid;gap:3px;min-width:0;}
+.closure-journey-row strong{font-size:13px;}
+.closure-journey-row small{color:#76645f;line-height:1.35;}
+.closure-journey-row .btn{flex:0 0 auto;text-decoration:none;}
+@media(max-width:720px){.closure-journey-row{align-items:stretch;flex-direction:column}.closure-journey-row .btn{width:100%;text-align:center}}

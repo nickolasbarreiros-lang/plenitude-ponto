@@ -2136,7 +2136,7 @@ document.getElementById('registrar').onclick=async()=>{
   }
 
   const a=document.getElementById('pin-atual').value,n=document.getElementById('pin-novo').value,c=document.getElementById('pin-confirmar').value;if(!/^\d{4}$/.test(n)||n!==c)return toast('O novo PIN deve ter 4 números e coincidir com a confirmação.','warn');try{await rpc('alterar_proprio_pin',{p_token:token,p_pin_atual:a,p_novo_pin:n});toast('PIN alterado com sucesso.');document.getElementById('change-pin-panel').hidden=true}catch(e){toast(e.message,'warn')}};
- console.info('[Plenitude Ponto RC6.5.3] controles do funcionário inicializados');
+ console.info('[Plenitude Ponto RC6.5.5] controles do funcionário inicializados');
  init();
  function updatePointClockSource(){
   const target=document.getElementById('clock-source-status');

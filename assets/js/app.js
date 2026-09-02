@@ -1,4 +1,4 @@
-console.info('[Plenitude Ponto RC6.5.4] app.js carregado; políticas centralizadas ativas.');
+console.info('[Plenitude Ponto RC6.5.5] app.js carregado; políticas centralizadas ativas.');
 const defaultSchedule=[
   {dia:'Segunda',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'19:00'},
   {dia:'Terça',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'19:00'},
@@ -1006,6 +1006,31 @@ function setAdminAdjustmentEditing(open){
   }
 }
 
+function openAdminAdjustmentFromQuery(){
+  if(DB_STATE.profile?.papel!=='administrador'||!DB_STATE.employee)return;
+  const params=new URLSearchParams(location.search);
+  if(params.get('ajuste')!=='1')return;
+
+  const mode=params.get('modalidade')||'inclusao';
+  const date=params.get('data')||'';
+  const type=params.get('tipo')||'';
+
+  setAdminAdjustmentEditing(true);
+  const modeEl=document.getElementById('ajuste-modalidade');
+  const dateEl=document.getElementById('ajuste-data');
+  const typeEl=document.getElementById('ajuste-tipo');
+  if(modeEl&&['inclusao','correcao'].includes(mode))modeEl.value=mode;
+  if(dateEl&&/^\d{4}-\d{2}-\d{2}$/.test(date))dateEl.value=date;
+  if(typeEl&&['entrada','inicio_intervalo','fim_intervalo','saida'].includes(type))typeEl.value=type;
+  refreshAdminAdjustmentCurrentMark();
+  document.getElementById('adjustment-form')?.scrollIntoView({behavior:'smooth',block:'center'});
+  requestAnimationFrame(()=>document.getElementById('ajuste-horario')?.focus());
+
+  params.delete('ajuste');params.delete('modalidade');params.delete('data');params.delete('tipo');
+  const clean=`${location.pathname}${params.toString()?`?${params.toString()}`:''}${location.hash||''}`;
+  history.replaceState({},'',clean);
+}
+
 function initAdminPointSelfService(){
   if(DB_STATE.profile?.papel!=='administrador')return;
 
@@ -1103,7 +1128,7 @@ function initAdminPointSelfService(){
   setAdminAdjustmentEditing(false);
   refreshAdminPointMovements();
   refreshAdminPointAdjustments();
-  console.info('[Plenitude Ponto RC6.5.4] autoatendimento administrativo do ponto inicializado');
+  console.info('[Plenitude Ponto RC6.5.5] autoatendimento administrativo do ponto inicializado');
 }
 
 async function initPonto(){
@@ -1181,7 +1206,10 @@ async function initPonto(){
     if(!DB_STATE.employee){document.getElementById('clock-employee').textContent=profile.papel==='funcionario'?'Conta ainda não vinculada a um funcionário':'Nenhum funcionário cadastrado';document.getElementById('clock-status').textContent='Acesso pendente';document.getElementById('registrar').disabled=true;renderRealPunches([]);return}
     renderClockEmployee(DB_STATE.employee);
     await loadRealPunches();
-    if(profile.papel==='administrador')initAdminPointSelfService();
+    if(profile.papel==='administrador'){
+      initAdminPointSelfService();
+      openAdminAdjustmentFromQuery();
+    }
     let adminPointRegistrationInFlight=false;
     document.getElementById('registrar').onclick=async()=>{
       if(adminPointRegistrationInFlight)return;

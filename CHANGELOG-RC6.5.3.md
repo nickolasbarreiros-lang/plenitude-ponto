@@ -1,4 +1,4 @@
-# Plenitude Ponto RC6.5.3
+# Plenitude Ponto RC6.5.5
 
 Correção estrutural dos botões laterais da tela `ponto.html` quando ela é aberta a partir de uma sessão administrativa.
 
@@ -18,13 +18,13 @@ Por isso os botões apareciam, mas não recebiam os listeners do módulo do func
 - o horário atual é consultado antes de uma correção;
 - histórico lateral de movimentações e ajustes é atualizado ao trocar o funcionário selecionado;
 - novas ações administrativas ficam registradas em `logs_auditoria`;
-- cache, Version Guard e referências de build atualizados para RC6.5.3.
+- cache, Version Guard e referências de build atualizados para RC6.5.5.
 
 ## Banco
 
 Executar em produção apenas:
 
-`supabase-rc6-5-3-admin-autoatendimento-ponto.sql`
+`supabase-rc6-5-5-admin-autoatendimento-ponto.sql`
 
 A baseline de instalação limpa foi consolidada como:
 
