@@ -1,4 +1,4 @@
-console.info('[Plenitude Ponto RC6.5.5] app.js carregado; políticas centralizadas ativas.');
+console.info('[Plenitude Ponto RC6.5.5-HF1] app.js carregado; feriados preservados no espelho mensal.');
 const defaultSchedule=[
   {dia:'Segunda',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'19:00'},
   {dia:'Terça',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'19:00'},
@@ -1353,8 +1353,8 @@ async function initRelatorios(){
     await renderRelatorio();
   }catch(error){toast(errorText(error),'warn');console.error(error)}
 }
-function balanceStatusLabel(status){return({completo:'Completo',falta:'Falta',pendente:'Pendente',aguardando:'Aguardando',futuro:'Futuro',sem_jornada:'Sem jornada',extra:'Hora extra',folga:'Folga',ferias:'Férias',feriado:'Feriado',atestado:'Atestado'})[status]||status||'—'}
-function balanceStatusClass(status){return ['falta','pendente'].includes(status)?'negative':['completo','extra'].includes(status)?'positive':''}
+function balanceStatusLabel(status){return({completo:'Completo',falta:'Falta',pendente:'Pendente',aguardando:'Aguardando',futuro:'Futuro',sem_jornada:'Sem jornada',extra:'Hora extra',folga:'Folga',ferias:'Férias',feriado:'Feriado',feriado_trabalhado:'Feriado trabalhado',feriado_banco_dobro:'Feriado — banco em dobro',feriado_folha:'Feriado — folha',atestado:'Atestado',abonado:'Abonado'})[status]||status||'—'}
+function balanceStatusClass(status){return ['falta','pendente'].includes(status)?'negative':['completo','extra','feriado','feriado_trabalhado','feriado_banco_dobro','feriado_folha','abonado'].includes(status)?'positive':''}
 async function renderRelatorio(){
   try{
     const selected=document.getElementById('rel-mes').value,employeeId=document.getElementById('rel-funcionario').value;
@@ -1396,12 +1396,13 @@ async function renderRelatorio(){
     document.getElementById('rel-creditos').textContent=`+${fmtMinutes(summary.credito_minutos||0)}`;
     document.getElementById('rel-debitos').textContent=`−${fmtMinutes(summary.debito_minutos||0)}`;
     document.getElementById('rel-pendencias').textContent=String((summary.pendencias||0)+(summary.faltas||0));
-    const relevant=days.filter(d=>d.previsto_minutos>0||d.quantidade_marcacoes>0||d.ocorrencia);
+    const relevant=days.filter(d=>d.previsto_minutos>0||d.quantidade_marcacoes>0||d.ocorrencia||d.feriado);
     const body=document.getElementById('relatorio-body'),empty=document.getElementById('relatorio-vazio');
     body.innerHTML=relevant.map(r=>{
       const marks=(r.marcacoes||[]).map(v=>formatDbTime(v));
       const saldo=r.saldo_minutos===null||r.saldo_minutos===undefined?'—':signedMinutes(r.saldo_minutos);
-      return `<tr><td>${new Intl.DateTimeFormat('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}).format(dateFromKey(r.data))}</td>${[0,1,2,3].map(i=>`<td>${marks[i]||'—'}</td>`).join('')}<td>${fmtMinutes(r.previsto_minutos||0)}</td><td>${fmtMinutes(r.trabalhado_minutos||0)}</td><td class="${r.saldo_minutos<0?'negative':r.saldo_minutos>0?'positive':''}">${saldo}</td><td><span class="report-status ${balanceStatusClass(r.status)}">${balanceStatusLabel(r.status)}</span>${r.tolerancia_aplicada?' <small title="Horário real preservado; tolerância aplicada apenas ao cálculo">Tolerância</small>':''}${r.alerta_intervalo?' <small class="negative">'+(r.alerta_intervalo==='intervalo_curto'?'Intervalo curto':'Intervalo excedido')+'</small>':''}</td></tr>`;
+      const holidayName=r.feriado?.nome?` <small title="Feriado cadastrado no calendário da empresa">${escapeHtml(r.feriado.nome)}</small>`:'';
+      return `<tr><td>${new Intl.DateTimeFormat('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}).format(dateFromKey(r.data))}</td>${[0,1,2,3].map(i=>`<td>${marks[i]||'—'}</td>`).join('')}<td>${fmtMinutes(r.previsto_minutos||0)}</td><td>${fmtMinutes(r.trabalhado_minutos||0)}</td><td class="${r.saldo_minutos<0?'negative':r.saldo_minutos>0?'positive':''}">${saldo}</td><td><span class="report-status ${balanceStatusClass(r.status)}">${balanceStatusLabel(r.status)}</span>${holidayName}${r.tolerancia_aplicada?' <small title="Horário real preservado; tolerância aplicada apenas ao cálculo">Tolerância</small>':''}${r.alerta_intervalo?' <small class="negative">'+(r.alerta_intervalo==='intervalo_curto'?'Intervalo curto':'Intervalo excedido')+'</small>':''}</td></tr>`;
     }).join('');
     empty.style.display=relevant.length?'none':'block';
   }catch(error){toast(errorText(error),'warn');console.error(error)}

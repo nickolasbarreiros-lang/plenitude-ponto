@@ -42,6 +42,10 @@
    folga:'Folga',
    ferias:'Férias',
    feriado:'Feriado',
+   feriado_trabalhado:'Feriado trabalhado',
+   feriado_banco_dobro:'Feriado — banco em dobro',
+   feriado_folha:'Feriado — folha',
+   abonado:'Abonado',
    atestado:'Atestado'
   })[status]||status||'—';
  }
@@ -78,7 +82,8 @@
   const days=allDays.filter(day=>
    day.previsto_minutos>0||
    day.quantidade_marcacoes>0||
-   day.ocorrencia
+   day.ocorrencia||
+   day.feriado
   );
 
   const rows=days.map(day=>{
@@ -98,7 +103,7 @@
     <td>${fmtMinutes(day.previsto_minutos||0)}</td>
     <td>${fmtMinutes(day.trabalhado_minutos||0)}</td>
     <td>${balance}</td>
-    <td>${safe(statusLabel(day.status))}</td>
+    <td>${safe(statusLabel(day.status))}${day.feriado?.nome?` · ${safe(day.feriado.nome)}`:''}</td>
    </tr>`;
   }).join('');
 
