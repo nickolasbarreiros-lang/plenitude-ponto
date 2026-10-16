@@ -1,4 +1,4 @@
-<!doctype html><html lang="pt-BR"><head><meta name="plenitude-build" content="RC6.5.6"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#2c2324"><title>Funcionário | Plenitude Ponto</title><link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc6.5.6"></head><body>
+<!doctype html><html lang="pt-BR"><head><meta name="plenitude-build" content="RC6.6"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#2c2324"><title>Funcionário | Plenitude Ponto</title><link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc6.6"></head><body>
 <div class="app-shell"><aside class="sidebar">
   <div class="sidebar-brand"><img class="logo" src="assets/img/logo-plenitude.png" alt="Plenitude"></div>
   <p class="sidebar-label">CONTROLE DE PONTO</p>
@@ -23,7 +23,7 @@
 </div></header><section class="panel-grid employee-module-grid">
 <article class="panel">
   <div class="panel-head"><div><p class="panel-kicker">DADOS</p><h2>Cadastro do funcionário</h2></div></div>
-  <form id="func-form" class="form-grid">
+  <div class="form-grid" id="rc66-employee-assignment"><label>Jornada cadastrada<select id="rc66-employee-model"><option value="">Carregando...</option></select></label><div><button class="btn secondary" type="button" id="rc66-employee-assign">Vincular jornada</button><p id="rc66-employee-status" class="field-help"></p></div></div><form id="func-form" class="form-grid">
     <label>Nome completo<input id="nome" required></label>
     <label>CPF<input id="cpf" placeholder="000.000.000-00" inputmode="numeric"></label>
     <label>Cargo<input id="cargo" value="Atendente"></label>
@@ -102,6 +102,6 @@
 </div>
 <footer><button id="activity-cancel" class="btn outline" type="button">Cancelar</button><button id="activity-submit" class="btn primary" type="submit">Confirmar</button></footer>
 </form>
-</dialog></main></div><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc6.5.6"></script><script src="assets/js/auth.js?v=1.0.0-rc6.5.6"></script><script src="assets/js/official-clock.js?v=1.0.0-rc6.5.6"></script>
-  <script src="assets/js/database.js?v=1.0.0-rc6.5.6"></script><script src="assets/js/app.js?v=1.0.0-rc6.5.6"></script><script>initFuncionarios()</script><script src="assets/js/version-guard.js?v=1.0.0-rc6.5.6"></script>
-</body></html>
+</dialog></main></div><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc6.6"></script><script src="assets/js/auth.js?v=1.0.0-rc6.6"></script><script src="assets/js/official-clock.js?v=1.0.0-rc6.6"></script>
+  <script src="assets/js/database.js?v=1.0.0-rc6.6"></script><script src="assets/js/app.js?v=1.0.0-rc6.6"></script><script>initFuncionarios()</script><script src="assets/js/version-guard.js?v=1.0.0-rc6.6"></script>
+<script src="assets/js/jornadas-modelos.js?v=1.0.0-rc6.6"></script></body></html>
