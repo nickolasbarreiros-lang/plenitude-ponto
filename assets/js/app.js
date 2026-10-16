@@ -1,4 +1,4 @@
-console.info('[Plenitude Ponto RC6.5.5-HF1] app.js carregado; feriados preservados no espelho mensal.');
+console.info('[Plenitude Ponto RC6.5.6-HF1] app.js carregado; feriados preservados no espelho mensal.');
 const defaultSchedule=[
   {dia:'Segunda',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'19:00'},
   {dia:'Terça',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'19:00'},
@@ -715,7 +715,34 @@ async function initFuncionarios(){
       `<option value="${item.id}">${item.nome} — ${item.matricula||'sem matrícula'}${item.ativo===false?' (inativo)':''}</option>`
     ).join('');
 
+    const newButton=document.getElementById('novo-funcionario');
+    const cancelButton=document.getElementById('cancelar-novo-funcionario');
+    let creatingEmployee=false;
+    const setCreatingEmployee=async active=>{
+      creatingEmployee=active;
+      newButton.hidden=active;
+      cancelButton.hidden=!active;
+      employeeSelector.disabled=active;
+      if(active){
+        DB_STATE.employee=null;
+        form.reset();
+        fillEmployeeForm(null);
+        document.getElementById('matricula').value='';
+        document.getElementById('func-status').value='ativo';
+        if(photoInput)photoInput.value='';
+        await renderEmployee(null);
+        document.getElementById('nome').focus();
+      }else{
+        DB_STATE.employee=DB_STATE.employees.find(item=>item.id===employeeSelector.value)||DB_STATE.employees[0]||null;
+        if(DB_STATE.employee)employeeSelector.value=DB_STATE.employee.id;
+        fillEmployeeForm(DB_STATE.employee);
+        await renderEmployee(DB_STATE.employee);
+      }
+    };
+    newButton.addEventListener('click',()=>setCreatingEmployee(true));
+    cancelButton.addEventListener('click',()=>setCreatingEmployee(false));
     employeeSelector.onchange=async()=>{
+      if(creatingEmployee)return;
       DB_STATE.employee=DB_STATE.employees.find(item=>item.id===employeeSelector.value)||null;
       fillEmployeeForm(DB_STATE.employee);
       await renderEmployee(DB_STATE.employee);
@@ -727,9 +754,22 @@ async function initFuncionarios(){
     setupEmployeeActivityManagement();
     form.onsubmit=async e=>{e.preventDefault();const button=form.querySelector('button[type="submit"]');button.disabled=true;button.textContent='Salvando...';try{
       const values={nome:document.getElementById('nome').value.trim(),cpf:document.getElementById('cpf').value.replace(/\D/g,''),cargo:document.getElementById('cargo').value.trim(),admissao:document.getElementById('admissao').value,matricula:document.getElementById('matricula')?.value.trim()||null,status:document.getElementById('func-status').value,foto_url:DB_STATE.employee?.foto_url||null,codigo_qr:DB_STATE.employee?.codigo_qr||null};
-      let saved=await window.PlenitudeDB.saveEmployee(values,DB_STATE.employee?.id||null);
+      let saved=await window.PlenitudeDB.saveEmployee(values,creatingEmployee?null:(DB_STATE.employee?.id||null));
       if(window.__employeePhotoFileSelected&&window.__employeePhotoData){document.getElementById('foto-status').textContent='Enviando foto...';saved=await window.PlenitudeDB.uploadEmployeePhoto(saved.id,window.__employeePhotoData)}
-      DB_STATE.employee=saved;window.__employeePhotoFileSelected=false;window.__employeePhotoData=null;if(photoInput)photoInput.value='';fillEmployeeForm(saved);await renderEmployee(saved);toast('Funcionário salvo no Supabase.');
+      DB_STATE.employee=saved;
+      const existingIndex=DB_STATE.employees.findIndex(item=>item.id===saved.id);
+      if(existingIndex>=0)DB_STATE.employees[existingIndex]=saved;
+      else DB_STATE.employees.push(saved);
+      DB_STATE.employees.sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+      employeeSelector.innerHTML=DB_STATE.employees.map(item=>
+        `<option value="${item.id}">${item.nome} — ${item.matricula||'sem matrícula'}${item.ativo===false?' (inativo)':''}</option>`
+      ).join('');
+      employeeSelector.value=saved.id;
+      creatingEmployee=false;
+      newButton.hidden=false;cancelButton.hidden=true;employeeSelector.disabled=false;
+      window.__employeePhotoFileSelected=false;window.__employeePhotoData=null;
+      if(photoInput)photoInput.value='';fillEmployeeForm(saved);await renderEmployee(saved);
+      toast('Funcionário salvo no Supabase. Configure a jornada e o PIN para liberar o ponto.');
     }catch(error){toast(errorText(error),'warn');console.error(error)}finally{button.disabled=false;button.textContent='Salvar dados cadastrais'}};
     document.getElementById('remover-foto').onclick=async()=>{if(!DB_STATE.employee)return toast('Cadastre primeiro o funcionário.','warn');if(!confirm('Remover a foto deste funcionário?'))return;try{const saved=await window.PlenitudeDB.removeEmployeePhoto(DB_STATE.employee);DB_STATE.employee=saved;window.__employeePhotoData=null;window.__employeePhotoFileSelected=false;await renderEmployee(saved);document.getElementById('foto-status').textContent='Foto removida.';toast('Foto removida.')}catch(error){toast(errorText(error),'warn')}};
         document.getElementById('baixar-qr').onclick=downloadEmployeeQr;
@@ -744,7 +784,12 @@ function renderEmployeeActivity(){
  const reset=document.getElementById('deactivate-reset');
  const reactivate=document.getElementById('reactivate-employee');
 
- if(!employee)return;
+ if(!employee){
+  if(badge)badge.textContent='Novo cadastro';
+  if(keep)keep.disabled=true;if(reset)reset.disabled=true;if(reactivate)reactivate.disabled=true;
+  return;
+ }
+ if(keep)keep.disabled=false;if(reset)reset.disabled=false;if(reactivate)reactivate.disabled=false;
  const inactive=employee.ativo===false||employee.status==='inativo';
 
  badge.textContent=inactive?'Inativo':'Ativo';
@@ -1128,7 +1173,7 @@ function initAdminPointSelfService(){
   setAdminAdjustmentEditing(false);
   refreshAdminPointMovements();
   refreshAdminPointAdjustments();
-  console.info('[Plenitude Ponto RC6.5.5] autoatendimento administrativo do ponto inicializado');
+  console.info('[Plenitude Ponto RC6.5.6] autoatendimento administrativo do ponto inicializado');
 }
 
 async function initPonto(){

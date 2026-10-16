@@ -1,4 +1,4 @@
-<!doctype html><html lang="pt-BR"><head><meta name="plenitude-build" content="RC6.5.5"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#2c2324"><title>Funcionário | Plenitude Ponto</title><link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc6.5.5"></head><body>
+<!doctype html><html lang="pt-BR"><head><meta name="plenitude-build" content="RC6.5.6"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#2c2324"><title>Funcionário | Plenitude Ponto</title><link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc6.5.6"></head><body>
 <div class="app-shell"><aside class="sidebar">
   <div class="sidebar-brand"><img class="logo" src="assets/img/logo-plenitude.png" alt="Plenitude"></div>
   <p class="sidebar-label">CONTROLE DE PONTO</p>
@@ -19,7 +19,7 @@
 <label>Funcionário selecionado
 <select id="employee-selector" class="compact-select"></select>
 </label>
-<span id="func-status-top" class="badge">0 funcionários</span>
+<button id="novo-funcionario" type="button" class="btn primary">+ Novo funcionário</button><button id="cancelar-novo-funcionario" type="button" class="btn secondary" hidden>Cancelar cadastro</button><span id="func-status-top" class="badge">0 funcionários</span>
 </div></header><section class="panel-grid employee-module-grid">
 <article class="panel">
   <div class="panel-head"><div><p class="panel-kicker">DADOS</p><h2>Cadastro do funcionário</h2></div></div>
@@ -27,7 +27,7 @@
     <label>Nome completo<input id="nome" required></label>
     <label>CPF<input id="cpf" placeholder="000.000.000-00" inputmode="numeric"></label>
     <label>Cargo<input id="cargo" value="Atendente"></label>
-    <label>Matrícula<input id="matricula" placeholder="Ex.: 001"></label>
+    <label>Matrícula<input id="matricula" placeholder="Gerada automaticamente" readonly><small class="field-help">Gerada automaticamente pelo sistema ao salvar um novo cadastro.</small></label>
     <label>Data de admissão<input id="admissao" type="date"></label>
     <label>Status<select id="func-status"><option value="ativo">Ativo</option><option value="ferias">Férias</option><option value="afastado">Afastado</option><option value="inativo">Inativo</option></select></label>
     <label class="full">Foto do funcionário<input id="func-foto" type="file" accept="image/png,image/jpeg,image/webp"><small class="field-help">A imagem será recortada, comprimida e enviada ao Supabase Storage.</small></label>
@@ -102,6 +102,6 @@
 </div>
 <footer><button id="activity-cancel" class="btn outline" type="button">Cancelar</button><button id="activity-submit" class="btn primary" type="submit">Confirmar</button></footer>
 </form>
-</dialog></main></div><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc6.5.5"></script><script src="assets/js/auth.js?v=1.0.0-rc6.5.5"></script><script src="assets/js/official-clock.js?v=1.0.0-rc6.5.5"></script>
-  <script src="assets/js/database.js?v=1.0.0-rc6.5.5"></script><script src="assets/js/app.js?v=1.0.0-rc6.5.5"></script><script>initFuncionarios()</script><script src="assets/js/version-guard.js?v=1.0.0-rc6.5.5"></script>
+</dialog></main></div><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc6.5.6"></script><script src="assets/js/auth.js?v=1.0.0-rc6.5.6"></script><script src="assets/js/official-clock.js?v=1.0.0-rc6.5.6"></script>
+  <script src="assets/js/database.js?v=1.0.0-rc6.5.6"></script><script src="assets/js/app.js?v=1.0.0-rc6.5.6"></script><script>initFuncionarios()</script><script src="assets/js/version-guard.js?v=1.0.0-rc6.5.6"></script>
 </body></html>

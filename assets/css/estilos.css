@@ -3892,3 +3892,7 @@ button[aria-busy="true"]{
 .closure-journey-row small{color:#76645f;line-height:1.35;}
 .closure-journey-row .btn{flex:0 0 auto;text-decoration:none;}
 @media(max-width:720px){.closure-journey-row{align-items:stretch;flex-direction:column}.closure-journey-row .btn{width:100%;text-align:center}}
+
+/* RC6.5.6 — criação de funcionário */
+#novo-funcionario[hidden],#cancelar-novo-funcionario[hidden]{display:none!important}
+.employee-top-actions{flex-wrap:wrap;gap:10px}
