@@ -21,7 +21,26 @@
   if($('rc66-employee-model'))$('rc66-employee-model').innerHTML=options();
   if($('rc66-funcionario'))$('rc66-funcionario').innerHTML=employees.map(e=>`<option value="${esc(e.id)}">${esc(e.nome)} — ${esc(e.matricula)}</option>`).join('');
  };
- const showEmployee=()=>{const id=$('rc66-funcionario')?.value||$('employee-selector')?.value;const a=latest(id),m=models.find(x=>x.id===a?.modelo_id);if($('rc66-employee-status'))$('rc66-employee-status').textContent=m?`Jornada: ${m.nome} • desde ${a.vigencia_inicio}`:'Sem jornada-modelo atribuída';if($('rc66-vinculo'))$('rc66-vinculo').textContent=m?`Jornada atual: ${m.nome} • desde ${a.vigencia_inicio}`:'Sem jornada-modelo atribuída';if($('rc66-employee-model'))$('rc66-employee-model').value=m?.id||'';if($('rc66-employee-assign'))$('rc66-employee-assign').disabled=!employees.some(e=>e.id===id);};
+ const showEmployee=()=>{
+  // Cada página possui seu próprio seletor: nunca utilizar o seletor de outra tela.
+  const onRegistration=!!$('rc66-employee-assignment');
+  const selector=onRegistration?$('employee-selector'):$('rc66-funcionario');
+  const id=selector?.value||'';
+  const active=employees.some(e=>e.id===id);
+  const a=id?latest(id):null;
+  const m=a?models.find(x=>x.id===a.modelo_id):null;
+  if($('rc66-employee-status'))$('rc66-employee-status').textContent=m?`Jornada: ${m.nome} • desde ${a.vigencia_inicio}`:'Nenhuma jornada cadastrada';
+  if($('rc66-vinculo'))$('rc66-vinculo').textContent=m?`Jornada atual: ${m.nome} • desde ${a.vigencia_inicio}`:'Nenhuma jornada cadastrada';
+  if($('rc66-employee-model')){
+   $('rc66-employee-model').value=m?.id||'';
+   $('rc66-employee-model').disabled=!active;
+  }
+  if($('rc66-employee-assign')){
+   $('rc66-employee-assign').disabled=!active;
+   $('rc66-employee-assign').title=active?'':'Funcionários inativos não podem receber novas jornadas';
+  }
+ };
+
  const assign=async(id,model)=>{if(!employees.some(e=>e.id===id))throw Error('Selecione um funcionário ativo.');if(!id||!model)throw Error('Selecione funcionário e jornada.');if(!confirm('Aplicar a jornada selecionada ao funcionário a partir de hoje? Os horários atuais serão substituídos.'))return;await api('rc66_atribuir_modelo',{p_funcionario:id,p_modelo:model,p_vigencia:new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'})});await reload();fill();showEmployee();message('Jornada atribuída. Atualize o painel para conferir os horários.');};
  const safe=fn=>async()=>{try{await fn()}catch(e){console.error(e);message(e.message||String(e),true)}};
  async function start(){
@@ -33,7 +52,9 @@
   }
   if(!$('rc66-panel')&&!$('rc66-employee-assignment'))return;
   try{await reload();fill();showEmployee()}catch(e){console.error(e);message('Instale o SQL RC6.6 antes de utilizar jornadas cadastradas: '+e.message,true);return;}
-  $('employee-selector')?.addEventListener('change',()=>setTimeout(showEmployee,0));
+  $('employee-selector')?.addEventListener('change',()=>{showEmployee();setTimeout(showEmployee,0)});
+  // Atualiza a visualização quando o cadastro altera o seletor programaticamente.
+  if($('rc66-employee-assignment')){const sel=$('employee-selector');if(sel){const observer=new MutationObserver(()=>showEmployee());observer.observe(sel,{childList:true,subtree:true});}}
   $('rc66-funcionario')?.addEventListener('change',showEmployee);
   $('rc66-modelo')?.addEventListener('change',()=>{const m=models.find(x=>x.id===$('rc66-modelo').value);$('rc66-nome').value=m?.nome||'';$('rc66-descricao').value=m?.descricao||'';paint(m?.dias||[])});
   $('rc66-novo')?.addEventListener('click',()=>{$('rc66-modelo').value='';$('rc66-nome').value='';$('rc66-descricao').value='';paint([]);message('Informe o nome e os horários para criar a jornada.');});
