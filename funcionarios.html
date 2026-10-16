@@ -1,4 +1,4 @@
-<!doctype html><html lang="pt-BR"><head><meta name="plenitude-build" content="RC6.6"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#2c2324"><title>Funcionário | Plenitude Ponto</title><link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc6.6"></head><body>
+<!doctype html><html lang="pt-BR"><head><meta name="plenitude-build" content="RC6.6"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#2c2324"><title>Funcionário | Plenitude Ponto</title><link rel="stylesheet" href="assets/css/estilos.css?v=1.0.0-rc6.6.1"></head><body>
 <div class="app-shell"><aside class="sidebar">
   <div class="sidebar-brand"><img class="logo" src="assets/img/logo-plenitude.png" alt="Plenitude"></div>
   <p class="sidebar-label">CONTROLE DE PONTO</p>
@@ -16,7 +16,8 @@
   </nav>
   <button id="sair" class="link-button">↪ Sair do sistema</button>
 </aside><main class="content"><header class="topbar"><div><p class="eyebrow">CADASTRO</p><h1>Funcionário</h1><p class="muted">Mantenha os dados do colaborador atualizados.</p></div><div class="employee-top-actions">
-<label>Funcionário selecionado
+<label>Exibir funcionários
+<select id="employee-status-filter" class="compact-select"><option value="ativos">Ativos</option><option value="inativos">Inativos</option><option value="todos">Todos</option></select></label><label>Funcionário selecionado
 <select id="employee-selector" class="compact-select"></select>
 </label>
 <button id="novo-funcionario" type="button" class="btn primary">+ Novo funcionário</button><button id="cancelar-novo-funcionario" type="button" class="btn secondary" hidden>Cancelar cadastro</button><span id="func-status-top" class="badge">0 funcionários</span>
@@ -102,6 +103,6 @@
 </div>
 <footer><button id="activity-cancel" class="btn outline" type="button">Cancelar</button><button id="activity-submit" class="btn primary" type="submit">Confirmar</button></footer>
 </form>
-</dialog></main></div><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc6.6"></script><script src="assets/js/auth.js?v=1.0.0-rc6.6"></script><script src="assets/js/official-clock.js?v=1.0.0-rc6.6"></script>
-  <script src="assets/js/database.js?v=1.0.0-rc6.6"></script><script src="assets/js/app.js?v=1.0.0-rc6.6"></script><script>initFuncionarios()</script><script src="assets/js/version-guard.js?v=1.0.0-rc6.6"></script>
-<script src="assets/js/jornadas-modelos.js?v=1.0.0-rc6.6"></script></body></html>
+</dialog></main></div><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=1.0.0-rc6.6.1"></script><script src="assets/js/auth.js?v=1.0.0-rc6.6.1"></script><script src="assets/js/official-clock.js?v=1.0.0-rc6.6.1"></script>
+  <script src="assets/js/database.js?v=1.0.0-rc6.6.1"></script><script src="assets/js/app.js?v=1.0.0-rc6.6.1"></script><script>initFuncionarios()</script><script src="assets/js/version-guard.js?v=1.0.0-rc6.6.1"></script>
+<script src="assets/js/jornadas-modelos.js?v=1.0.0-rc6.6.1"></script></body></html>
