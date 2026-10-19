@@ -4,12 +4,14 @@ const defaultSchedule=[
   {dia:'Terça',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'19:00'},
   {dia:'Quarta',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'18:00'},
   {dia:'Quinta',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'18:30'},
-  {dia:'Sexta',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'17:00'}
+  {dia:'Sexta',entrada:'09:00',almoco:'13:00',retorno:'13:30',saida:'17:00'},
+  {dia:'Sábado',entrada:'',almoco:'',retorno:'',saida:''},
+  {dia:'Domingo',entrada:'',almoco:'',retorno:'',saida:''}
 ];
 const punchLabels=['Entrada','Início do almoço','Retorno do almoço','Saída'];
 const STORAGE={theme:'plenitudeTheme'};
 let DB_STATE={profile:null,employees:[],employee:null,schedule:[]};
-const dayNames=['Segunda','Terça','Quarta','Quinta','Sexta'];
+const dayNames=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 function dbScheduleToUi(rows){const byDay=new Map((rows||[]).map(r=>[r.dia_semana,r]));return dayNames.map((dia,i)=>{const r=byDay.get(i+1);return r?{dia,entrada:r.entrada?.slice(0,5)||'',almoco:r.inicio_intervalo?.slice(0,5)||'',retorno:r.fim_intervalo?.slice(0,5)||'',saida:r.saida?.slice(0,5)||''}:defaultSchedule[i]});}
 function errorText(error){const m=String(error?.message||error||'');if(m.includes('duplicate key'))return 'Já existe um cadastro com este CPF ou matrícula.';if(m.includes('row-level security'))return 'Seu usuário não tem permissão para esta operação.';if(m.includes('Failed to fetch'))return 'Não foi possível conectar ao banco de dados.';return m||'Ocorreu um erro inesperado.';}
 
@@ -241,13 +243,15 @@ async function refreshSelectedEmployeeDashboard(){
   }
 
   const max=Math.max(...selectedSchedule.map(totalDay),1);
-  document.getElementById('resumo-jornada').innerHTML=selectedSchedule.map(item=>`
-    <div class="schedule-row-v4">
+  document.getElementById('resumo-jornada').innerHTML=selectedSchedule.map(item=>{
+    const working=totalDay(item)>0;
+    return `<div class="schedule-row-v4${working?'':' schedule-day-off'}">
       <span class="schedule-day">${item.dia.slice(0,3)}</span>
-      <div class="schedule-line"><span style="width:${Math.max(34,Math.round(totalDay(item)/max*100))}%"></span></div>
-      <strong class="schedule-time">${item.entrada}–${item.saida}</strong>
-      <small class="schedule-break">Intervalo ${item.almoco}–${item.retorno}</small>
-    </div>`).join('');
+      <div class="schedule-line">${working?`<span style="width:${Math.round(totalDay(item)/max*100)}%"></span>`:''}</div>
+      <strong class="schedule-time">${working?`${item.entrada}–${item.saida}`:'Folga'}</strong>
+      <small class="schedule-break">${working&&item.almoco&&item.retorno?`Intervalo ${item.almoco}–${item.retorno}`:working?'Sem intervalo':'Sem expediente'}</small>
+    </div>`;
+  }).join('');
 
   const plannedToday=scheduleForDateFrom(selectedSchedule,new Date());
   const next=times.length<4?punchLabels[times.length]:'Concluído';
@@ -543,7 +547,7 @@ async function renderMonthOverview(employee){
     </div>`;
   }).join('');
 }
-function scheduleForDateFrom(schedule,d){const map={1:0,2:1,3:2,4:3,5:4};const i=map[d.getDay()];return i===undefined?null:schedule[i]}
+function scheduleForDateFrom(schedule,d){const i=(d.getDay()+6)%7;const item=schedule?.[i];return item&&totalDay(item)>0?item:null}
 async function renderWeekChartDB(employeeId=DB_STATE.employee?.id,schedule=DB_STATE.schedule){
   const el=document.getElementById('grafico-semana');if(!el)return;
   if(!employeeId){
